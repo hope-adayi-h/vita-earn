@@ -13,7 +13,6 @@ export function Logo3D({ size = "md", className = "", showSubtitle = false }: Lo
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
-  const [glarePosition, setGlarePosition] = useState({ x: 50, y: 50 });
 
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
@@ -24,14 +23,10 @@ export function Logo3D({ size = "md", className = "", showSubtitle = false }: Lo
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
 
-    const rotateX = ((y - centerY) / centerY) * -12;
-    const rotateY = ((x - centerX) / centerX) * 12;
+    const rotateX = ((y - centerY) / centerY) * -10;
+    const rotateY = ((x - centerX) / centerX) * 10;
 
     setRotation({ x: rotateX, y: rotateY });
-    setGlarePosition({
-      x: (x / rect.width) * 100,
-      y: (y / rect.height) * 100,
-    });
   };
 
   const handleMouseEnter = () => {
@@ -43,71 +38,96 @@ export function Logo3D({ size = "md", className = "", showSubtitle = false }: Lo
     setRotation({ x: 0, y: 0 });
   };
 
-  // Dimensions réduites, élégantes et bien proportionnées
-  const dimensions = {
-    sm: { width: 100, height: 32, container: "py-1 px-3 max-w-[125px] rounded-xl" },
-    md: { width: 130, height: 42, container: "py-2 px-4 max-w-[160px] rounded-2xl" },
-    lg: { width: 165, height: 52, container: "py-2.5 px-5 max-w-[195px] rounded-2xl" },
+  // Dimensions adaptées à l'emplacement (grande et lisible sur les pages d'authentification)
+  const sizeClasses = {
+    sm: {
+      gap: "gap-2 sm:gap-2.5",
+      iconClass: "h-7 sm:h-8 w-auto",
+      textClass: "h-4 sm:h-5 w-auto",
+      iconWidth: 45,
+      iconHeight: 32,
+      textWidth: 140,
+      textHeight: 17,
+    },
+    md: {
+      gap: "gap-3 sm:gap-3.5",
+      iconClass: "h-11 sm:h-14 w-auto",
+      textClass: "h-7 sm:h-9 w-auto",
+      iconWidth: 80,
+      iconHeight: 58,
+      textWidth: 240,
+      textHeight: 29,
+    },
+    lg: {
+      gap: "gap-4 sm:gap-5",
+      iconClass: "h-14 sm:h-16 w-auto",
+      textClass: "h-9 sm:h-11 w-auto",
+      iconWidth: 100,
+      iconHeight: 72,
+      textWidth: 300,
+      textHeight: 36,
+    },
   }[size];
 
   return (
     <div className={`relative flex flex-col items-center select-none ${className}`}>
-      {/* Halo de lueur ambiante vert doux */}
+      {/* Halo de lueur ambiante vert doux d'arrière-plan */}
       <div
-        className="absolute -inset-1 rounded-2xl opacity-30 blur-lg transition-all duration-500 pointer-events-none"
+        className="absolute -inset-2 rounded-full opacity-25 blur-xl transition-all duration-500 pointer-events-none"
         style={{
           background: isHovered
-            ? "radial-gradient(circle, rgba(126,211,33,0.35) 0%, rgba(27,77,15,0.15) 70%, transparent 100%)"
-            : "radial-gradient(circle, rgba(126,211,33,0.2) 0%, rgba(27,77,15,0.08) 70%, transparent 100%)",
+            ? "radial-gradient(circle, rgba(143,207,8,0.35) 0%, rgba(17,66,2,0.15) 70%, transparent 100%)"
+            : "radial-gradient(circle, rgba(143,207,8,0.2) 0%, rgba(17,66,2,0.08) 70%, transparent 100%)",
         }}
       />
 
-      {/* Conteneur 3D flottant avec perspective */}
+      {/* Affichage direct sur la couleur de fond, sans carré ni cadre */}
       <div
         ref={cardRef}
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={`relative z-10 bg-white/95 border border-vita-border/90 shadow-md cursor-pointer transition-transform duration-200 ease-out flex items-center justify-center overflow-hidden animate-float-3d ${dimensions.container}`}
+        className={`relative z-10 cursor-pointer transition-transform duration-200 ease-out flex items-center justify-center ${sizeClasses.gap}`}
         style={{
           transform: `perspective(800px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg) scale3d(${
-            isHovered ? 1.03 : 1
-          }, ${isHovered ? 1.03 : 1}, 1)`,
+            isHovered ? 1.04 : 1
+          }, ${isHovered ? 1.04 : 1}, 1)`,
           transformStyle: "preserve-3d",
-          boxShadow: isHovered
-            ? "0 12px 24px -6px rgba(27, 77, 15, 0.2), 0 0 12px 1px rgba(126, 211, 33, 0.25)"
-            : "0 6px 16px -4px rgba(27, 77, 15, 0.1), 0 0 8px 1px rgba(126, 211, 33, 0.08)",
         }}
       >
-        {/* Effet reflet de verre (glare 3D) */}
+        {/* 1. Icône 'V' seul, transparent, sans carré ni cadre */}
         <div
-          className="absolute inset-0 pointer-events-none transition-opacity duration-300"
-          style={{
-            opacity: isHovered ? 0.3 : 0.08,
-            background: `radial-gradient(circle at ${glarePosition.x}% ${glarePosition.y}%, rgba(255,255,255,0.9) 0%, rgba(126,211,33,0.15) 45%, transparent 70%)`,
-          }}
-        />
-
-        {/* Image du logo officiel Vita Earn */}
-        <div
-          className="relative transition-transform duration-300"
-          style={{
-            transform: "translateZ(20px)",
-          }}
+          className="relative transition-transform duration-200"
+          style={{ transform: "translateZ(15px)" }}
         >
           <Image
-            src="/images/logo.png"
+            src="/images/logo-icon.png"
             alt="Vita Earn"
-            width={dimensions.width}
-            height={dimensions.height}
-            className="w-auto h-auto max-h-9 object-contain filter drop-shadow-sm"
+            width={sizeClasses.iconWidth}
+            height={sizeClasses.iconHeight}
+            className={`${sizeClasses.iconClass} object-contain mix-blend-multiply drop-shadow-sm`}
+            priority
+          />
+        </div>
+
+        {/* 2. Nom 'VITA EARN' découpé avec police et couleurs originales */}
+        <div
+          className="relative transition-transform duration-200 flex items-center"
+          style={{ transform: "translateZ(12px)" }}
+        >
+          <Image
+            src="/images/logo-text.png"
+            alt="Vita Earn"
+            width={sizeClasses.textWidth}
+            height={sizeClasses.textHeight}
+            className={`${sizeClasses.textClass} object-contain mix-blend-multiply drop-shadow-sm`}
             priority
           />
         </div>
       </div>
 
       {showSubtitle && (
-        <span className="mt-1.5 text-[10px] font-semibold text-vita-muted uppercase tracking-widest flex items-center gap-1">
+        <span className="mt-2 text-[10px] font-semibold text-vita-muted uppercase tracking-widest flex items-center gap-1">
           <span className="w-1 h-1 rounded-full bg-vita-bright animate-pulse" />
           Plateforme Officielle
         </span>

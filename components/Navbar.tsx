@@ -111,23 +111,24 @@ export function Navbar({ user }: NavbarProps) {
                 closeSidebar();
                 closeHelpDropdown();
               }}
-              className="flex items-center gap-2.5 group py-1"
+              className="flex items-center gap-2 group py-1"
             >
-              <div className="relative flex items-center justify-center">
-                <Image
-                  src="/images/logo.png"
-                  alt="Vita Earn"
-                  width={52}
-                  height={52}
-                  className="h-9 sm:h-10 w-auto object-contain transition-transform group-hover:scale-105 duration-200"
-                  priority
-                />
-              </div>
-              <div className="flex items-center tracking-wider leading-none">
-                <span className="text-xl sm:text-2xl font-black uppercase text-vita-deep tracking-wider font-sans">
-                  VITA <span className="text-vita-medium">EARN</span>
-                </span>
-              </div>
+              <Image
+                src="/images/logo-icon.png"
+                alt="Vita Earn"
+                width={56}
+                height={40}
+                className="h-8 sm:h-9 w-auto object-contain mix-blend-multiply transition-transform group-hover:scale-105 duration-200"
+                priority
+              />
+              <Image
+                src="/images/logo-text.png"
+                alt="Vita Earn"
+                width={170}
+                height={20}
+                className="h-5 sm:h-6 w-auto object-contain mix-blend-multiply"
+                priority
+              />
             </Link>
           </div>
 
@@ -350,15 +351,19 @@ export function Navbar({ user }: NavbarProps) {
         <div className="p-4 border-b border-vita-border flex items-center justify-between bg-vita-surface/40">
           <Link href="/" onClick={closeSidebar} className="flex items-center gap-2">
             <Image
-              src="/images/logo.png"
+              src="/images/logo-icon.png"
               alt="Vita Earn"
-              width={38}
-              height={38}
-              className="h-8 w-auto object-contain"
+              width={45}
+              height={32}
+              className="h-7 w-auto object-contain mix-blend-multiply"
             />
-            <span className="text-lg font-black uppercase text-vita-deep tracking-wider font-sans">
-              VITA <span className="text-vita-medium">EARN</span>
-            </span>
+            <Image
+              src="/images/logo-text.png"
+              alt="Vita Earn"
+              width={140}
+              height={17}
+              className="h-4 sm:h-5 w-auto object-contain mix-blend-multiply"
+            />
           </Link>
           <button
             type="button"
