@@ -317,52 +317,52 @@ export default async function HomePage() {
 
   return (
     <div className="max-w-xl mx-auto py-2 sm:py-4 space-y-4">
-      {/* 1. CARTE EN-TÊTE PREMIUM - ARRIÈRE-PLAN VERT LOGO (#1B4D0F / #00A86B / #2F7A1A) */}
-      <div className="rounded-3xl bg-gradient-to-br from-[#0B3308] via-[#1B4D0F] to-[#256815] p-5 sm:p-6 text-white shadow-xl relative overflow-hidden border border-white/15">
-        {/* Éléments scintillants d'arrière-plan aux couleurs de la marque */}
-        <div className="absolute top-3 right-6 text-[#7ED321]/50 pointer-events-none">
+      {/* 1. CARTE EN-TÊTE PREMIUM - VERT VIBRANT #16A34A (Même vert que le bouton Retirer de Solde) */}
+      <div className="rounded-3xl bg-gradient-to-br from-[#16A34A] via-[#16A34A] to-[#15803D] p-5 sm:p-6 text-white shadow-xl relative overflow-hidden border border-white/20">
+        {/* Éléments scintillants d'arrière-plan */}
+        <div className="absolute top-3 right-6 text-white/50 pointer-events-none">
           <Sparkles className="w-6 h-6 animate-pulse" />
         </div>
-        <div className="absolute top-12 right-2 text-emerald-200/40 pointer-events-none">
+        <div className="absolute top-12 right-2 text-emerald-100/40 pointer-events-none">
           <Sparkles className="w-4 h-4" />
         </div>
-        <div className="absolute -bottom-10 -right-10 w-44 h-44 bg-[#7ED321]/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -top-10 -left-10 w-36 h-36 bg-emerald-400/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-10 -right-10 w-44 h-44 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-10 -left-10 w-36 h-36 bg-emerald-300/15 rounded-full blur-2xl pointer-events-none" />
 
         {/* Profil utilisateur & Salutation */}
         <div className="flex items-start gap-3.5 relative z-10 mb-4">
-          <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center text-white font-black text-2xl shadow-inner flex-shrink-0">
+          <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white font-black text-2xl shadow-inner flex-shrink-0">
             {userInitial}
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-xs sm:text-sm text-emerald-100/90 font-medium block">
+            <span className="text-xs sm:text-sm text-emerald-100 font-medium block">
               Bienvenue,
             </span>
             <div className="flex items-center gap-2 mt-0.5">
               <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">
                 {userName}
               </h1>
-              <span className="flex-shrink-0 text-amber-400" title="Membre Actif">
+              <span className="flex-shrink-0 text-amber-300" title="Membre Actif">
                 <Award className="w-5 h-5" />
               </span>
               {isActivated && (
-                <ShieldCheck className="w-4 h-4 text-[#7ED321] flex-shrink-0" />
+                <ShieldCheck className="w-4 h-4 text-emerald-200 flex-shrink-0" />
               )}
             </div>
-            <p className="text-[11px] sm:text-xs text-emerald-100/85 mt-1 leading-snug">
+            <p className="text-[11px] sm:text-xs text-emerald-50 mt-1 leading-snug">
               Chez <strong className="text-white font-bold">VitaEarn</strong>, accédez à un ensemble diversifié de 10+ produits digitaux et formations adaptés à vos BESOINS.
             </p>
           </div>
         </div>
 
-        {/* BLOCS MÉTRIQUES : ESPÈCES (4 500 FCFA) & PROFITS AVEC CONTRASTE ÉLÉGANT */}
+        {/* BLOCS MÉTRIQUES : ESPÈCES (4 500 FCFA) & PROFITS */}
         <div className="grid grid-cols-2 gap-3 pt-2 relative z-10">
-          {/* Bloc Espèces (Dépenses d'activation du compte) - Fond sombre contrasté */}
-          <div className="rounded-2xl bg-black/35 backdrop-blur-md border border-white/15 p-3.5 sm:p-4 relative overflow-hidden flex flex-col justify-between transition-all hover:bg-black/45 shadow-inner">
+          {/* Bloc Espèces (Dépenses d'activation du compte) */}
+          <div className="rounded-2xl bg-black/20 backdrop-blur-md border border-white/20 p-3.5 sm:p-4 relative overflow-hidden flex flex-col justify-between transition-all hover:bg-black/30 shadow-inner">
             {/* Liseré indicateur latéral rose/corail */}
-            <div className="absolute left-0 top-2 bottom-2 w-1.5 rounded-r bg-rose-500" />
+            <div className="absolute left-0 top-2 bottom-2 w-1.5 rounded-r bg-rose-400" />
             <div className="flex items-center gap-2 mb-2 pl-1.5">
-              <div className="w-7 h-7 rounded-lg bg-rose-500/25 text-rose-300 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-rose-500/30 text-rose-200 flex items-center justify-center">
                 <ArrowDownLeft className="w-4 h-4" />
               </div>
               <span className="text-[11px] sm:text-xs font-black tracking-wider text-rose-200 uppercase">
@@ -370,7 +370,7 @@ export default async function HomePage() {
               </span>
             </div>
             <div className="pl-1.5">
-              <span className="text-[10px] font-bold text-white/70 block uppercase tracking-wide">
+              <span className="text-[10px] font-bold text-white/80 block uppercase tracking-wide">
                 XOF
               </span>
               <span className="text-lg sm:text-2xl font-black text-white tracking-tight">
@@ -379,20 +379,20 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Bloc Profits (Total des gains) - Fond sombre avec accents lumineux Vert Jade / Vert Vif */}
-          <div className="rounded-2xl bg-black/35 backdrop-blur-md border border-[#7ED321]/40 p-3.5 sm:p-4 relative overflow-hidden flex flex-col justify-between transition-all hover:bg-black/45 shadow-inner">
-            {/* Liseré indicateur latéral Vert Vif */}
-            <div className="absolute left-0 top-2 bottom-2 w-1.5 rounded-r bg-[#7ED321]" />
+          {/* Bloc Profits (Total des gains) */}
+          <div className="rounded-2xl bg-black/20 backdrop-blur-md border border-white/25 p-3.5 sm:p-4 relative overflow-hidden flex flex-col justify-between transition-all hover:bg-black/30 shadow-inner">
+            {/* Liseré indicateur latéral Blanc / Émeraude lumineux */}
+            <div className="absolute left-0 top-2 bottom-2 w-1.5 rounded-r bg-emerald-200" />
             <div className="flex items-center gap-2 mb-2 pl-1.5">
-              <div className="w-7 h-7 rounded-lg bg-[#00A86B]/30 text-[#7ED321] flex items-center justify-center">
-                <ArrowUpRight className="w-4 h-4 text-[#7ED321]" />
+              <div className="w-7 h-7 rounded-lg bg-white/20 text-emerald-100 flex items-center justify-center">
+                <ArrowUpRight className="w-4 h-4 text-emerald-100" />
               </div>
-              <span className="text-[11px] sm:text-xs font-black tracking-wider text-[#7ED321] uppercase">
+              <span className="text-[11px] sm:text-xs font-black tracking-wider text-emerald-100 uppercase">
                 PROFIT
               </span>
             </div>
             <div className="pl-1.5">
-              <span className="text-[10px] font-bold text-white/70 block uppercase tracking-wide">
+              <span className="text-[10px] font-bold text-white/80 block uppercase tracking-wide">
                 XOF
               </span>
               <span className="text-lg sm:text-2xl font-black text-white tracking-tight">
