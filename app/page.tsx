@@ -350,7 +350,7 @@ export default async function HomePage() {
               )}
             </div>
             <p className="text-[11px] sm:text-xs text-emerald-50 mt-1 leading-snug">
-              Chez <strong className="text-white font-bold">VitaEarn</strong>, accédez à un ensemble diversifié de 10+ produits digitaux et formations adaptés à vos BESOINS.
+              Chez <strong className="text-white font-bold">Vita Earn</strong>, accédez à un ensemble diversifié de 10+ ressources numériques pour développer vos compétences et vos projets.
             </p>
           </div>
         </div>
