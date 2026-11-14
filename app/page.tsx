@@ -403,59 +403,59 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* 2. CARTE SOLDE DU COMPTE (Account Balance) - Dégradé Bleu Ciel / Cyan */}
-      <div className="rounded-2xl bg-gradient-to-r from-[#0072FF] via-[#0094FF] to-[#00C6FF] p-4 sm:p-5 text-white shadow-md relative overflow-hidden">
+      {/* 2. CARTE SOLDE DU COMPTE (Account Balance) - Vert Pastel #DDF3E4 */}
+      <div className="rounded-2xl bg-[#DDF3E4] p-4 sm:p-5 shadow-sm relative overflow-hidden">
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[#16A34A] flex items-center justify-center shadow-xs">
               <Building2 className="w-4.5 h-4.5 text-white" />
             </div>
             <div>
-              <h2 className="text-xs sm:text-sm font-bold text-white tracking-wide">Solde du Compte</h2>
-              <p className="text-[10px] text-blue-100">Votre solde disponible en direct</p>
+              <h2 className="text-xs sm:text-sm font-bold text-[#1F2937] tracking-wide">Solde du Compte</h2>
+              <p className="text-[10px] text-[#4B5563]">Votre solde disponible en direct</p>
             </div>
           </div>
           <Link
             href="/portefeuille"
-            className="px-3 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-[11px] font-bold text-white backdrop-blur transition-colors inline-flex items-center gap-1 shadow-sm"
+            className="px-3 py-1 rounded-lg bg-[#16A34A] hover:bg-[#15803d] text-[11px] font-bold text-white transition-colors inline-flex items-center gap-1 shadow-xs"
           >
             <span>Retirer</span>
-            <ArrowRight className="w-3 h-3" />
+            <ArrowRight className="w-3 h-3 text-white" />
           </Link>
         </div>
 
         <div className="mt-3 flex items-baseline gap-1.5">
-          <span className="text-[11px] font-bold text-blue-100 uppercase tracking-wider">
+          <span className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider">
             XOF
           </span>
-          <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <span className="text-2xl sm:text-3xl font-black text-[#1F2937] tracking-tight">
             {balance.toLocaleString("fr-FR")}
           </span>
         </div>
       </div>
 
-      {/* 3. CARTE TOTAL DES RETRAITS (Total Withdrawals) - Dégradé Corail / Rouge Vif */}
-      <div className="rounded-2xl bg-gradient-to-r from-[#FF416C] via-[#FF4B2B] to-[#FF6B4A] p-4 sm:p-5 text-white shadow-md relative overflow-hidden">
+      {/* 3. CARTE TOTAL DES RETRAITS (Total Withdrawals) - Orange Pastel #FDE5DA */}
+      <div className="rounded-2xl bg-[#FDE5DA] p-4 sm:p-5 shadow-sm relative overflow-hidden">
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[#F97316] flex items-center justify-center shadow-xs">
               <CreditCard className="w-4.5 h-4.5 text-white" />
             </div>
             <div>
-              <h2 className="text-xs sm:text-sm font-bold text-white tracking-wide">Total des Retraits</h2>
-              <p className="text-[10px] text-rose-100">Montant total retiré par Mobile Money</p>
+              <h2 className="text-xs sm:text-sm font-bold text-[#1F2937] tracking-wide">Total des Retraits</h2>
+              <p className="text-[10px] text-[#4B5563]">Montant total retiré par Mobile Money</p>
             </div>
           </div>
-          <span className="px-2 py-0.5 rounded-full bg-white/20 text-[9px] font-bold text-white">
+          <span className="px-2 py-0.5 rounded-full bg-[#F97316] text-[9px] font-bold text-white shadow-xs">
             T-Money / Flooz
           </span>
         </div>
 
         <div className="mt-3 flex items-baseline gap-1.5">
-          <span className="text-[11px] font-bold text-rose-100 uppercase tracking-wider">
+          <span className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider">
             XOF
           </span>
-          <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <span className="text-2xl sm:text-3xl font-black text-[#1F2937] tracking-tight">
             {totalWithdrawn.toLocaleString("fr-FR")}
           </span>
         </div>
@@ -468,34 +468,34 @@ export default async function HomePage() {
         initialClaimed={welcomeBonusClaimed}
       />
 
-      {/* 5. CARTE GAINS TRIVIA (Trivia Earnings) - Dégradé Indigo / Bleu Électrique */}
-      <div className="rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#6366F1] to-[#3B82F6] p-4 sm:p-5 text-white shadow-md relative overflow-hidden">
+      {/* 5. CARTE GAINS TRIVIA (Trivia Earnings) - Bleu Pastel #DCEBFB */}
+      <div className="rounded-2xl bg-[#DCEBFB] p-4 sm:p-5 shadow-sm relative overflow-hidden">
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center shadow-xs">
               <HelpCircle className="w-4.5 h-4.5 text-white" />
             </div>
             <div>
-              <h2 className="text-xs sm:text-sm font-bold text-white tracking-wide">Trivia Earnings</h2>
-              <p className="text-[10px] text-indigo-100">
+              <h2 className="text-xs sm:text-sm font-bold text-[#1F2937] tracking-wide">Trivia Earnings</h2>
+              <p className="text-[10px] text-[#4B5563]">
                 Répondez aux questions et gagnez des récompenses
               </p>
             </div>
           </div>
           <Link
             href="/taches"
-            className="px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-[10px] font-bold text-white transition-colors flex items-center gap-1"
+            className="px-2.5 py-1 rounded-lg bg-[#2563EB] hover:bg-[#1d4ed8] text-[10px] font-bold text-white transition-colors flex items-center gap-1 shadow-xs"
           >
             <span>Voir Time Table</span>
-            <ArrowRight className="w-3 h-3" />
+            <ArrowRight className="w-3 h-3 text-white" />
           </Link>
         </div>
 
         <div className="mt-3 flex items-baseline gap-1.5">
-          <span className="text-[11px] font-bold text-indigo-100 uppercase tracking-wider">
+          <span className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider">
             XOF
           </span>
-          <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <span className="text-2xl sm:text-3xl font-black text-[#1F2937] tracking-tight">
             {triviaEarnings.toLocaleString("fr-FR")}
           </span>
         </div>

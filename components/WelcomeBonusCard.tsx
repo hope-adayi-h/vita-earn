@@ -41,30 +41,30 @@ export function WelcomeBonusCard({
   };
 
   return (
-    <div className="rounded-2xl bg-gradient-to-r from-[#00A86B] via-[#059669] to-[#10B981] p-4 sm:p-5 text-white shadow-md relative overflow-hidden">
+    <div className="rounded-2xl bg-[#EBDDFB] p-4 sm:p-5 shadow-sm relative overflow-hidden">
       {/* En-tête */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-[#9333EA] flex items-center justify-center shadow-xs">
             <Gift className="w-4.5 h-4.5 text-white" />
           </div>
           <div>
-            <h2 className="text-xs sm:text-sm font-bold text-white tracking-wide">
+            <h2 className="text-xs sm:text-sm font-bold text-[#1F2937] tracking-wide">
               Welcome Bonus
             </h2>
-            <p className="text-[10px] text-emerald-100">
+            <p className="text-[10px] text-[#4B5563]">
               Parrainez 20 personnes pour débloquer
             </p>
           </div>
         </div>
 
         <span
-          className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+          className={`px-2 py-0.5 rounded-full text-[9px] font-bold shadow-xs ${
             isClaimed
-              ? "bg-white text-[#00A86B]"
+              ? "bg-[#9333EA] text-white"
               : isUnlocked
-              ? "bg-white text-emerald-700 animate-pulse"
-              : "bg-black/20 text-emerald-100"
+              ? "bg-[#9333EA] text-white animate-pulse"
+              : "bg-[#9333EA] text-white"
           }`}
         >
           {isClaimed
@@ -77,25 +77,25 @@ export function WelcomeBonusCard({
 
       {/* Montant */}
       <div className="mt-2.5 flex items-baseline gap-1.5">
-        <span className="text-[11px] font-bold text-emerald-100 uppercase tracking-wider">
+        <span className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider">
           XOF
         </span>
-        <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+        <span className="text-2xl sm:text-3xl font-black text-[#1F2937] tracking-tight">
           {welcomeBonusAmount.toLocaleString("fr-FR")}
         </span>
       </div>
 
       {/* Barre de progression ou Bouton de réclamation manuelle */}
-      <div className="mt-2.5 pt-2 border-t border-white/20 space-y-2">
+      <div className="mt-2.5 pt-2 border-t border-[#9333EA]/20 space-y-2">
         {!isClaimed && (
           <div>
-            <div className="flex items-center justify-between text-[10px] text-emerald-100 mb-1">
+            <div className="flex items-center justify-between text-[10px] text-[#4B5563] mb-1">
               <span>Progression du déblocage</span>
-              <span className="font-bold">{progressPercent}%</span>
+              <span className="font-bold text-[#1F2937]">{progressPercent}%</span>
             </div>
-            <div className="w-full h-1.5 rounded-full bg-black/20 overflow-hidden">
+            <div className="w-full h-1.5 rounded-full bg-[#9333EA]/20 overflow-hidden">
               <div
-                className="h-full bg-white rounded-full transition-all duration-500 shadow-sm"
+                className="h-full bg-[#9333EA] rounded-full transition-all duration-500 shadow-xs"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -104,8 +104,8 @@ export function WelcomeBonusCard({
 
         {/* Message d'état ou bouton d'action selon conditions */}
         {isClaimed ? (
-          <div className="flex items-center gap-1.5 text-[10px] text-emerald-100 font-bold bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/20">
-            <CheckCircle className="w-3.5 h-3.5 text-white flex-shrink-0" />
+          <div className="flex items-center gap-1.5 text-[10px] text-[#9333EA] font-bold bg-[#9333EA]/10 px-2.5 py-1.5 rounded-lg border border-[#9333EA]/20">
+            <CheckCircle className="w-3.5 h-3.5 text-[#9333EA] flex-shrink-0" />
             <span>Bonus réclamé et transféré vers votre solde retirable.</span>
           </div>
         ) : isUnlocked ? (
@@ -114,29 +114,29 @@ export function WelcomeBonusCard({
               type="button"
               disabled={isClaiming}
               onClick={handleClaim}
-              className="w-full py-2.5 px-3 rounded-xl bg-white hover:bg-emerald-50 text-[#00A86B] font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 px-3 rounded-xl bg-[#9333EA] hover:bg-[#7e22ce] text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#00A86B]" />
+              <Sparkles className="w-3.5 h-3.5 text-white" />
               <span>
                 {isClaiming
                   ? "Transfert en cours..."
                   : "Réclamer mon Bonus (900 FCFA)"}
               </span>
-              <ArrowRight className="w-3.5 h-3.5 text-[#00A86B]" />
+              <ArrowRight className="w-3.5 h-3.5 text-white" />
             </button>
-            <p className="text-[9px] text-emerald-100/90 text-center">
+            <p className="text-[9px] text-[#4B5563] text-center">
               Cliquez pour transférer directement les 900 FCFA vers votre solde disponible.
             </p>
           </div>
         ) : (
-          <p className="text-[9px] text-emerald-100/90">
+          <p className="text-[9px] text-[#4B5563]">
             Encore {Math.max(0, target - level1Count)} filleul(s) direct(s) pour transférer vos {welcomeBonusAmount} FCFA.
           </p>
         )}
 
         {/* Message retour */}
         {feedback && (
-          <div className="text-[10px] font-bold text-white bg-black/30 p-2 rounded-lg border border-white/15">
+          <div className="text-[10px] font-bold text-white bg-black/70 p-2 rounded-lg border border-white/15">
             {feedback}
           </div>
         )}
