@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { formatFCFA } from "@/lib/utils";
 import type { WithdrawalPageData } from "./actions";
 import { submitWithdrawalAction } from "./actions";
@@ -19,6 +19,11 @@ import {
   Smartphone,
   ChevronDown,
   Info,
+  Video,
+  PlaySquare,
+  HelpCircle,
+  MousePointerClick,
+  Camera,
 } from "lucide-react";
 
 interface WithdrawalClientProps {
@@ -35,8 +40,67 @@ const OPERATORS = [
   { id: "mtn_cm", name: "MTN MoMo Cameroun (+237)", country: "Cameroun" },
 ];
 
+const WITHDRAWAL_TYPES_CONFIG: Record<
+  string,
+  {
+    title: string;
+    badge: string;
+    description: string;
+    icon: any;
+    accentColor: string;
+  }
+> = {
+  total: {
+    title: "Retrait Total (Solde Principal)",
+    badge: "Solde Principal & Réseau",
+    description: "Retrait direct de votre solde disponible vers votre numéro Mobile Money.",
+    icon: Wallet,
+    accentColor: "from-[#16A34A] via-[#16A34A] to-[#15803D]",
+  },
+  tiktok: {
+    title: "Retrait des Gains TikTok",
+    badge: "Tâche TikTok Vidéos",
+    description: "Retrait de vos rémunérations accumulées sur les tâches vidéos TikTok.",
+    icon: Video,
+    accentColor: "from-[#BE185D] via-[#9D174D] to-[#831843]",
+  },
+  youtube: {
+    title: "Retrait des Gains YouTube",
+    badge: "Tâche YouTube Vidéos",
+    description: "Retrait de vos gains accumulés sur les formations et vidéos YouTube.",
+    icon: PlaySquare,
+    accentColor: "from-[#DC2626] via-[#B91C1C] to-[#991B1B]",
+  },
+  trivia: {
+    title: "Retrait des Gains Trivia",
+    badge: "Tâche Trivia Questions",
+    description: "Retrait de vos récompenses accumulées sur les quiz et questions culturelles.",
+    icon: HelpCircle,
+    accentColor: "from-[#4F46E5] via-[#4338CA] to-[#3730A3]",
+  },
+  ads: {
+    title: "Retrait des Gains Ads Clics",
+    badge: "Tâche Clics Publicitaires",
+    description: "Retrait de vos gains accumulés sur les visites d'annonces sponsorisées.",
+    icon: MousePointerClick,
+    accentColor: "from-[#D97706] via-[#B45309] to-[#92400E]",
+  },
+  instagram: {
+    title: "Retrait des Gains Instagram",
+    badge: "Tâche Vidéos Instagram",
+    description: "Retrait de vos gains accumulés sur les contenus vidéos Instagram.",
+    icon: Camera,
+    accentColor: "from-[#7C3AED] via-[#6D28D9] to-[#5B21B6]",
+  },
+};
+
 export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const currentTypeKey = searchParams.get("type") || "total";
+  const currentType = WITHDRAWAL_TYPES_CONFIG[currentTypeKey] || WITHDRAWAL_TYPES_CONFIG.total;
+  const TypeIcon = currentType.icon;
+
   const [operator, setOperator] = useState(OPERATORS[0].name);
   const [accountName, setAccountName] = useState(initialData.user.fullName || initialData.user.username || "");
   const [phone, setPhone] = useState(initialData.user.phone || "");
@@ -88,9 +152,14 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
     setIsSubmitting(true);
 
     try {
+      const fullOperatorLabel =
+        currentTypeKey !== "total"
+          ? `${operator} (${currentType.badge})`
+          : operator;
+
       const formData = new FormData();
       formData.set("amount", numAmount.toString());
-      formData.set("operator", operator);
+      formData.set("operator", fullOperatorLabel);
       formData.set("phone", phone);
       formData.set("accountName", accountName);
 
@@ -103,7 +172,7 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
         setSuccessResult({
           reference: "WDR-" + Math.random().toString(36).substring(2, 8).toUpperCase(),
           amount: numAmount,
-          operator,
+          operator: fullOperatorLabel,
           phone,
         });
         setIsSubmitting(false);
@@ -117,18 +186,18 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
   return (
     <div className="max-w-xl mx-auto space-y-4 pb-12">
       {/* 1. EN-TÊTE : SOLDE DISPONIBLE & ACCÈS HISTORIQUE */}
-      <div className="rounded-3xl bg-gradient-to-br from-[#16A34A] via-[#16A34A] to-[#15803D] p-5 sm:p-6 text-white shadow-xl relative overflow-hidden">
+      <div className={`rounded-3xl bg-gradient-to-br ${currentType.accentColor} p-5 sm:p-6 text-white shadow-xl relative overflow-hidden transition-all duration-300`}>
         <div className="flex items-start justify-between gap-3 relative z-10">
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white backdrop-blur mb-1.5">
-              <Wallet className="w-3.5 h-3.5" />
-              <span>Portefeuille Mobile Money</span>
+              <TypeIcon className="w-3.5 h-3.5" />
+              <span>{currentType.badge}</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-              Demande de Retrait
+              {currentType.title}
             </h1>
-            <p className="text-xs text-emerald-100 mt-0.5">
-              Encaissez vos gains directement sur votre numéro Mobile Money.
+            <p className="text-xs text-white/90 mt-0.5">
+              {currentType.description}
             </p>
           </div>
 

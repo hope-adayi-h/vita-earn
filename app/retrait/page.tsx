@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getWithdrawalData } from "./actions";
 import { WithdrawalClient } from "./WithdrawalClient";
 
@@ -9,5 +10,15 @@ export const metadata = {
 export default async function RetraitPage() {
   const data = await getWithdrawalData();
 
-  return <WithdrawalClient initialData={data} />;
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-xl mx-auto py-12 text-center text-xs text-vita-muted">
+          Chargement du centre de retrait...
+        </div>
+      }
+    >
+      <WithdrawalClient initialData={data} />
+    </Suspense>
+  );
 }

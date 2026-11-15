@@ -36,6 +36,10 @@ import {
   Camera,
   Check,
   History,
+  ChevronDown,
+  Video,
+  PlaySquare,
+  MousePointerClick,
 } from "lucide-react";
 import { HelpModal } from "@/components/HelpModal";
 import { CommunityModal } from "@/components/CommunityModal";
@@ -59,8 +63,70 @@ export function Navbar({ user }: NavbarProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [withdrawalMenuOpen, setWithdrawalMenuOpen] = useState(false);
+  const [desktopWithdrawalOpen, setDesktopWithdrawalOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [communityModalOpen, setCommunityModalOpen] = useState(false);
+
+  // Sous-options du Centre de Retrait
+  const withdrawalSubOptions = [
+    {
+      id: "total",
+      label: "Retrait Total",
+      sublabel: "Solde Principal & Réseau",
+      href: "/retrait?type=total",
+      icon: Wallet,
+      color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60",
+    },
+    {
+      id: "tiktok",
+      label: "Retrait TikTok",
+      sublabel: "Gains Tâches Vidéos TikTok",
+      href: "/retrait?type=tiktok",
+      icon: Video,
+      color: "text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950/60",
+    },
+    {
+      id: "youtube",
+      label: "Retrait YouTube",
+      sublabel: "Gains Tâches Vidéos YouTube",
+      href: "/retrait?type=youtube",
+      icon: PlaySquare,
+      color: "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60",
+    },
+    {
+      id: "trivia",
+      label: "Retrait Trivia",
+      sublabel: "Gains Questions & Quiz",
+      href: "/retrait?type=trivia",
+      icon: HelpCircle,
+      color: "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60",
+    },
+    {
+      id: "ads",
+      label: "Retrait Ads Clics",
+      sublabel: "Gains Clics Publicitaires",
+      href: "/retrait?type=ads",
+      icon: MousePointerClick,
+      color: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60",
+    },
+    {
+      id: "instagram",
+      label: "Retrait Instagram",
+      sublabel: "Gains Vidéos Instagram",
+      href: "/retrait?type=instagram",
+      icon: Camera,
+      color: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60",
+    },
+    {
+      id: "historique",
+      label: "Historique",
+      sublabel: "Journal de tous vos retraits",
+      href: "/retrait/historique",
+      icon: History,
+      color: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60",
+    },
+  ];
 
   const isActivationPage = pathname.startsWith("/activation");
   const isAuthPage = pathname.startsWith("/auth");
@@ -123,6 +189,7 @@ export function Navbar({ user }: NavbarProps) {
   const closeDropdowns = () => {
     setProfileDropdownOpen(false);
     setLangDropdownOpen(false);
+    setDesktopWithdrawalOpen(false);
   };
 
   const openFaqModal = () => {
@@ -187,20 +254,98 @@ export function Navbar({ user }: NavbarProps) {
           {/* 3. NAVIGATION DESKTOP                                                     */}
           {/* ========================================================================= */}
           {!isActivationPage && !isAuthPage && (
-            <nav className="hidden md:flex items-center gap-3 lg:gap-4">
-              {navLinks.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={`text-sm font-semibold transition-colors px-2.5 py-1.5 rounded-lg ${
-                    pathname === item.href
-                      ? "text-vita-deep dark:text-[#86EFAC] font-bold bg-vita-surface/80 dark:bg-emerald-950/40"
-                      : "text-vita-text dark:text-gray-300 hover:text-vita-deep hover:bg-gray-50 dark:hover:bg-slate-800/50"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
+            <nav className="hidden md:flex items-center gap-2 lg:gap-3">
+              {navLinks.map((item) => {
+                if (item.href === "/retrait") {
+                  return (
+                    <div key="desktop-withdrawal" className="relative">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDesktopWithdrawalOpen(!desktopWithdrawalOpen);
+                          setProfileDropdownOpen(false);
+                          setLangDropdownOpen(false);
+                        }}
+                        className={`text-sm font-semibold transition-colors px-2.5 py-1.5 rounded-lg flex items-center gap-1 ${
+                          pathname.startsWith("/retrait") || desktopWithdrawalOpen
+                            ? "text-vita-deep dark:text-[#86EFAC] font-bold bg-vita-surface/80 dark:bg-emerald-950/40"
+                            : "text-vita-text dark:text-gray-300 hover:text-vita-deep hover:bg-gray-50 dark:hover:bg-slate-800/50"
+                        }`}
+                        aria-expanded={desktopWithdrawalOpen}
+                      >
+                        <span>{item.label}</span>
+                        <ChevronDown
+                          className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                            desktopWithdrawalOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+
+                      {desktopWithdrawalOpen && (
+                        <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-[#131E17] rounded-2xl shadow-xl border border-gray-100 dark:border-[#1E2E24] p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                          <div className="px-2.5 py-1.5 mb-1 border-b border-gray-100 dark:border-[#1E2E24]">
+                            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                              Centre de Retrait
+                            </p>
+                          </div>
+                          <div className="space-y-0.5">
+                            {withdrawalSubOptions.map((sub) => {
+                              const SubIcon = sub.icon;
+                              const isSubActive =
+                                sub.id === "historique"
+                                  ? pathname === "/retrait/historique"
+                                  : pathname === sub.href;
+                              return (
+                                <Link
+                                  key={sub.id}
+                                  href={sub.href}
+                                  onClick={() => setDesktopWithdrawalOpen(false)}
+                                  className={`flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-colors group ${
+                                    isSubActive
+                                      ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 font-bold"
+                                      : "text-gray-700 dark:text-gray-200 hover:bg-vita-surface dark:hover:bg-slate-800/60"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <span
+                                      className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${sub.color}`}
+                                    >
+                                      <SubIcon className="w-3.5 h-3.5" />
+                                    </span>
+                                    <div>
+                                      <p className="text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300">
+                                        {sub.label}
+                                      </p>
+                                      <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                                        {sub.sublabel}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-emerald-600 shrink-0 ml-1" />
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={`text-sm font-semibold transition-colors px-2.5 py-1.5 rounded-lg ${
+                      pathname === item.href
+                        ? "text-vita-deep dark:text-[#86EFAC] font-bold bg-vita-surface/80 dark:bg-emerald-950/40"
+                        : "text-vita-text dark:text-gray-300 hover:text-vita-deep hover:bg-gray-50 dark:hover:bg-slate-800/50"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
             </nav>
           )}
 
@@ -593,6 +738,82 @@ export function Navbar({ user }: NavbarProps) {
           {drawerNavLinks.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
+
+            if (item.href === "/retrait") {
+              const isSectionActive = pathname.startsWith("/retrait");
+              return (
+                <div key={item.label} className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => setWithdrawalMenuOpen((prev) => !prev)}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                      isSectionActive || withdrawalMenuOpen
+                        ? "bg-vita-surface dark:bg-emerald-950/40 text-vita-deep dark:text-emerald-300 font-bold"
+                        : "text-vita-text dark:text-gray-200 hover:bg-vita-surface/60 dark:hover:bg-slate-800/50"
+                    }`}
+                    aria-expanded={withdrawalMenuOpen}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Icon
+                        className={`w-4 h-4 shrink-0 ${
+                          isSectionActive || withdrawalMenuOpen
+                            ? "text-vita-deep dark:text-emerald-400"
+                            : "text-vita-medium dark:text-emerald-500"
+                        }`}
+                      />
+                      <span className="truncate text-sm font-semibold">
+                        {item.label}
+                      </span>
+                    </div>
+                    <ChevronDown
+                      className={`w-4 h-4 text-vita-muted/60 dark:text-gray-400 shrink-0 ml-1 transition-transform duration-200 ${
+                        withdrawalMenuOpen ? "rotate-180 text-emerald-600 dark:text-emerald-400" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {/* Options déroulantes du Centre de Retrait */}
+                  {withdrawalMenuOpen && (
+                    <div className="mt-1 ml-4 pl-3 py-1 space-y-1 border-l-2 border-emerald-500/30 dark:border-emerald-500/20">
+                      {withdrawalSubOptions.map((sub) => {
+                        const SubIcon = sub.icon;
+                        const isSubActive =
+                          sub.id === "historique"
+                            ? pathname === "/retrait/historique"
+                            : pathname === sub.href;
+                        return (
+                          <Link
+                            key={sub.id}
+                            href={sub.href}
+                            onClick={() => {
+                              closeSidebar();
+                            }}
+                            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors group ${
+                              isSubActive
+                                ? "bg-emerald-100/70 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200 font-bold"
+                                : "text-gray-700 dark:text-gray-300 hover:bg-vita-surface dark:hover:bg-slate-800/60"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span
+                                className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${sub.color}`}
+                              >
+                                <SubIcon className="w-3.5 h-3.5" />
+                              </span>
+                              <span className="truncate group-hover:text-vita-deep dark:group-hover:text-emerald-300 transition-colors">
+                                {sub.label}
+                              </span>
+                            </div>
+                            <ChevronRight className="w-3 h-3 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 shrink-0" />
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <Link
                 key={item.label}
