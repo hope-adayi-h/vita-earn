@@ -3,7 +3,9 @@ export interface ActivationData {
     id: string;
     email?: string;
     fullName: string;
+    username?: string;
     phone?: string | null;
+    country?: string;
   };
   isActivated: boolean;
   feeAmount: number;

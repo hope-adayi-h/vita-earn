@@ -2,244 +2,332 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { ActivationData } from "./types";
-import { quickActivateAction } from "./actions";
-import { formatFCFA } from "@/lib/utils";
 import {
-  CheckCircle2,
-  ShieldCheck,
-  Zap,
-  ArrowRight,
-  ShoppingBag,
+  User,
   CreditCard,
-  Lock,
+  Globe,
+  ArrowLeftRight,
+  PhoneCall,
+  Home,
+  Wallet,
   Loader2,
+  CheckCircle2,
+  AlertCircle,
+  Smartphone,
+  ChevronDown,
 } from "lucide-react";
 
 interface ActivationClientProps {
   initialData: ActivationData;
 }
 
+const PAYMENT_CHANNELS = [
+  { id: "tmoney_tg", name: "T-Money Togo (+228)", country: "Togo", code: "+228" },
+  { id: "flooz_tg", name: "Moov Flooz Togo (+228)", country: "Togo", code: "+228" },
+  { id: "mtn_bj", name: "MTN MoMo Bénin (+229)", country: "Bénin", code: "+229" },
+  { id: "moov_bj", name: "Moov Money Bénin (+229)", country: "Bénin", code: "+229" },
+  { id: "orange_ci", name: "Orange Money Côte d'Ivoire (+225)", country: "Côte d'Ivoire", code: "+225" },
+  { id: "mtn_ci", name: "MTN MoMo Côte d'Ivoire (+225)", country: "Côte d'Ivoire", code: "+225" },
+  { id: "wave_ci", name: "Wave Côte d'Ivoire / Sénégal (+225 / +221)", country: "UEMOA", code: "+225" },
+  { id: "orange_sn", name: "Orange Money Sénégal (+221)", country: "Sénégal", code: "+221" },
+  { id: "mtn_cm", name: "MTN MoMo Cameroun (+237)", country: "Cameroun", code: "+237" },
+  { id: "orange_cm", name: "Orange Money Cameroun (+237)", country: "Cameroun", code: "+237" },
+];
+
 export function ActivationClient({ initialData }: ActivationClientProps) {
-  const [isActivating, setIsActivating] = useState(false);
+  const router = useRouter();
+  const [selectedChannel, setSelectedChannel] = useState(PAYMENT_CHANNELS[0].id);
+  const [fullName, setFullName] = useState(initialData.user.fullName || initialData.user.username || "");
+  const [walletNumber, setWalletNumber] = useState(initialData.user.phone || "");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showStkModal, setShowStkModal] = useState(false);
 
-  const handleActivation = () => {
-    setIsActivating(true);
+  const displayUsername = initialData.user.username || initialData.user.fullName || "Utilisateur";
+  const displayPhone = walletNumber || initialData.user.phone || "+228 90 00 00 00";
+  const currency = initialData.currency || "XOF";
+  const feeAmount = initialData.feeAmount || 4500;
+
+  const handleStartPayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    setShowStkModal(true);
+
+    // Simulation du push STK Mobile Money puis validation automatique
+    setTimeout(() => {
+      // Soumettre le formulaire vers /api/auth/quick-activate
+      const form = document.getElementById("stk-payment-form") as HTMLFormElement;
+      if (form) {
+        form.submit();
+      } else {
+        router.push("/api/auth/quick-activate");
+      }
+    }, 2400);
   };
-  // Écran compte déjà pleinement activé
-  if (initialData.isActivated) {
-    return (
-      <div className="max-w-xl mx-auto pt-4 sm:pt-10">
-        <div className="bg-white rounded-3xl border border-vita-border p-6 sm:p-10 shadow-sm text-center">
-          <div className="w-16 h-16 rounded-full bg-green-100 text-vita-deep flex items-center justify-center mx-auto mb-4 border-2 border-vita-bright">
-            <CheckCircle2 className="w-10 h-10 text-vita-deep" />
-          </div>
-
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-vita-deep mb-3">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Statut : Compte Actif
-          </span>
-
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-vita-deep mb-2">
-            Votre compte est pleinement activé !
-          </h1>
-          <p className="text-sm text-vita-muted max-w-md mx-auto mb-8">
-            Vous avez un accès complet à la vente, à la création de votre boutique et aux retraits
-            de vos gains par Mobile Money.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8 text-left">
-            <div className="p-4 rounded-xl bg-vita-surface border border-vita-border">
-              <ShoppingBag className="w-5 h-5 text-vita-deep mb-1.5" />
-              <h3 className="text-sm font-semibold text-vita-text">Vendre des articles</h3>
-              <p className="text-xs text-vita-muted mt-0.5">
-                Publiez des produits physiques ou digitaux et encaissez vos ventes.
-              </p>
-            </div>
-            <div className="p-4 rounded-xl bg-vita-surface border border-vita-border">
-              <CreditCard className="w-5 h-5 text-vita-medium mb-1.5" />
-              <h3 className="text-sm font-semibold text-vita-text">Retraits Mobile Money</h3>
-              <p className="text-xs text-vita-muted mt-0.5">
-                Retirez directement vos gains sur votre numéro T-Money, Flooz ou Wave.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3 justify-center max-w-sm mx-auto">
-            <Link
-              href="/"
-              className="touch-target px-6 py-3.5 rounded-2xl bg-[#16A34A] hover:bg-[#15803D] text-white font-black text-sm transition-all shadow-md inline-flex items-center justify-center gap-2"
-            >
-              <Zap className="w-4 h-4 text-white" />
-              <span>Accéder à mon Tableau de Bord</span>
-              <ArrowRight className="w-4 h-4 text-white" />
-            </Link>
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <Link
-                href="/marche"
-                className="touch-target px-4 py-2 rounded-xl bg-white hover:bg-vita-surface border border-vita-border text-vita-deep font-semibold text-xs transition-colors shadow-xs inline-flex items-center justify-center gap-1.5"
-              >
-                <ShoppingBag className="w-4 h-4 text-emerald-600" />
-                <span>Explorer le Marché</span>
-              </Link>
-              <Link
-                href="/portefeuille"
-                className="touch-target px-4 py-2 rounded-xl bg-white hover:bg-vita-surface border border-vita-border text-vita-deep font-semibold text-xs transition-colors inline-flex items-center justify-center gap-1.5"
-              >
-                <CreditCard className="w-4 h-4 text-vita-medium" />
-                <span>Mon portefeuille</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="max-w-2xl mx-auto pt-2 sm:pt-6 space-y-6">
-      {/* Carte principale d'adhésion */}
-      <div className="bg-white rounded-3xl border border-vita-border overflow-hidden shadow-sm">
-        {/* En-tête de l'adhésion */}
-        <div className="bg-gradient-to-br from-vita-deep to-vita-medium p-6 sm:p-8 text-white text-center relative overflow-hidden">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur mb-3">
-            <Lock className="w-3.5 h-3.5" />
-            <span>Accès Vendeur & Membre Pro</span>
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
-            Frais d'Adhésion Vita Earn
-          </h1>
-          <p className="text-xs sm:text-sm text-white/85 max-w-md mx-auto leading-relaxed">
-            Frais d'adhésion pour commencer votre travail et gagner de l'argent sur cette plateforme
-            Vita Earn.
-          </p>
-
-          <div className="mt-6 inline-flex flex-col items-center bg-white/10 backdrop-blur px-6 py-3 rounded-2xl border border-white/20">
-            <span className="text-xs uppercase tracking-wider text-white/70 font-medium">
-              Tarif unique à vie
-            </span>
-            <span className="text-3xl sm:text-4xl font-extrabold text-vita-bright mt-0.5">
-              {formatFCFA(initialData.feeAmount)}
-            </span>
-            <span className="text-[11px] text-white/75 mt-0.5">Aucun abonnement récurrent</span>
-          </div>
-        </div>
-
-        {/* Détails et Avantages inclus */}
-        <div className="p-6 sm:p-8 space-y-6">
+    <div className="max-w-md mx-auto space-y-4 pb-12">
+      {/* CARTE 1 : Statut du compte (Account Status) */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 p-5 shadow-xs">
+        {initialData.isActivated ? (
           <div>
-            <h2 className="text-xs font-bold uppercase tracking-wider text-vita-text mb-3">
-              Ce qui est inclus avec votre adhésion :
-            </h2>
-            <ul className="space-y-2.5 text-xs sm:text-sm text-vita-muted">
-              <li className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-vita-deep flex-shrink-0" />
-                <span>
-                  Formations exclusives : Vente WhatsApp, marketing digital et développement commercial
-                </span>
-              </li>
-              <li className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-vita-deep flex-shrink-0" />
-                <span>Outils premium & applications dédiées pour développer vos activités</span>
-              </li>
-              <li className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-vita-deep flex-shrink-0" />
-                <span>Retraits multiples et directs par Mobile Money (T-Money & Moov Flooz)</span>
-              </li>
-              <li className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-vita-deep flex-shrink-0" />
-                <span>Canaux de communication & accompagnement prioritaire</span>
-              </li>
-              <li className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-vita-deep flex-shrink-0" />
-                <span>
-                  Boutique en ligne certifiée & publication illimitée de produits (physiques et digitaux)
-                </span>
-              </li>
-              <li className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-vita-deep flex-shrink-0" />
-                <span>Grand livre financier sécurisé, traçabilité absolue et protection anti-fraude</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Bouton d'action principal vers l'activation immédiate */}
-          <div className="pt-2 space-y-2.5">
-            <form
-              method="POST"
-              action="/api/auth/quick-activate"
-              onSubmit={handleActivation}
-            >
-              <button
-                type="submit"
-                disabled={isActivating}
-                className={`w-full touch-target rounded-2xl bg-gradient-to-r from-vita-deep via-vita-medium to-[#236014] hover:from-vita-medium hover:to-vita-deep text-white font-extrabold text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2.5 py-4 group ${
-                  isActivating ? "opacity-80 cursor-wait" : ""
-                }`}
-              >
-                {isActivating ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin text-vita-bright" />
-                    <span>Activation en cours... Redirection...</span>
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="w-5 h-5 text-vita-bright" />
-                    <span>Activer mon compte (4 500 F) & Accéder au Tableau de Bord</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
-            </form>
-
-            <div className="text-center">
-              <Link
-                href="/activation/paiement"
-                className="text-[11px] font-semibold text-vita-muted hover:text-vita-deep hover:underline transition-colors"
-              >
-                Optionnel : Choisir un moyen de paiement Mobile Money détaillé (T-Money / Flooz)
-              </Link>
+            <div className="flex items-center gap-2 text-emerald-600 font-bold text-base mb-1">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+              <span>Compte Actif</span>
             </div>
+            <p className="text-xs sm:text-sm text-gray-500">
+              Votre adhésion est confirmée. Vous avez accès à l&apos;ensemble des services Vita Earn.
+            </p>
           </div>
-        </div>
+        ) : (
+          <div>
+            <div className="flex items-center gap-2 text-rose-600 font-bold text-base mb-1">
+              <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
+              <span>Compte Inactif</span>
+            </div>
+            <p className="text-xs sm:text-sm text-gray-500">
+              Veuillez activer votre compte pour commencer votre activité.
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Option Acheteur : Accès 100% Libre et Gratuit au Marché */}
-      <div className="bg-white rounded-3xl border border-vita-border p-6 sm:p-7 shadow-sm relative overflow-hidden transition-all hover:border-emerald-300">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100/50 rounded-full blur-2xl pointer-events-none" />
+      {/* CARTE 2 : Informations de Dépôt (Deposit Info) */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 p-5 shadow-xs">
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100">
+          <h2 className="text-sm font-bold text-gray-900">Informations de Dépôt</h2>
+          <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
+            <CreditCard className="w-4 h-4" />
+          </div>
+        </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative z-10">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-500/20">
-              <ShoppingBag className="w-6 h-6" />
+        <div className="space-y-4">
+          {/* USER NAME */}
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 mt-0.5 border border-gray-100 flex-shrink-0">
+              <User className="w-4 h-4" />
             </div>
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 mb-1.5">
-                <ShoppingBag className="w-3 h-3 text-emerald-700" />
-                <span>Espace Acheteur Gratuit</span>
-              </div>
-              <h2 className="text-base sm:text-lg font-extrabold text-vita-text">
-                Vous souhaitez uniquement acheter des articles ?
-              </h2>
-              <p className="text-xs sm:text-sm text-vita-muted mt-1 max-w-md leading-relaxed">
-                L'adhésion de 4 500 FCFA est réservée aux vendeurs souhaitant publier et retirer des
-                gains. En tant qu'acheteur, parcourez gratuitement la marketplace et commandez vos
-                produits dès maintenant.
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                Nom d&apos;utilisateur
+              </span>
+              <p className="text-sm font-semibold text-gray-900 truncate">
+                {displayUsername}
               </p>
             </div>
           </div>
 
-          <Link
-            href="/marche"
-            className="w-full sm:w-auto touch-target px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs sm:text-sm transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2.5 flex-shrink-0 group"
-          >
-            <ShoppingBag className="w-4 h-4 text-emerald-200 group-hover:scale-110 transition-transform" />
-            <span>Je suis acheteur — Accéder au Marché</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
+          <div className="h-px bg-gray-100" />
+
+          {/* DEPOSIT NUMBER */}
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mt-0.5 border border-emerald-100 flex-shrink-0">
+              <Smartphone className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                Numéro de dépôt
+              </span>
+              <p className="text-sm font-semibold text-gray-900 truncate">
+                {displayPhone}
+              </p>
+            </div>
+          </div>
+
+          <div className="h-px bg-gray-100" />
+
+          {/* CURRENCY */}
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 mt-0.5 border border-gray-100 flex-shrink-0">
+              <Globe className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                Devise
+              </span>
+              <p className="text-sm font-semibold text-gray-900">
+                {currency}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* CARTE 3 : Actions Rapides (Quick Actions) */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 p-5 shadow-xs">
+        <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
+          <h2 className="text-sm font-bold text-gray-900">Actions Rapides</h2>
+          <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600 border border-sky-100">
+            <ArrowLeftRight className="w-4 h-4" />
+          </div>
+        </div>
+
+        <Link
+          href="/"
+          className="w-full touch-target rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-sm py-3 px-4 flex items-center justify-center gap-2 shadow-xs transition-colors"
+        >
+          <Home className="w-4 h-4 text-white" />
+          <span>Accéder au Tableau de Bord</span>
+        </Link>
+      </div>
+
+      {/* CARTE 4 : Paiement Mobile Money (STK Push) */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 p-5 shadow-xs">
+        <div className="flex items-start justify-between pb-3 mb-4 border-b border-gray-100">
+          <div>
+            <h2 className="text-sm font-bold text-gray-900">Mobile Money (STK)</h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Initiez le paiement directement sur votre téléphone
+            </p>
+          </div>
+          <div className="w-9 h-9 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600 border border-sky-100 flex-shrink-0">
+            <PhoneCall className="w-4 h-4" />
+          </div>
+        </div>
+
+        <form
+          id="stk-payment-form"
+          method="POST"
+          action="/api/auth/quick-activate"
+          onSubmit={handleStartPayment}
+          className="space-y-4"
+        >
+          {/* Sélection du canal */}
+          <div>
+            <label htmlFor="channel-select" className="text-xs font-semibold text-gray-700 mb-1.5 block">
+              Sélectionnez le canal
+            </label>
+            <div className="relative">
+              <select
+                id="channel-select"
+                value={selectedChannel}
+                onChange={(e) => setSelectedChannel(e.target.value)}
+                className="w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs sm:text-sm font-medium text-gray-800 appearance-none focus:outline-hidden focus:border-[#16A34A] focus:ring-1 focus:ring-[#16A34A] pr-9"
+              >
+                {PAYMENT_CHANNELS.map((ch) => (
+                  <option key={ch.id} value={ch.id}>
+                    {ch.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Nom du propriétaire */}
+          <div>
+            <label htmlFor="fullName" className="text-xs font-semibold text-gray-700 mb-1.5 block">
+              Nom complet
+            </label>
+            <input
+              id="fullName"
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Ex: Koffi Mensah"
+              className="w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs sm:text-sm font-medium text-gray-800 focus:outline-hidden focus:border-[#16A34A] focus:ring-1 focus:ring-[#16A34A]"
+            />
+          </div>
+
+          {/* Numéro de portefeuille */}
+          <div>
+            <label htmlFor="walletNumber" className="text-xs font-semibold text-gray-700 mb-1.5 block">
+              Numéro de portefeuille
+            </label>
+            <input
+              id="walletNumber"
+              type="tel"
+              value={walletNumber}
+              onChange={(e) => setWalletNumber(e.target.value)}
+              placeholder="Ex: +228 90 12 34 56"
+              className="w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs sm:text-sm font-medium text-gray-800 focus:outline-hidden focus:border-[#16A34A] focus:ring-1 focus:ring-[#16A34A]"
+              required
+            />
+          </div>
+
+          {/* Montant (Amount) avec badge XOF */}
+          <div>
+            <label htmlFor="amount" className="text-xs font-semibold text-gray-700 mb-1.5 block">
+              Montant
+            </label>
+            <div className="flex rounded-xl border border-gray-200 overflow-hidden bg-gray-50">
+              <span className="inline-flex items-center px-4 py-2.5 bg-gray-100 text-xs font-bold text-gray-600 border-r border-gray-200 select-none">
+                {currency}
+              </span>
+              <input
+                id="amount"
+                type="text"
+                value={feeAmount}
+                readOnly
+                className="w-full px-3.5 py-2.5 bg-gray-50 text-xs sm:text-sm font-bold text-gray-900 cursor-not-allowed select-none focus:outline-hidden"
+              />
+            </div>
+          </div>
+
+          {/* Boutons d'action : Dashboard & Make Payment */}
+          <div className="pt-2 grid grid-cols-2 gap-3">
+            <Link
+              href="/"
+              className="touch-target px-3 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              <span>Tableau de Bord</span>
+            </Link>
+
+            <button
+              type="submit"
+              disabled={isProcessing}
+              className="touch-target px-3 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 shadow-xs transition-colors disabled:opacity-75 disabled:cursor-wait"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  <span>Envoi STK...</span>
+                </>
+              ) : (
+                <>
+                  <Wallet className="w-4 h-4" />
+                  <span>Payer Maintenant</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* MODAL SIMULATION STK PUSH */}
+      {showStkModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl border border-gray-100 animate-in fade-in zoom-in-95">
+            <div className="w-16 h-16 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center mx-auto border-2 border-sky-200">
+              <PhoneCall className="w-8 h-8 animate-pulse text-sky-600" />
+            </div>
+
+            <div>
+              <h3 className="text-base font-extrabold text-gray-900">
+                Demande STK Push envoyée !
+              </h3>
+              <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+                Une invite de paiement de <strong className="text-gray-900">{feeAmount} {currency}</strong> a été transmise sur le numéro{" "}
+                <strong className="text-gray-900">{displayPhone}</strong>.
+              </p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 text-[11px] text-gray-600 text-left space-y-1">
+              <p className="font-semibold text-gray-800">Instructions :</p>
+              <p>1. Tapez votre code secret Mobile Money sur votre écran.</p>
+              <p>2. Validez le débit de 4 500 FCFA.</p>
+              <p>3. Redirection automatique vers votre espace membre.</p>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 py-2.5 rounded-xl border border-emerald-100">
+              <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+              <span>Validation du paiement en cours...</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

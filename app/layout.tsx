@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { BottomNav } from "@/components/BottomNav";
+import { Footer } from "@/components/Footer";
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 
@@ -105,6 +106,7 @@ export default async function RootLayout({
         <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-6 sm:py-8">
           {children}
         </main>
+        <Footer />
         <BottomNav />
       </body>
     </html>

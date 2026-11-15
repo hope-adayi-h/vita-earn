@@ -92,7 +92,9 @@ export async function getActivationData(): Promise<ActivationData> {
   // 1. Profil utilisateur si connecté
   let isActivated = false;
   let fullName = "Nouvel Utilisateur";
+  let username = "Nouvel Utilisateur";
   let phone: string | undefined = undefined;
+  let country: string | undefined = undefined;
 
   const cookieStore = cookies();
   const sessionUserCookie = cookieStore.get("vita_session_user")?.value;
@@ -103,27 +105,50 @@ export async function getActivationData(): Promise<ActivationData> {
     } catch {}
   }
   const testUser = cookieStore.get("vita_test_user")?.value;
+  const activatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
 
   if (sessionUser) {
-    fullName = sessionUser.username || sessionUser.fullName || "Utilisateur";
+    username = sessionUser.username || sessionUser.fullName || "Utilisateur";
+    fullName = sessionUser.fullName || sessionUser.username || "Utilisateur";
     phone = sessionUser.phone;
-    isActivated = Boolean(sessionUser.isActivated);
+    country = sessionUser.country;
+    isActivated = Boolean(sessionUser.isActivated || activatedCookie);
   } else if (testUser) {
+    username = testUser;
     fullName = testUser;
-    isActivated = false;
+    isActivated = activatedCookie;
+  }
+
+  if (!sessionUser && !testUser) {
+    try {
+      const rawAccounts = cookieStore.get("vita_accounts")?.value;
+      if (rawAccounts) {
+        const accs = JSON.parse(rawAccounts);
+        if (Array.isArray(accs) && accs.length > 0) {
+          const lastAcc = accs[accs.length - 1];
+          username = lastAcc.username || "Utilisateur";
+          fullName = lastAcc.username || "Utilisateur";
+          phone = lastAcc.phone;
+          country = lastAcc.country;
+          isActivated = Boolean(lastAcc.isActivated || activatedCookie);
+        }
+      }
+    } catch {}
   }
 
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, is_activated")
+      .select("id, full_name, phone, is_activated, country")
       .eq("id", user.id)
       .maybeSingle();
 
     if (profile) {
-      isActivated = Boolean(profile.is_activated || sessionUser?.isActivated);
-      fullName = profile.full_name || sessionUser?.username || user.email || "Utilisateur";
+      isActivated = Boolean(profile.is_activated || sessionUser?.isActivated || activatedCookie);
+      fullName = profile.full_name || sessionUser?.fullName || user.email || "Utilisateur";
+      username = sessionUser?.username || profile.full_name || user.email?.split("@")[0] || "Utilisateur";
       phone = profile.phone || sessionUser?.phone;
+      country = (profile as any).country || sessionUser?.country;
     }
   }
 
@@ -168,7 +193,9 @@ export async function getActivationData(): Promise<ActivationData> {
       id: user?.id || "",
       email: user?.email || "visiteur@vitaearn.com",
       fullName,
+      username,
       phone,
+      country,
     },
     isActivated,
     feeAmount,
