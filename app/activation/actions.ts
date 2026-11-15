@@ -27,6 +27,12 @@ export async function quickActivateAction(): Promise<void> {
   const testUser = cookieStore.get("vita_test_user")?.value;
   const testEmail = cookieStore.get("vita_test_email")?.value;
 
+  cookieStore.set("vita_account_activated", "true", {
+    path: "/",
+    httpOnly: true,
+    maxAge: 60 * 60 * 24 * 7,
+  });
+
   if (sessionUser) {
     sessionUser.isActivated = true;
     cookieStore.set("vita_session_user", JSON.stringify(sessionUser), {

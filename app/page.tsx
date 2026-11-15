@@ -56,6 +56,7 @@ export default async function HomePage() {
   const testRole = cookieStore.get("vita_test_role")?.value || sessionUser?.role;
   const testUser = cookieStore.get("vita_test_user")?.value || sessionUser?.username;
   const testEmail = cookieStore.get("vita_test_email")?.value || sessionUser?.email;
+  const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
 
   const supabase = createClient();
   let user: any = null;
@@ -112,7 +113,7 @@ export default async function HomePage() {
         .eq("id", user.id)
         .maybeSingle();
 
-      isActivated = Boolean(profile?.is_activated || sessionUser?.isActivated);
+      isActivated = Boolean(profile?.is_activated || sessionUser?.isActivated || isActivatedCookie);
       welcomeBonusClaimed = Boolean(profile?.welcome_bonus_claimed);
 
       const rawName =
@@ -288,7 +289,7 @@ export default async function HomePage() {
     userName = (sessionUser.username || sessionUser.fullName || "Membre").trim();
     userName = userName.charAt(0).toUpperCase() + userName.slice(1);
     userInitial = userName ? userName.charAt(0).toUpperCase() : "M";
-    isActivated = Boolean(sessionUser.isActivated);
+    isActivated = Boolean(sessionUser.isActivated || isActivatedCookie);
     if (isActivated) {
       totalExpenses = 4500;
     }
@@ -316,7 +317,7 @@ export default async function HomePage() {
     userName = (sessionUser.username || sessionUser.fullName || "Membre").trim();
     userName = userName.charAt(0).toUpperCase() + userName.slice(1);
     userInitial = userName.charAt(0).toUpperCase();
-    isActivated = Boolean(sessionUser.isActivated);
+    isActivated = Boolean(sessionUser.isActivated || isActivatedCookie);
     if (isActivated) totalExpenses = 4500;
   } else if (testUser) {
     userName = testUser.trim();

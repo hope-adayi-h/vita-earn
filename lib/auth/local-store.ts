@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import os from "os";
 
 export interface StoredUser {
   id: string;
@@ -14,15 +15,45 @@ export interface StoredUser {
   createdAt: string;
 }
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const USERS_FILE = path.join(DATA_DIR, "registered_users.json");
-
-function ensureDirectoryAndFile() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+// Détection du répertoire de stockage persistant (supporte dev local et serverless Netlify / AWS Lambda)
+function getDataDir(): string {
+  try {
+    const localDir = path.join(process.cwd(), "data");
+    if (!fs.existsSync(localDir)) {
+      fs.mkdirSync(localDir, { recursive: true });
+    }
+    const testFile = path.join(localDir, ".test_write");
+    fs.writeFileSync(testFile, "1");
+    fs.unlinkSync(testFile);
+    return localDir;
+  } catch {
+    const tmpDir = path.join(os.tmpdir(), "vita_earn_data");
+    if (!fs.existsSync(tmpDir)) {
+      try {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      } catch {}
+    }
+    return tmpDir;
   }
-  if (!fs.existsSync(USERS_FILE)) {
-    // Initialiser avec des utilisateurs de démonstration si absent
+}
+
+function getFilePath(): string {
+  const dir = getDataDir();
+  return path.join(dir, "registered_users.json");
+}
+
+function ensureDirectoryAndFile(): string {
+  const filePath = getFilePath();
+  if (!fs.existsSync(filePath)) {
+    const bundledPath = path.join(process.cwd(), "data", "registered_users.json");
+    if (fs.existsSync(bundledPath)) {
+      try {
+        fs.copyFileSync(bundledPath, filePath);
+        return filePath;
+      } catch {}
+    }
+
+    // Utilisateurs par défaut
     const initialUsers: StoredUser[] = [
       {
         id: "demo_koffi",
@@ -47,14 +78,17 @@ function ensureDirectoryAndFile() {
         createdAt: new Date().toISOString(),
       },
     ];
-    fs.writeFileSync(USERS_FILE, JSON.stringify(initialUsers, null, 2), "utf-8");
+    try {
+      fs.writeFileSync(filePath, JSON.stringify(initialUsers, null, 2), "utf-8");
+    } catch {}
   }
+  return filePath;
 }
 
 export function getAllUsers(): StoredUser[] {
   try {
-    ensureDirectoryAndFile();
-    const content = fs.readFileSync(USERS_FILE, "utf-8");
+    const filePath = ensureDirectoryAndFile();
+    const content = fs.readFileSync(filePath, "utf-8");
     return JSON.parse(content) as StoredUser[];
   } catch (err) {
     console.error("Erreur lecture registered_users.json:", err);
@@ -77,7 +111,7 @@ export function findUserByIdentifier(identifier: string): StoredUser | null {
 
 export function saveUser(user: StoredUser): void {
   try {
-    ensureDirectoryAndFile();
+    const filePath = ensureDirectoryAndFile();
     const users = getAllUsers();
     const existingIndex = users.findIndex(
       (u) =>
@@ -92,7 +126,7 @@ export function saveUser(user: StoredUser): void {
       users.push(user);
     }
 
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), "utf-8");
+    fs.writeFileSync(filePath, JSON.stringify(users, null, 2), "utf-8");
   } catch (err) {
     console.error("Erreur écriture registered_users.json:", err);
   }
@@ -100,7 +134,7 @@ export function saveUser(user: StoredUser): void {
 
 export function activateUser(identifierOrId: string): StoredUser | null {
   try {
-    ensureDirectoryAndFile();
+    const filePath = ensureDirectoryAndFile();
     const clean = identifierOrId.toLowerCase().trim();
     const users = getAllUsers();
     const user = users.find(
@@ -112,7 +146,7 @@ export function activateUser(identifierOrId: string): StoredUser | null {
 
     if (user) {
       user.isActivated = true;
-      fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), "utf-8");
+      fs.writeFileSync(filePath, JSON.stringify(users, null, 2), "utf-8");
       return user;
     }
     return null;

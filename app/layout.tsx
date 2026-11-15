@@ -40,6 +40,7 @@ export default async function RootLayout({
     } catch {}
   }
 
+  const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
   const testRole = cookieStore.get("vita_test_role")?.value || sessionUser?.role;
   const testEmail = cookieStore.get("vita_test_email")?.value || sessionUser?.email;
   const testUser = cookieStore.get("vita_test_user")?.value || sessionUser?.username;
@@ -48,7 +49,7 @@ export default async function RootLayout({
     currentUser = {
       email: sessionUser.email,
       name: sessionUser.username || sessionUser.fullName,
-      isActivated: Boolean(sessionUser.isActivated),
+      isActivated: Boolean(sessionUser.isActivated || isActivatedCookie),
       role: sessionUser.role || "user",
     };
   } else if (testRole) {
@@ -73,7 +74,7 @@ export default async function RootLayout({
       currentUser = {
         email: user.email,
         name: profile?.full_name || sessionUser?.username || user.user_metadata?.username || user.email?.split("@")[0],
-        isActivated: Boolean(profile?.is_activated ?? sessionUser?.isActivated),
+        isActivated: Boolean(profile?.is_activated || sessionUser?.isActivated || isActivatedCookie),
         role: profile?.role || testRole || "user",
       };
     }
