@@ -6,9 +6,69 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPaymentProvider } from "@/lib/payments";
+import { activateUser } from "@/lib/auth/local-store";
 import type { ActivationData } from "./types";
 
 export type { ActivationData };
+
+/**
+ * Activation immédiate en 1 clic (Mode simplifié & test)
+ * Valide le compte et redirige immédiatement vers le tableau de bord avec le nom d'utilisateur
+ */
+export async function quickActivateAction(): Promise<void> {
+  const cookieStore = cookies();
+  const sessionUserCookie = cookieStore.get("vita_session_user")?.value;
+  let sessionUser: any = null;
+  if (sessionUserCookie) {
+    try {
+      sessionUser = JSON.parse(sessionUserCookie);
+    } catch {}
+  }
+  const testUser = cookieStore.get("vita_test_user")?.value;
+  const testEmail = cookieStore.get("vita_test_email")?.value;
+
+  if (sessionUser) {
+    sessionUser.isActivated = true;
+    cookieStore.set("vita_session_user", JSON.stringify(sessionUser), {
+      path: "/",
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 7,
+    });
+    activateUser(sessionUser.id || sessionUser.username || sessionUser.email);
+  } else if (testUser) {
+    activateUser(testUser);
+    const newSession = {
+      id: "usr_" + Date.now(),
+      username: testUser,
+      fullName: testUser,
+      email: testEmail || "user@vitaearn.com",
+      role: "user",
+      isActivated: true,
+    };
+    cookieStore.set("vita_session_user", JSON.stringify(newSession), {
+      path: "/",
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 7,
+    });
+  }
+
+  try {
+    const supabase = createClient();
+    const { data } = await supabase.auth.getUser();
+    if (data?.user) {
+      const adminClient = createAdminClient();
+      await adminClient
+        .from("profiles")
+        .update({ is_activated: true })
+        .eq("id", data.user.id);
+    }
+  } catch {}
+
+  revalidatePath("/");
+  revalidatePath("/activation");
+  revalidatePath("/profil");
+  redirect("/");
+}
 
 /**
  * Récupère le statut d'activation et le montant serveur (Règle 4 : source de vérité platform_settings)

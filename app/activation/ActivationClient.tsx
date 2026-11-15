@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ActivationData } from "./types";
+import { quickActivateAction } from "./actions";
 import { formatFCFA } from "@/lib/utils";
 import {
   CheckCircle2,
@@ -156,16 +157,27 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
             </ul>
           </div>
 
-          {/* Bouton d'action principal vers la page de paiement complète */}
-          <div className="pt-2">
-            <Link
-              href="/activation/paiement"
-              className="w-full touch-target rounded-2xl bg-gradient-to-r from-vita-deep via-vita-medium to-[#236014] hover:from-vita-medium hover:to-vita-deep text-white font-extrabold text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2.5 py-4 group"
-            >
-              <ShieldCheck className="w-5 h-5 text-vita-bright" />
-              <span>Activer mon compte pour commencer à travailler</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
+          {/* Bouton d'action principal vers l'activation immédiate */}
+          <div className="pt-2 space-y-2.5">
+            <form action={quickActivateAction}>
+              <button
+                type="submit"
+                className="w-full touch-target rounded-2xl bg-gradient-to-r from-vita-deep via-vita-medium to-[#236014] hover:from-vita-medium hover:to-vita-deep text-white font-extrabold text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2.5 py-4 group"
+              >
+                <ShieldCheck className="w-5 h-5 text-vita-bright" />
+                <span>Activer mon compte (4 500 F) & Accéder au Tableau de Bord</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </form>
+
+            <div className="text-center">
+              <Link
+                href="/activation/paiement"
+                className="text-[11px] font-semibold text-vita-muted hover:text-vita-deep hover:underline transition-colors"
+              >
+                Optionnel : Choisir un moyen de paiement Mobile Money détaillé (T-Money / Flooz)
+              </Link>
+            </div>
           </div>
         </div>
       </div>
