@@ -492,11 +492,13 @@ export default async function HomePage() {
       </div>
 
       {/* 4. CARTE BONUS DE BIENVENUE (Welcome Bonus 900 FCFA) AVEC DÉBLOCAGE MANUEL */}
-      <WelcomeBonusCard
-        level1Count={level1Count}
-        welcomeBonusAmount={900}
-        initialClaimed={welcomeBonusClaimed}
-      />
+      <div id="welcome-bonus">
+        <WelcomeBonusCard
+          level1Count={level1Count}
+          welcomeBonusAmount={900}
+          initialClaimed={welcomeBonusClaimed}
+        />
+      </div>
 
       {/* 5. CARTE GAINS TRIVIA (Trivia Earnings) - Bleu Pastel #DCEBFB */}
       <div className="rounded-2xl bg-[#DCEBFB] p-4 sm:p-5 shadow-sm relative overflow-hidden">
@@ -564,17 +566,19 @@ export default async function HomePage() {
       <TimeTableSection />
 
       {/* 7. SECTION RÉSEAU & PARRAINAGE 3 NIVEAUX */}
-      <ReferralSection
-        referralCode={referralCode}
-        appUrl={appUrl}
-        level1Count={level1Count}
-        level2Count={level2Count}
-        level3Count={level3Count}
-        level1Earned={level1Earned}
-        level2Earned={level2Earned}
-        level3Earned={level3Earned}
-        referrals={referralsList}
-      />
+      <div id="equipe">
+        <ReferralSection
+          referralCode={referralCode}
+          appUrl={appUrl}
+          level1Count={level1Count}
+          level2Count={level2Count}
+          level3Count={level3Count}
+          level1Earned={level1Earned}
+          level2Earned={level2Earned}
+          level3Earned={level3Earned}
+          referrals={referralsList}
+        />
+      </div>
 
       {/* 8. RACCOURCIS D'ACTION RAPIDE */}
       <div className="grid grid-cols-2 gap-3 pt-2">

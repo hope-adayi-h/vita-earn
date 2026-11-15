@@ -24,8 +24,16 @@ import {
   Mail,
   ExternalLink,
   ChevronRight,
+  MessageSquare,
+  Users,
+  Gift,
+  Disc,
+  Briefcase,
+  Sparkles,
+  GraduationCap,
 } from "lucide-react";
 import { HelpModal } from "@/components/HelpModal";
+import { CommunityModal } from "@/components/CommunityModal";
 
 interface NavbarProps {
   user?: {
@@ -49,6 +57,9 @@ export function Navbar({ user }: NavbarProps) {
   // État du modal complet d'Assistance / FAQ
   const [helpModalOpen, setHelpModalOpen] = useState(false);
 
+  // État du modal Centre Communautaire (WhatsApp & Telegram)
+  const [communityModalOpen, setCommunityModalOpen] = useState(false);
+
   const isActivationPage = pathname.startsWith("/activation");
   const isAuthPage = pathname.startsWith("/auth");
 
@@ -58,10 +69,10 @@ export function Navbar({ user }: NavbarProps) {
   const userInitial = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : "U";
   const isActivated = Boolean(user?.isActivated);
 
+  // Liens pour la barre supérieure Desktop
   const navLinks = [
     { label: "Accueil", href: "/", icon: Home },
     { label: "Marché", href: "/marche", icon: ShoppingBag },
-    { label: "Vendre", href: "/vendre", icon: PlusCircle },
     { label: "Tâches", href: "/taches", icon: CalendarCheck },
     { label: "Portefeuille", href: "/portefeuille", icon: Wallet },
     { label: "Profil", href: "/profil", icon: User },
@@ -69,6 +80,104 @@ export function Navbar({ user }: NavbarProps) {
 
   if (user?.role === "admin") {
     navLinks.push({ label: "Admin", href: "/admin", icon: ShieldCheck });
+  }
+
+  // Liens officiels numérotés du tiroir de navigation mobile (1 à 12 + Centre d'Aide)
+  const drawerNavLinks = [
+    {
+      number: 1,
+      label: "1. Accueil",
+      href: "/",
+      icon: Home,
+    },
+    {
+      number: 2,
+      label: "2. Centre Communautaire",
+      desc: "Canaux WhatsApp & Telegram",
+      href: "/communaute",
+      icon: MessageSquare,
+      isCommunity: true,
+    },
+    {
+      number: 3,
+      label: "3. Centre de Retrait",
+      desc: "Types de retraits & historique",
+      href: "/portefeuille",
+      icon: Wallet,
+    },
+    {
+      number: 4,
+      label: "4. Équipe",
+      desc: "Niveaux N1, N2, N3 & inactifs",
+      href: "/#equipe",
+      icon: Users,
+    },
+    {
+      number: 5,
+      label: "5. Récompense de Démarrage",
+      desc: "Bonus de bienvenue 900 F",
+      href: "/#welcome-bonus",
+      icon: Gift,
+    },
+    {
+      number: 6,
+      label: "6. Roue de la Chance",
+      desc: "Tirage & gains quotidiens",
+      href: "/roue",
+      icon: Disc,
+    },
+    {
+      number: 7,
+      label: "7. Tâches",
+      desc: "Missions & gains journaliers",
+      href: "/taches",
+      icon: CalendarCheck,
+    },
+    {
+      number: 8,
+      label: "8. Marketplace",
+      desc: "Produits & boutiques",
+      href: "/marche",
+      icon: ShoppingBag,
+    },
+    {
+      number: 9,
+      label: "9. Emploi",
+      desc: "Offres & opportunités",
+      href: "/emploi",
+      icon: Briefcase,
+    },
+    {
+      number: 10,
+      label: "10. Application Premium",
+      desc: "Outils & apps exclusives",
+      href: "/applications-premium",
+      icon: Sparkles,
+    },
+    {
+      number: 11,
+      label: "11. Formations",
+      desc: "Ressources & apprentissage",
+      href: "/formations",
+      icon: GraduationCap,
+    },
+    {
+      number: 12,
+      label: "12. Profil",
+      desc: "Paramètres du compte",
+      href: "/profil",
+      icon: User,
+    },
+  ];
+
+  if (user?.role === "admin") {
+    drawerNavLinks.push({
+      number: 13,
+      label: "13. Admin",
+      desc: "Modération & gestion",
+      href: "/admin",
+      icon: ShieldCheck,
+    });
   }
 
   const closeSidebar = () => setSidebarOpen(false);
@@ -457,27 +566,41 @@ export function Navbar({ user }: NavbarProps) {
           <p className="text-[11px] font-bold text-vita-muted uppercase px-3 pt-1 pb-1">
             Navigation
           </p>
-          {navLinks.map((item) => {
+          {drawerNavLinks.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (
               <Link
-                key={item.href}
+                key={item.label}
                 href={item.href}
-                onClick={closeSidebar}
+                onClick={() => {
+                  closeSidebar();
+                  if (item.isCommunity) {
+                    setCommunityModalOpen(true);
+                  }
+                }}
                 className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                   isActive
                     ? "bg-vita-surface text-vita-deep font-bold"
                     : "text-vita-text hover:bg-vita-surface/60"
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <Icon
-                    className={`w-4 h-4 ${isActive ? "text-vita-deep" : "text-vita-medium"}`}
+                    className={`w-4 h-4 shrink-0 ${isActive ? "text-vita-deep" : "text-vita-medium"}`}
                   />
-                  <span>{item.label}</span>
+                  <div className="min-w-0">
+                    <span className="block truncate text-xs sm:text-sm font-bold text-gray-800">
+                      {item.label}
+                    </span>
+                    {item.desc && (
+                      <span className="block truncate text-[10px] text-gray-500 font-normal">
+                        {item.desc}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-vita-muted/60" />
+                <ChevronRight className="w-4 h-4 text-vita-muted/60 shrink-0 ml-1" />
               </Link>
             );
           })}
@@ -490,9 +613,12 @@ export function Navbar({ user }: NavbarProps) {
             >
               <div className="flex items-center gap-3">
                 <Headphones className="w-4 h-4 text-vita-medium" />
-                <span>Centre d'Aide & FAQ</span>
+                <div className="text-left">
+                  <span className="block text-xs sm:text-sm font-bold text-gray-800">Centre d'Aide</span>
+                  <span className="block text-[10px] text-gray-500 font-normal">Assistance & FAQ</span>
+                </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-vita-muted/60" />
+              <ChevronRight className="w-4 h-4 text-vita-muted/60 shrink-0" />
             </button>
           </div>
         </div>
@@ -514,6 +640,9 @@ export function Navbar({ user }: NavbarProps) {
 
       {/* Modal complet Assistance & FAQ */}
       <HelpModal isOpen={helpModalOpen} onClose={() => setHelpModalOpen(false)} />
+
+      {/* Modal Centre Communautaire (WhatsApp & Telegram) */}
+      <CommunityModal isOpen={communityModalOpen} onClose={() => setCommunityModalOpen(false)} />
     </>
   );
 }
