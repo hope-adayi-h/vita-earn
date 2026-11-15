@@ -479,7 +479,7 @@ export default async function HomePage() {
             </div>
           </div>
           <Link
-            href="/portefeuille"
+            href="/retrait"
             className="px-3 py-1 rounded-lg bg-[#16A34A] hover:bg-[#15803d] text-[11px] font-bold text-white transition-colors inline-flex items-center gap-1 shadow-xs"
           >
             <span><T k="dash.withdraw" fallback="Retirer" /></span>
@@ -511,9 +511,13 @@ export default async function HomePage() {
               <p className="text-[10px] text-[#4B5563]">Montant total retiré par Mobile Money</p>
             </div>
           </div>
-          <span className="px-2 py-0.5 rounded-full bg-[#F97316] text-[9px] font-bold text-white shadow-xs">
-            T-Money / Flooz
-          </span>
+          <Link
+            href="/retrait/historique"
+            className="px-3 py-1 rounded-lg bg-[#F97316] hover:bg-[#EA580C] text-[11px] font-bold text-white transition-colors inline-flex items-center gap-1 shadow-xs"
+          >
+            <span><T k="dash.history" fallback="Historique" /></span>
+            <ArrowRight className="w-3 h-3 text-white" />
+          </Link>
         </div>
 
         <div className="mt-3 flex items-baseline gap-1.5">

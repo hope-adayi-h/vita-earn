@@ -35,6 +35,7 @@ import {
   Globe,
   Camera,
   Check,
+  History,
 } from "lucide-react";
 import { HelpModal } from "@/components/HelpModal";
 import { CommunityModal } from "@/components/CommunityModal";
@@ -94,7 +95,7 @@ export function Navbar({ user }: NavbarProps) {
     { label: t("nav.home"), href: "/", icon: Home },
     { label: t("nav.market"), href: "/marche", icon: ShoppingBag },
     { label: t("nav.tasks"), href: "/taches", icon: CalendarCheck },
-    { label: t("nav.withdrawal"), href: "/portefeuille", icon: Wallet },
+    { label: t("nav.withdrawal"), href: "/retrait", icon: Wallet },
     { label: t("nav.profile"), href: "/profil", icon: User },
   ];
 
@@ -106,7 +107,7 @@ export function Navbar({ user }: NavbarProps) {
   const drawerNavLinks = [
     { label: t("nav.home"), href: "/", icon: Home },
     { label: t("nav.community"), href: "/communaute", icon: MessageSquare, isCommunity: true },
-    { label: t("nav.withdrawal"), href: "/portefeuille", icon: Wallet },
+    { label: t("nav.withdrawal"), href: "/retrait", icon: Wallet },
     { label: t("nav.team"), href: "/#equipe", icon: Users },
     { label: t("nav.welcomeBonus"), href: "/#welcome-bonus", icon: Gift },
     { label: t("nav.wheel"), href: "/roue", icon: Disc },
@@ -133,50 +134,50 @@ export function Navbar({ user }: NavbarProps) {
   return (
     <>
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#131E17]/95 backdrop-blur-md border-b border-gray-100 dark:border-[#1E2E24] shadow-xs transition-colors">
-        <div className="max-w-5xl mx-auto px-3 sm:px-4 h-16 sm:h-18 flex items-center justify-between gap-2">
+        <div className="max-w-5xl mx-auto px-2.5 sm:px-4 h-15 sm:h-18 flex items-center justify-between gap-1 sm:gap-3">
           {/* ========================================================================= */}
           {/* 1. GAUCHE MOBILE : Bouton Hamburger (3 traits)                            */}
           {/* ========================================================================= */}
-          <div className="flex md:hidden items-center">
+          <div className="flex md:hidden items-center shrink-0">
             <button
               type="button"
               onClick={() => {
                 setSidebarOpen(true);
                 closeDropdowns();
               }}
-              className="p-2 -ml-2 rounded-xl text-gray-800 dark:text-gray-100 hover:text-vita-deep hover:bg-vita-surface transition-colors focus:outline-hidden"
+              className="p-1.5 -ml-1 rounded-xl text-gray-800 dark:text-gray-100 hover:text-vita-deep hover:bg-vita-surface transition-colors focus:outline-hidden"
               aria-label="Ouvrir le menu de navigation"
             >
-              <Menu className="w-6 h-6 text-gray-800 dark:text-gray-100" />
+              <Menu className="w-5 h-5 sm:w-6 sm:h-6 text-gray-800 dark:text-gray-100" />
             </button>
           </div>
 
           {/* ========================================================================= */}
-          {/* 2. CENTRE MOBILE / GAUCHE DESKTOP : Logo et Nom VITA EARN                 */}
+          {/* 2. LOGO VITA EARN (Dimensions calibrées pour éviter tout chevauchement)    */}
           {/* ========================================================================= */}
-          <div className="flex-1 md:flex-initial flex items-center justify-center md:justify-start">
+          <div className="flex items-center justify-start shrink min-w-0 mr-auto pl-1 sm:pl-2">
             <Link
               href="/"
               onClick={() => {
                 closeSidebar();
                 closeDropdowns();
               }}
-              className="flex items-center gap-2 group py-1"
+              className="flex items-center gap-1.5 sm:gap-2 group py-1"
             >
               <Image
                 src="/images/logo-icon.png"
                 alt="Vita Earn"
-                width={56}
-                height={40}
-                className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-105 duration-200"
+                width={36}
+                height={28}
+                className="h-6 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105 duration-200 shrink-0"
                 priority
               />
               <Image
                 src="/images/logo-text.png"
                 alt="Vita Earn"
-                width={170}
-                height={20}
-                className="h-5 sm:h-6 w-auto object-contain dark:brightness-200"
+                width={110}
+                height={16}
+                className="h-3.5 sm:h-5.5 w-auto object-contain dark:brightness-200 shrink-0"
                 priority
               />
             </Link>
@@ -206,7 +207,7 @@ export function Navbar({ user }: NavbarProps) {
           {/* ========================================================================= */}
           {/* 4. ACTIONS DROITE : Langue, Mode Sombre/Clair, Avatar Profil              */}
           {/* ========================================================================= */}
-          <div className="flex items-center gap-1.5 sm:gap-2 relative">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0 relative">
             {/* 1. SÉLECTEUR DE LANGUE (FR / EN) */}
             <div className="relative">
               <button
@@ -361,6 +362,32 @@ export function Navbar({ user }: NavbarProps) {
                       <div className="flex items-center gap-2.5">
                         <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                         <span className="text-xs font-semibold">{t("prof.viewProfile")}</span>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                    </Link>
+
+                    {/* Centre de Retrait Mobile Money */}
+                    <Link
+                      href="/retrait"
+                      onClick={closeDropdowns}
+                      className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span className="text-xs font-semibold">Demande de Retrait</span>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                    </Link>
+
+                    {/* Historique des Retraits */}
+                    <Link
+                      href="/retrait/historique"
+                      onClick={closeDropdowns}
+                      className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <History className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span className="text-xs font-semibold">Historique des Retraits</span>
                       </div>
                       <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
                     </Link>
