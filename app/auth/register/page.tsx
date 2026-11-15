@@ -51,8 +51,14 @@ function RegisterForm() {
     formData.set("country", selectedCountry.name);
     // Préfixer le numéro avec l'indicatif choisi
     const rawPhone = formData.get("phone") as string;
-    if (rawPhone && !rawPhone.startsWith("+")) {
-      formData.set("phone", `${selectedCountry.dialCode} ${rawPhone.trim()}`);
+    const computedPhone = rawPhone && !rawPhone.startsWith("+")
+      ? `${selectedCountry.dialCode} ${rawPhone.trim()}`
+      : rawPhone?.trim() || "";
+    if (computedPhone) {
+      formData.set("phone", computedPhone);
+      try {
+        localStorage.setItem("vita_registered_phone", computedPhone);
+      } catch {}
     }
     formData.set("upline", uplineValue);
     formData.set("termsAccepted", termsAccepted ? "true" : "false");

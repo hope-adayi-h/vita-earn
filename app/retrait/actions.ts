@@ -47,10 +47,12 @@ export async function getWithdrawalData(): Promise<WithdrawalPageData> {
   const testUser = cookieStore.get("vita_test_user")?.value;
   const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
 
+  const registeredPhoneCookie = cookieStore.get("vita_registered_phone")?.value;
+
   let fullName = "Utilisateur";
   let username = "Utilisateur";
   let email = "user@vitaearn.com";
-  let phone = "+228 90 00 00 00";
+  let phone = registeredPhoneCookie || sessionUser?.phone || "";
   let isActivated = Boolean(isActivatedCookie);
   let balance = 4500; // Solde par défaut ou crédité
   let totalWithdrawn = 0;
@@ -60,13 +62,38 @@ export async function getWithdrawalData(): Promise<WithdrawalPageData> {
     username = sessionUser.username || "Utilisateur";
     fullName = sessionUser.fullName || sessionUser.username || "Utilisateur";
     email = sessionUser.email || "user@vitaearn.com";
-    phone = sessionUser.phone || "+228 90 00 00 00";
+    if (!phone && sessionUser.phone) phone = sessionUser.phone;
     isActivated = Boolean(sessionUser.isActivated || isActivatedCookie);
   } else if (testUser) {
     username = testUser;
     fullName = testUser;
     isActivated = true;
   }
+
+  // Chercher dans le coffre vita_accounts pour retrouver le numéro exact d'inscription
+  try {
+    const rawAccounts = cookieStore.get("vita_accounts")?.value;
+    if (rawAccounts) {
+      const accs = JSON.parse(rawAccounts);
+      if (Array.isArray(accs) && accs.length > 0) {
+        const found =
+          [...accs].reverse().find(
+            (a) =>
+              (username && a.username?.toLowerCase() === username.toLowerCase()) ||
+              (email && a.email?.toLowerCase() === email.toLowerCase()) ||
+              (testUser && a.username?.toLowerCase() === testUser.toLowerCase())
+          ) || [...accs].reverse().find((a) => a.phone);
+
+        if (found) {
+          if (!phone && found.phone) phone = found.phone;
+          if (username === "Utilisateur" && found.username) username = found.username;
+          if (fullName === "Utilisateur" && (found.fullName || found.username)) {
+            fullName = found.fullName || found.username;
+          }
+        }
+      }
+    }
+  } catch {}
 
   // Solde spécial pour Koffi ou autres comptes démo
   if (username.toLowerCase() === "koffi") {
@@ -244,7 +271,23 @@ export async function submitWithdrawalAction(formData: FormData): Promise<{
     } catch {}
   }
 
-  const phone = (formData.get("phone") as string)?.trim() || sessionUser?.phone || "+228 90 00 00 00";
+  const registeredPhoneCookie = cookieStore.get("vita_registered_phone")?.value;
+  let phone = (formData.get("phone") as string)?.trim() || registeredPhoneCookie || sessionUser?.phone || "";
+
+  if (!phone) {
+    try {
+      const rawAccounts = cookieStore.get("vita_accounts")?.value;
+      if (rawAccounts) {
+        const accs = JSON.parse(rawAccounts);
+        if (Array.isArray(accs) && accs.length > 0) {
+          const found = [...accs].reverse().find((a) => a.phone);
+          if (found?.phone) phone = found.phone;
+        }
+      }
+    } catch {}
+  }
+  if (!phone) phone = "+228 90 00 00 00";
+
   const accountName = (formData.get("accountName") as string)?.trim() || sessionUser?.fullName || sessionUser?.username || "Titulaire du compte";
 
   // Sauvegarde dans l'historique des retraits

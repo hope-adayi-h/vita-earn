@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { formatFCFA } from "@/lib/utils";
@@ -103,7 +103,7 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
   const currentType = WITHDRAWAL_TYPES_CONFIG[currentTypeKey] || WITHDRAWAL_TYPES_CONFIG.solde;
   const TypeIcon = currentType.icon;
 
-  const [operator, setOperator] = useState(OPERATORS[0].name);
+  const [operator, setOperator] = useState<string>("");
   const [amount, setAmount] = useState<number | "">("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -118,7 +118,30 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
 
   const availableBalance = initialData.balance;
   const isActivated = initialData.user.isActivated;
-  const registeredPhone = initialData.user.phone || "+228 90 00 00 00";
+
+  // Récupération dynamique et prioritaire du vrai numéro d'inscription
+  const [actualPhone, setActualPhone] = useState<string>(
+    initialData.user.phone && initialData.user.phone !== "+228 90 00 00 00"
+      ? initialData.user.phone
+      : ""
+  );
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("vita_registered_phone");
+      if (stored) {
+        setActualPhone(stored);
+      } else if (initialData.user.phone) {
+        setActualPhone(initialData.user.phone);
+      }
+    } catch {
+      if (initialData.user.phone) {
+        setActualPhone(initialData.user.phone);
+      }
+    }
+  }, [initialData.user.phone]);
+
+  const registeredPhone = actualPhone || initialData.user.phone || "+228 90 00 00 00";
   const registeredName = initialData.user.fullName || initialData.user.username || "Titulaire";
 
   const numAmount = typeof amount === "number" ? amount : 0;
@@ -128,6 +151,11 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
+
+    if (!operator || operator === "") {
+      setErrorMsg("Veuillez sélectionner ton moyen de paiement.");
+      return;
+    }
 
     if (!numAmount || numAmount < 1000) {
       setErrorMsg("Le montant minimum de retrait est de 1 000 FCFA.");
@@ -257,20 +285,28 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* CHAMP 1 : SÉLECTIONNER LE MODE DE PAIEMENT */}
+          {/* CHAMP 1 : SÉLECTIONNER TON MOYEN DE PAIEMENT */}
           <div>
             <label htmlFor="operator-select" className="text-xs font-bold text-gray-800 dark:text-gray-200 mb-1.5 block">
-              Sélectionner le mode de paiement
+              Sélectionner ton moyen de paiement
             </label>
             <div className="relative">
               <select
                 id="operator-select"
                 value={operator}
-                onChange={(e) => setOperator(e.target.value)}
-                className="w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#1E2E24] bg-white dark:bg-[#17241C] text-xs sm:text-sm font-medium text-gray-800 dark:text-gray-100 appearance-none focus:outline-hidden focus:border-[#16A34A] pr-9"
+                onChange={(e) => {
+                  setOperator(e.target.value);
+                  setErrorMsg("");
+                }}
+                className={`w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#1E2E24] bg-white dark:bg-[#17241C] text-xs sm:text-sm font-medium ${
+                  operator ? "text-gray-800 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"
+                } appearance-none focus:outline-hidden focus:border-[#16A34A] pr-9`}
               >
+                <option value="" disabled className="text-gray-400">
+                  Sélectionner ton moyen de paiement
+                </option>
                 {OPERATORS.map((op) => (
-                  <option key={op.id} value={op.name}>
+                  <option key={op.id} value={op.name} className="text-gray-800 dark:text-gray-100">
                     {op.name}
                   </option>
                 ))}

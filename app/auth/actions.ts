@@ -212,6 +212,9 @@ export async function signUpAction(
   cookieStore.set("vita_test_role", "user", { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 7 });
   cookieStore.set("vita_test_user", cleanUsername, { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 7 });
   cookieStore.set("vita_test_email", cleanEmail, { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 7 });
+  if (phone) {
+    cookieStore.set("vita_registered_phone", phone, { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 365 });
+  }
 
   // Redirection OBLIGATOIRE et immédiate vers la page d'activation
   redirect("/activation");
@@ -360,6 +363,13 @@ export async function signInAction(
         httpOnly: true,
         maxAge: 60 * 60 * 24 * 7,
       });
+      if (matchedAccount.phone) {
+        cookieStore.set("vita_registered_phone", matchedAccount.phone, {
+          path: "/",
+          httpOnly: true,
+          maxAge: 60 * 60 * 24 * 365,
+        });
+      }
 
       if (matchedAccount.role === "admin") {
         redirect("/admin");
