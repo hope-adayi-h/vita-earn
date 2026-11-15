@@ -7,6 +7,8 @@ import { formatFCFA } from "@/lib/utils";
 import { ReferralSection } from "@/components/ReferralSection";
 import { WelcomeBonusCard } from "@/components/WelcomeBonusCard";
 import { TimeTableSection } from "@/components/TimeTableSection";
+import { UserAvatar } from "@/components/UserAvatar";
+import { T } from "@/components/T";
 import {
   Wallet,
   CreditCard,
@@ -392,12 +394,10 @@ export default async function HomePage() {
 
         {/* Profil utilisateur & Salutation */}
         <div className="flex items-start gap-3.5 relative z-10 mb-4">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full aspect-square bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white font-black text-xl sm:text-2xl shadow-inner flex-shrink-0">
-            {userInitial}
-          </div>
+          <UserAvatar initial={userInitial} />
           <div className="min-w-0 flex-1">
             <span className="text-xs sm:text-sm text-emerald-100 font-medium block">
-              Bienvenue,
+              <T k="dash.welcome" fallback="Bienvenue," />
             </span>
             <div className="flex items-center gap-2 mt-0.5">
               <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">
@@ -472,7 +472,9 @@ export default async function HomePage() {
               <Building2 className="w-4.5 h-4.5 text-white" />
             </div>
             <div>
-              <h2 className="text-xs sm:text-sm font-bold text-[#1F2937] tracking-wide">Solde du Compte</h2>
+              <h2 className="text-xs sm:text-sm font-bold text-[#1F2937] tracking-wide">
+                <T k="dash.mainBalance" fallback="Solde du Compte" />
+              </h2>
               <p className="text-[10px] text-[#4B5563]">Votre solde disponible en direct</p>
             </div>
           </div>
@@ -480,7 +482,7 @@ export default async function HomePage() {
             href="/portefeuille"
             className="px-3 py-1 rounded-lg bg-[#16A34A] hover:bg-[#15803d] text-[11px] font-bold text-white transition-colors inline-flex items-center gap-1 shadow-xs"
           >
-            <span>Retirer</span>
+            <span><T k="dash.withdraw" fallback="Retirer" /></span>
             <ArrowRight className="w-3 h-3 text-white" />
           </Link>
         </div>
@@ -503,7 +505,9 @@ export default async function HomePage() {
               <CreditCard className="w-4.5 h-4.5 text-white" />
             </div>
             <div>
-              <h2 className="text-xs sm:text-sm font-bold text-[#1F2937] tracking-wide">Total des Retraits</h2>
+              <h2 className="text-xs sm:text-sm font-bold text-[#1F2937] tracking-wide">
+                <T k="dash.withdrawals" fallback="Total des Retraits" />
+              </h2>
               <p className="text-[10px] text-[#4B5563]">Montant total retiré par Mobile Money</p>
             </div>
           </div>

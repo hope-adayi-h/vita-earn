@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useApp } from "@/context/AppContext";
 import type { ActivationData } from "./types";
 import {
   User,
@@ -38,6 +39,7 @@ const PAYMENT_CHANNELS = [
 
 export function ActivationClient({ initialData }: ActivationClientProps) {
   const router = useRouter();
+  const { t } = useApp();
   const [selectedChannel, setSelectedChannel] = useState(PAYMENT_CHANNELS[0].id);
   const [fullName, setFullName] = useState(initialData.user.fullName || initialData.user.username || "");
   const [walletNumber, setWalletNumber] = useState(initialData.user.phone || "");
@@ -54,9 +56,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
     setIsProcessing(true);
     setShowStkModal(true);
 
-    // Simulation du push STK Mobile Money puis validation automatique
     setTimeout(() => {
-      // Soumettre le formulaire vers /api/auth/quick-activate
       const form = document.getElementById("stk-payment-form") as HTMLFormElement;
       if (form) {
         form.submit();
@@ -74,20 +74,20 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
           <div>
             <div className="flex items-center gap-2 text-emerald-600 font-bold text-base mb-1">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-              <span>Compte Actif</span>
+              <span>{t("act.active")}</span>
             </div>
             <p className="text-xs sm:text-sm text-gray-500">
-              Votre adhésion est confirmée. Vous avez accès à l&apos;ensemble des services Vita Earn.
+              {t("act.activeSub")}
             </p>
           </div>
         ) : (
           <div>
             <div className="flex items-center gap-2 text-rose-600 font-bold text-base mb-1">
               <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
-              <span>Compte Inactif</span>
+              <span>{t("act.inactive")}</span>
             </div>
             <p className="text-xs sm:text-sm text-gray-500">
-              Veuillez activer votre compte pour commencer votre activité.
+              {t("act.inactiveSub")}
             </p>
           </div>
         )}
@@ -96,7 +96,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
       {/* CARTE 2 : Informations de Dépôt (Deposit Info) */}
       <div className="bg-white rounded-2xl border border-gray-200/80 p-5 shadow-xs">
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100">
-          <h2 className="text-sm font-bold text-gray-900">Informations de Dépôt</h2>
+          <h2 className="text-sm font-bold text-gray-900">{t("act.depositInfo")}</h2>
           <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
             <CreditCard className="w-4 h-4" />
           </div>
@@ -110,7 +110,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
             </div>
             <div className="flex-1 min-w-0">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-                Nom d&apos;utilisateur
+                {t("act.username")}
               </span>
               <p className="text-sm font-semibold text-gray-900 truncate">
                 {displayUsername}
@@ -127,7 +127,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
             </div>
             <div className="flex-1 min-w-0">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-                Numéro de dépôt
+                {t("act.depositNumber")}
               </span>
               <p className="text-sm font-semibold text-gray-900 truncate">
                 {displayPhone}
@@ -144,7 +144,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
             </div>
             <div className="flex-1 min-w-0">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-                Devise
+                {t("act.currency")}
               </span>
               <p className="text-sm font-semibold text-gray-900">
                 {currency}
@@ -157,7 +157,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
       {/* CARTE 3 : Actions Rapides (Quick Actions) */}
       <div className="bg-white rounded-2xl border border-gray-200/80 p-5 shadow-xs">
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
-          <h2 className="text-sm font-bold text-gray-900">Actions Rapides</h2>
+          <h2 className="text-sm font-bold text-gray-900">{t("act.quickActions")}</h2>
           <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600 border border-sky-100">
             <ArrowLeftRight className="w-4 h-4" />
           </div>
@@ -168,7 +168,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
           className="w-full touch-target rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-sm py-3 px-4 flex items-center justify-center gap-2 shadow-xs transition-colors"
         >
           <Home className="w-4 h-4 text-white" />
-          <span>Accéder au Tableau de Bord</span>
+          <span>{t("act.dashboard")}</span>
         </Link>
       </div>
 
@@ -176,9 +176,9 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
       <div className="bg-white rounded-2xl border border-gray-200/80 p-5 shadow-xs">
         <div className="flex items-start justify-between pb-3 mb-4 border-b border-gray-100">
           <div>
-            <h2 className="text-sm font-bold text-gray-900">Mobile Money (STK)</h2>
+            <h2 className="text-sm font-bold text-gray-900">{t("act.stkTitle")}</h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              Initiez le paiement directement sur votre téléphone
+              {t("act.stkSub")}
             </p>
           </div>
           <div className="w-9 h-9 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600 border border-sky-100 flex-shrink-0">
@@ -200,7 +200,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
           {/* Sélection du canal */}
           <div>
             <label htmlFor="channel-select" className="text-xs font-semibold text-gray-700 mb-1.5 block">
-              Sélectionnez le canal
+              {t("act.selectChannel")}
             </label>
             <div className="relative">
               <select
@@ -223,7 +223,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
           {/* Nom du propriétaire */}
           <div>
             <label htmlFor="fullName" className="text-xs font-semibold text-gray-700 mb-1.5 block">
-              Nom complet
+              {t("act.fullName")}
             </label>
             <input
               id="fullName"
@@ -239,7 +239,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
           {/* Numéro de portefeuille */}
           <div>
             <label htmlFor="walletNumber" className="text-xs font-semibold text-gray-700 mb-1.5 block">
-              Numéro de portefeuille
+              {t("act.walletNumber")}
             </label>
             <input
               id="walletNumber"
@@ -256,7 +256,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
           {/* Montant (Amount) avec badge XOF */}
           <div>
             <label htmlFor="amount" className="text-xs font-semibold text-gray-700 mb-1.5 block">
-              Montant
+              {t("act.amount")}
             </label>
             <div className="flex rounded-xl border border-gray-200 overflow-hidden bg-gray-50">
               <span className="inline-flex items-center px-4 py-2.5 bg-gray-100 text-xs font-bold text-gray-600 border-r border-gray-200 select-none">
@@ -280,7 +280,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
               className="touch-target px-3 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 shadow-xs transition-colors"
             >
               <Home className="w-4 h-4" />
-              <span>Tableau de Bord</span>
+              <span>{t("act.dashboard")}</span>
             </Link>
 
             <button
@@ -291,12 +291,12 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
               {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>Envoi STK...</span>
+                  <span>{t("act.sendingStk")}</span>
                 </>
               ) : (
                 <>
                   <Wallet className="w-4 h-4" />
-                  <span>Payer Maintenant</span>
+                  <span>{t("act.payNow")}</span>
                 </>
               )}
             </button>
@@ -314,24 +314,22 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
 
             <div>
               <h3 className="text-base font-extrabold text-gray-900">
-                Demande STK Push envoyée !
+                {t("act.modalTitle")}
               </h3>
               <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
-                Une invite de paiement de <strong className="text-gray-900">{feeAmount} {currency}</strong> a été transmise sur le numéro{" "}
-                <strong className="text-gray-900">{displayPhone}</strong>.
+                {t("act.modalPrompt")}
               </p>
             </div>
 
             <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 text-[11px] text-gray-600 text-left space-y-1">
-              <p className="font-semibold text-gray-800">Instructions :</p>
-              <p>1. Tapez votre code secret Mobile Money sur votre écran.</p>
-              <p>2. Validez le débit de 4 500 FCFA.</p>
-              <p>3. Redirection automatique vers votre espace membre.</p>
+              <p>{t("act.modalStep1")}</p>
+              <p>{t("act.modalStep2")}</p>
+              <p>{t("act.modalStep3")}</p>
             </div>
 
             <div className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 py-2.5 rounded-xl border border-emerald-100">
               <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
-              <span>Validation du paiement en cours...</span>
+              <span>{t("act.modalValidating")}</span>
             </div>
           </div>
         </div>

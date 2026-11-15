@@ -4,18 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useApp } from "@/context/AppContext";
 import {
-  ShoppingBag,
-  Wallet,
-  PlusCircle,
-  User,
-  ShieldCheck,
   Menu,
   X,
   Home,
-  LogOut,
-  MoreHorizontal,
+  ShoppingBag,
+  Wallet,
+  User,
+  ShieldCheck,
   CalendarCheck,
+  LogOut,
   CheckCircle2,
   AlertCircle,
   Headphones,
@@ -31,6 +30,11 @@ import {
   Briefcase,
   Sparkles,
   GraduationCap,
+  Moon,
+  Sun,
+  Globe,
+  Camera,
+  Check,
 } from "lucide-react";
 import { HelpModal } from "@/components/HelpModal";
 import { CommunityModal } from "@/components/CommunityModal";
@@ -48,22 +52,19 @@ export function Navbar({ user }: NavbarProps) {
   const rawPathname = usePathname();
   const pathname = rawPathname || "";
 
-  // État du tiroir latéral gauche (Menu Hamburger)
+  const { language, setLanguage, theme, toggleTheme, avatar, setAvatar, t } = useApp();
+
+  // États des menus et modales
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // État du menu déroulant droit (Trois petits points : Aide & Assistance)
-  const [helpDropdownOpen, setHelpDropdownOpen] = useState(false);
-
-  // État du modal complet d'Assistance / FAQ
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
-
-  // État du modal Centre Communautaire (WhatsApp & Telegram)
   const [communityModalOpen, setCommunityModalOpen] = useState(false);
 
   const isActivationPage = pathname.startsWith("/activation");
   const isAuthPage = pathname.startsWith("/auth");
 
-  // Masquer intégralement le header (hamburger 3 traits, logo, nom et 3 points) sur les pages d'authentification (connexion, inscription...)
+  // Masquer intégralement le header sur les pages d'authentification
   if (isAuthPage) {
     return null;
   }
@@ -74,105 +75,65 @@ export function Navbar({ user }: NavbarProps) {
   const userInitial = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : "U";
   const isActivated = Boolean(user?.isActivated);
 
+  // Gestion du téléversement de la photo de profil
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          setAvatar(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Liens pour la barre supérieure Desktop
   const navLinks = [
-    { label: "Accueil", href: "/", icon: Home },
-    { label: "Marché", href: "/marche", icon: ShoppingBag },
-    { label: "Tâches", href: "/taches", icon: CalendarCheck },
-    { label: "Portefeuille", href: "/portefeuille", icon: Wallet },
-    { label: "Profil", href: "/profil", icon: User },
+    { label: t("nav.home"), href: "/", icon: Home },
+    { label: t("nav.market"), href: "/marche", icon: ShoppingBag },
+    { label: t("nav.tasks"), href: "/taches", icon: CalendarCheck },
+    { label: t("nav.withdrawal"), href: "/portefeuille", icon: Wallet },
+    { label: t("nav.profile"), href: "/profil", icon: User },
   ];
 
   if (user?.role === "admin") {
-    navLinks.push({ label: "Admin", href: "/admin", icon: ShieldCheck });
+    navLinks.push({ label: t("nav.admin"), href: "/admin", icon: ShieldCheck });
   }
 
-  // Liens officiels du tiroir de navigation mobile (épurés, sans numérotation ni sous-texte)
+  // Liens officiels du tiroir de navigation mobile (12 sections unifiées)
   const drawerNavLinks = [
-    {
-      label: "Accueil",
-      href: "/",
-      icon: Home,
-    },
-    {
-      label: "Centre Communautaire",
-      href: "/communaute",
-      icon: MessageSquare,
-      isCommunity: true,
-    },
-    {
-      label: "Centre de Retrait",
-      href: "/portefeuille",
-      icon: Wallet,
-    },
-    {
-      label: "Équipe",
-      href: "/#equipe",
-      icon: Users,
-    },
-    {
-      label: "Récompense de Démarrage",
-      href: "/#welcome-bonus",
-      icon: Gift,
-    },
-    {
-      label: "Roue de la Chance",
-      href: "/roue",
-      icon: Disc,
-    },
-    {
-      label: "Tâches",
-      href: "/taches",
-      icon: CalendarCheck,
-    },
-    {
-      label: "Marketplace",
-      href: "/marche",
-      icon: ShoppingBag,
-    },
-    {
-      label: "Emploi",
-      href: "/emploi",
-      icon: Briefcase,
-    },
-    {
-      label: "Application Premium",
-      href: "/applications-premium",
-      icon: Sparkles,
-    },
-    {
-      label: "Formations",
-      href: "/formations",
-      icon: GraduationCap,
-    },
-    {
-      label: "Profil",
-      href: "/profil",
-      icon: User,
-    },
+    { label: t("nav.home"), href: "/", icon: Home },
+    { label: t("nav.community"), href: "/communaute", icon: MessageSquare, isCommunity: true },
+    { label: t("nav.withdrawal"), href: "/portefeuille", icon: Wallet },
+    { label: t("nav.team"), href: "/#equipe", icon: Users },
+    { label: t("nav.welcomeBonus"), href: "/#welcome-bonus", icon: Gift },
+    { label: t("nav.wheel"), href: "/roue", icon: Disc },
+    { label: t("nav.tasks"), href: "/taches", icon: CalendarCheck },
+    { label: t("nav.market"), href: "/marche", icon: ShoppingBag },
+    { label: t("nav.jobs"), href: "/emploi", icon: Briefcase },
+    { label: t("nav.premium"), href: "/applications-premium", icon: Sparkles },
+    { label: t("nav.training"), href: "/formations", icon: GraduationCap },
+    { label: t("nav.profile"), href: "/profil", icon: User },
   ];
-
-  if (user?.role === "admin") {
-    drawerNavLinks.push({
-      label: "Administration",
-      href: "/admin",
-      icon: ShieldCheck,
-    });
-  }
 
   const closeSidebar = () => setSidebarOpen(false);
-  const closeHelpDropdown = () => setHelpDropdownOpen(false);
+  const closeDropdowns = () => {
+    setProfileDropdownOpen(false);
+    setLangDropdownOpen(false);
+  };
 
   const openFaqModal = () => {
-    closeHelpDropdown();
+    closeDropdowns();
     closeSidebar();
     setHelpModalOpen(true);
   };
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/98 backdrop-blur-md border-b border-gray-100 shadow-xs transition-all">
-        <div className="max-w-5xl mx-auto px-4 h-16 sm:h-18 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#131E17]/95 backdrop-blur-md border-b border-gray-100 dark:border-[#1E2E24] shadow-xs transition-colors">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 h-16 sm:h-18 flex items-center justify-between gap-2">
           {/* ========================================================================= */}
           {/* 1. GAUCHE MOBILE : Bouton Hamburger (3 traits)                            */}
           {/* ========================================================================= */}
@@ -181,24 +142,24 @@ export function Navbar({ user }: NavbarProps) {
               type="button"
               onClick={() => {
                 setSidebarOpen(true);
-                setHelpDropdownOpen(false);
+                closeDropdowns();
               }}
-              className="p-2 -ml-2 rounded-xl text-gray-800 hover:text-vita-deep hover:bg-vita-surface transition-colors focus:outline-none"
+              className="p-2 -ml-2 rounded-xl text-gray-800 dark:text-gray-100 hover:text-vita-deep hover:bg-vita-surface transition-colors focus:outline-hidden"
               aria-label="Ouvrir le menu de navigation"
             >
-              <Menu className="w-6 h-6 text-gray-800" />
+              <Menu className="w-6 h-6 text-gray-800 dark:text-gray-100" />
             </button>
           </div>
 
           {/* ========================================================================= */}
-          {/* 2. CENTRE MOBILE / GAUCHE DESKTOP : Logo et Nom VITA EARN en grand       */}
+          {/* 2. CENTRE MOBILE / GAUCHE DESKTOP : Logo et Nom VITA EARN                 */}
           {/* ========================================================================= */}
           <div className="flex-1 md:flex-initial flex items-center justify-center md:justify-start">
             <Link
               href="/"
               onClick={() => {
                 closeSidebar();
-                closeHelpDropdown();
+                closeDropdowns();
               }}
               className="flex items-center gap-2 group py-1"
             >
@@ -207,7 +168,7 @@ export function Navbar({ user }: NavbarProps) {
                 alt="Vita Earn"
                 width={56}
                 height={40}
-                className="h-8 sm:h-9 w-auto object-contain mix-blend-multiply transition-transform group-hover:scale-105 duration-200"
+                className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-105 duration-200"
                 priority
               />
               <Image
@@ -215,7 +176,7 @@ export function Navbar({ user }: NavbarProps) {
                 alt="Vita Earn"
                 width={170}
                 height={20}
-                className="h-5 sm:h-6 w-auto object-contain mix-blend-multiply"
+                className="h-5 sm:h-6 w-auto object-contain dark:brightness-200"
                 priority
               />
             </Link>
@@ -225,15 +186,15 @@ export function Navbar({ user }: NavbarProps) {
           {/* 3. NAVIGATION DESKTOP                                                     */}
           {/* ========================================================================= */}
           {!isActivationPage && !isAuthPage && (
-            <nav className="hidden md:flex items-center gap-4">
+            <nav className="hidden md:flex items-center gap-3 lg:gap-4">
               {navLinks.map((item) => (
                 <Link
-                  key={item.href}
+                  key={item.label}
                   href={item.href}
                   className={`text-sm font-semibold transition-colors px-2.5 py-1.5 rounded-lg ${
                     pathname === item.href
-                      ? "text-vita-deep font-bold bg-vita-surface/80"
-                      : "text-vita-text hover:text-vita-deep hover:bg-gray-50"
+                      ? "text-vita-deep dark:text-[#86EFAC] font-bold bg-vita-surface/80 dark:bg-emerald-950/40"
+                      : "text-vita-text dark:text-gray-300 hover:text-vita-deep hover:bg-gray-50 dark:hover:bg-slate-800/50"
                   }`}
                 >
                   {item.label}
@@ -243,195 +204,244 @@ export function Navbar({ user }: NavbarProps) {
           )}
 
           {/* ========================================================================= */}
-          {/* 4. ACTIONS DESKTOP                                                        */}
+          {/* 4. ACTIONS DROITE : Langue, Mode Sombre/Clair, Avatar Profil              */}
           {/* ========================================================================= */}
-          <div className="hidden md:flex items-center gap-3">
-            {/* Bouton Aide & Support sur Desktop */}
+          <div className="flex items-center gap-1.5 sm:gap-2 relative">
+            {/* 1. SÉLECTEUR DE LANGUE (FR / EN) */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setLangDropdownOpen(!langDropdownOpen);
+                  setProfileDropdownOpen(false);
+                  setSidebarOpen(false);
+                }}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-vita-deep hover:bg-vita-surface dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-slate-700"
+                aria-label="Changer de langue / Change language"
+                title="Langue / Language"
+              >
+                <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span className="uppercase">{language}</span>
+              </button>
+
+              {langDropdownOpen && (
+                <div className="absolute right-0 top-11 z-50 w-36 bg-white dark:bg-[#131E17] rounded-xl shadow-2xl border border-gray-100 dark:border-[#1E2E24] p-1.5 animate-in fade-in zoom-in-95 duration-150">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguage("fr");
+                      setLangDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      language === "fr"
+                        ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <span>Français (FR)</span>
+                    {language === "fr" && <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguage("en");
+                      setLangDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      language === "en"
+                        ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <span>English (EN)</span>
+                    {language === "en" && <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 2. BOUTON MODE SOMBRE / CLAIR (LUNE / SOLEIL) */}
             <button
               type="button"
-              onClick={() => setHelpModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-vita-deep bg-vita-surface rounded-lg border border-vita-border hover:bg-white transition-colors"
+              onClick={toggleTheme}
+              className="p-2 rounded-xl text-gray-700 dark:text-gray-200 hover:text-vita-deep hover:bg-vita-surface dark:hover:bg-slate-800 transition-colors"
+              aria-label={theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"}
+              title={theme === "dark" ? t("top.light") : t("top.dark")}
             >
-              <Headphones className="w-3.5 h-3.5 text-vita-medium" />
-              <span>Aide</span>
+              {theme === "dark" ? (
+                <Sun className="w-4 h-4 text-amber-400 animate-in spin-in-90 duration-200" />
+              ) : (
+                <Moon className="w-4 h-4 text-gray-700 hover:text-emerald-600 transition-colors" />
+              )}
             </button>
 
-            {isLoggedIn ? (
-              <>
-                {!isActivated && !isActivationPage && (
-                  <Link
-                    href="/activation"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-xs"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Activer mon compte</span>
-                  </Link>
-                )}
+            {/* 3. AVATAR DE PROFIL AVEC MENU DÉROULANT (Remplace les 3 points) */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileDropdownOpen(!profileDropdownOpen);
+                  setLangDropdownOpen(false);
+                  setSidebarOpen(false);
+                }}
+                className="relative rounded-full focus:outline-hidden p-0.5 border border-transparent hover:border-emerald-400 transition-colors block"
+                aria-label="Profil et options"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={avatar}
+                  alt={userDisplayName || "Avatar"}
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border border-emerald-500/40 shadow-xs"
+                />
+                {/* Pastille statut en ligne (comme sur la capture Earnlix) */}
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#16A34A] ring-2 ring-white dark:ring-[#131E17]" />
+              </button>
 
-                {user?.role === "admin" && (
-                  <Link
-                    href="/admin"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-xs"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Admin</span>
-                  </Link>
-                )}
+              {/* Menu Pop-up sous l'avatar */}
+              {profileDropdownOpen && (
+                <div className="absolute right-0 top-11 z-50 w-72 sm:w-80 bg-white dark:bg-[#131E17] rounded-2xl shadow-2xl border border-gray-100 dark:border-[#1E2E24] p-3.5 animate-in fade-in zoom-in-95 duration-150">
+                  {/* Profil & Statut */}
+                  <div className="pb-3 mb-3 border-b border-gray-100 dark:border-[#1E2E24]">
+                    <div className="flex items-center gap-3">
+                      <div className="relative shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={avatar}
+                          alt={userDisplayName || "Avatar"}
+                          className="w-11 h-11 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow-xs"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">
+                          {userDisplayName || t("prof.myAccount")}
+                        </p>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                          {user?.email || "membre@vitaearn.com"}
+                        </p>
+                        <div className="mt-1">
+                          {isActivated ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                              {t("nav.accountActive")}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
+                              <AlertCircle className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                              {t("nav.accountInactive")}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
 
-                <Link
-                  href="/profil"
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-vita-deep bg-vita-surface rounded-lg border border-vita-border hover:bg-white transition-colors"
-                >
-                  <User className="w-3.5 h-3.5 text-vita-medium" />
-                  <span className="truncate max-w-[130px]">{userDisplayName || "Mon compte"}</span>
-                </Link>
-
-                <Link
-                  href="/auth/logout"
-                  className="p-2 text-gray-500 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
-                  title="Se déconnecter"
-                >
-                  <LogOut className="w-4 h-4" />
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/auth/login"
-                  className="px-3 py-1.5 text-xs font-semibold text-vita-deep bg-vita-surface rounded-lg border border-vita-border hover:bg-white transition-colors"
-                >
-                  Connexion
-                </Link>
-                <Link
-                  href="/auth/register"
-                  className="px-3.5 py-1.5 text-xs font-bold bg-[#16A34A] text-white rounded-lg hover:bg-[#15803D] transition-colors shadow-xs"
-                >
-                  Inscription
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* ========================================================================= */}
-          {/* 5. DROITE MOBILE : Trois petits points (...) pour l'Assistance & Aide    */}
-          {/* ========================================================================= */}
-          <div className="flex md:hidden items-center relative">
-            <button
-              type="button"
-              onClick={() => {
-                setHelpDropdownOpen(!helpDropdownOpen);
-                setSidebarOpen(false);
-              }}
-              className="p-2 -mr-2 rounded-xl text-gray-800 hover:text-vita-deep hover:bg-vita-surface transition-colors focus:outline-none"
-              aria-label="Assistance et aide"
-            >
-              <MoreHorizontal className="w-6 h-6 text-gray-800" />
-            </button>
-
-            {/* Menu Pop-up sous les 3 points : AIDE & SUPPORT */}
-            {helpDropdownOpen && (
-              <div className="absolute right-0 top-12 z-50 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 p-3.5 animate-in fade-in zoom-in-95 duration-150">
-                <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-gray-100">
-                  <div className="flex items-center gap-2">
-                    <Headphones className="w-4 h-4 text-vita-deep" />
-                    <span className="text-xs font-bold text-vita-deep uppercase tracking-wider">
-                      Assistance & Aide
-                    </span>
+                    {/* Option de changement de photo de profil */}
+                    <div className="mt-2.5">
+                      <label className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gray-50 dark:bg-[#17241C] hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-gray-700 dark:text-gray-300 hover:text-emerald-800 dark:hover:text-emerald-300 text-xs font-semibold border border-gray-200 dark:border-[#1E2E24] cursor-pointer transition-colors">
+                        <Camera className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                        <span>{t("prof.changeAvatar")}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleAvatarUpload}
+                        />
+                      </label>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={closeHelpDropdown}
-                    className="p-1 rounded-md text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+
+                  {/* Actions & Raccourcis */}
+                  <div className="space-y-1">
+                    {/* Mon Profil */}
+                    <Link
+                      href="/profil"
+                      onClick={closeDropdowns}
+                      className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span className="text-xs font-semibold">{t("prof.viewProfile")}</span>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                    </Link>
+
+                    {/* Assistance WhatsApp Directe */}
+                    <a
+                      href="https://wa.me/22890000000?text=Bonjour%20Support%20Vita%20Earn,%20j'ai%20besoin%20d'aide."
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={closeDropdowns}
+                      className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span className="text-xs font-semibold">{t("prof.whatsapp")}</span>
+                      </div>
+                      <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+                    </a>
+
+                    {/* Centre d'Aide & FAQ */}
+                    <button
+                      type="button"
+                      onClick={openFaqModal}
+                      className="w-full flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <HelpCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span className="text-xs font-semibold">{t("prof.faq")}</span>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                    </button>
+
+                    {/* Canaux WhatsApp & Telegram */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeDropdowns();
+                        setCommunityModalOpen(true);
+                      }}
+                      className="w-full flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <MessageSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span className="text-xs font-semibold">{t("prof.community")}</span>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                    </button>
+
+                    {/* Activer mon compte si non activé */}
+                    {!isActivated && (
+                      <Link
+                        href="/activation"
+                        onClick={closeDropdowns}
+                        className="flex items-center justify-between p-2 rounded-xl bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 text-amber-800 dark:text-amber-300 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span className="text-xs font-bold">{t("prof.howToActivate")}</span>
+                        </div>
+                        <ChevronRight className="w-3.5 h-3.5 text-amber-600" />
+                      </Link>
+                    )}
+
+                    {/* Déconnexion */}
+                    <div className="pt-2 mt-2 border-t border-gray-100 dark:border-[#1E2E24]">
+                      <Link
+                        href="/auth/logout"
+                        onClick={closeDropdowns}
+                        className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <LogOut className="w-4 h-4 text-red-500 shrink-0" />
+                          <span className="text-xs font-bold">{t("nav.logout")}</span>
+                        </div>
+                        <ChevronRight className="w-3.5 h-3.5 text-red-400" />
+                      </Link>
+                    </div>
+                  </div>
                 </div>
-
-                <div className="space-y-1.5">
-                  {/* Option 1 : Assistance WhatsApp Directe */}
-                  <a
-                    href="https://wa.me/22890000000?text=Bonjour%20Support%20Vita%20Earn,%20j'ai%20besoin%20d'aide."
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={closeHelpDropdown}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <MessageCircle className="w-4 h-4 shrink-0" />
-                      <div className="text-left">
-                        <div className="text-xs font-bold">Assistance WhatsApp</div>
-                        <div className="text-[10px] text-white/80">Support réactif 7j/7</div>
-                      </div>
-                    </div>
-                    <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-                  </a>
-
-                  {/* Option 2 : Centre d'Aide & FAQ */}
-                  <button
-                    type="button"
-                    onClick={openFaqModal}
-                    className="w-full flex items-center justify-between p-2.5 rounded-xl text-left bg-vita-surface hover:bg-vita-surface/80 text-vita-deep transition-colors"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <HelpCircle className="w-4 h-4 text-vita-medium shrink-0" />
-                      <div>
-                        <div className="text-xs font-bold">Questions Fréquentes</div>
-                        <div className="text-[10px] text-vita-muted">Activation, tâches, retraits</div>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-vita-muted" />
-                  </button>
-
-                  {/* Option 3 : Comment activer son compte */}
-                  <Link
-                    href="/activation"
-                    onClick={closeHelpDropdown}
-                    className="flex items-center justify-between p-2.5 rounded-xl text-left hover:bg-gray-50 text-gray-700 transition-colors"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
-                      <div>
-                        <div className="text-xs font-semibold text-gray-800">Guide d'activation</div>
-                        <div className="text-[10px] text-gray-500">Paiement unique de 4 500 F</div>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                  </Link>
-
-                  {/* Option 4 : Guide des retraits */}
-                  <Link
-                    href="/portefeuille"
-                    onClick={closeHelpDropdown}
-                    className="flex items-center justify-between p-2.5 rounded-xl text-left hover:bg-gray-50 text-gray-700 transition-colors"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Wallet className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <div>
-                        <div className="text-xs font-semibold text-gray-800">Retraits Mobile Money</div>
-                        <div className="text-[10px] text-gray-500">Seuil min. 4 500 FCFA</div>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                  </Link>
-
-                  {/* Option 5 : Email */}
-                  <a
-                    href="mailto:support@vitaearn.com"
-                    onClick={closeHelpDropdown}
-                    className="flex items-center justify-between p-2.5 rounded-xl text-left hover:bg-gray-50 text-gray-700 transition-colors"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Mail className="w-4 h-4 text-gray-500 shrink-0" />
-                      <div>
-                        <div className="text-xs font-semibold text-gray-800">Support Email</div>
-                        <div className="text-[10px] text-gray-500">support@vitaearn.com</div>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                  </a>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -448,35 +458,39 @@ export function Navbar({ user }: NavbarProps) {
         aria-hidden="true"
       />
 
-      {/* 2. Tiroir coulissant depuis la gauche (ne couvre pas toute la page) */}
+      {/* 2. Volet latéral blanc/sombre coulissant depuis la gauche */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-[285px] sm:w-[320px] max-w-[82vw] h-full bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out md:hidden ${
+        className={`fixed top-0 left-0 bottom-0 z-50 w-72 max-w-[85vw] bg-white dark:bg-[#131E17] shadow-2xl flex flex-col transition-transform duration-300 ease-in-out md:hidden ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
-        aria-label="Menu principal de navigation"
+        aria-label="Navigation principale"
       >
-        {/* En-tête du tiroir avec logo et croix de fermeture */}
-        <div className="p-4 border-b border-vita-border flex items-center justify-between bg-vita-surface/40">
-          <Link href="/" onClick={closeSidebar} className="flex items-center gap-2">
+        {/* En-tête du tiroir avec Logo */}
+        <div className="p-4 border-b border-vita-border dark:border-[#1E2E24] flex items-center justify-between">
+          <Link
+            href="/"
+            onClick={closeSidebar}
+            className="flex items-center gap-2"
+          >
             <Image
               src="/images/logo-icon.png"
               alt="Vita Earn"
-              width={45}
-              height={32}
-              className="h-7 w-auto object-contain mix-blend-multiply"
+              width={42}
+              height={30}
+              className="h-7 w-auto object-contain"
             />
             <Image
               src="/images/logo-text.png"
               alt="Vita Earn"
               width={140}
               height={17}
-              className="h-4 sm:h-5 w-auto object-contain mix-blend-multiply"
+              className="h-4 sm:h-5 w-auto object-contain dark:brightness-200"
             />
           </Link>
           <button
             type="button"
             onClick={closeSidebar}
-            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-200/60 transition-colors"
+            className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
             aria-label="Fermer le menu"
           >
             <X className="w-5 h-5" />
@@ -485,23 +499,26 @@ export function Navbar({ user }: NavbarProps) {
 
         {/* Profil de l'utilisateur dans le tiroir */}
         {isLoggedIn ? (
-          <div className="p-4 bg-vita-surface/80 border-b border-vita-border">
+          <div className="p-4 bg-vita-surface/80 dark:bg-[#0E1812] border-b border-vita-border dark:border-[#1E2E24]">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-vita-deep text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
-                {userInitial}
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={avatar}
+                alt={userDisplayName || "Avatar"}
+                className="w-10 h-10 rounded-full object-cover shrink-0 shadow-xs border border-emerald-500/40"
+              />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-vita-deep truncate">{userDisplayName}</p>
+                <p className="text-xs font-bold text-vita-deep dark:text-emerald-400 truncate">{userDisplayName}</p>
                 <div className="flex items-center gap-1 mt-0.5">
                   {isActivated ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                      Compte activé
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                      {t("nav.accountActive")}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
-                      <AlertCircle className="w-3 h-3 text-amber-600" />
-                      Non activé
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded">
+                      <AlertCircle className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                      {t("nav.accountInactive")}
                     </span>
                   )}
                 </div>
@@ -515,27 +532,27 @@ export function Navbar({ user }: NavbarProps) {
                 className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs transition-colors"
               >
                 <ShieldCheck className="w-4 h-4" />
-                <span>Activer mon compte (4 500 F)</span>
+                <span>{t("nav.activate")}</span>
               </Link>
             )}
           </div>
         ) : (
-          <div className="p-4 bg-vita-surface/80 border-b border-vita-border">
-            <p className="text-xs font-bold text-vita-deep mb-2">Bienvenue sur Vita Earn</p>
+          <div className="p-4 bg-vita-surface/80 dark:bg-[#0E1812] border-b border-vita-border dark:border-[#1E2E24]">
+            <p className="text-xs font-bold text-vita-deep dark:text-emerald-400 mb-2">Vita Earn</p>
             <div className="flex gap-2">
               <Link
                 href="/auth/login"
                 onClick={closeSidebar}
-                className="flex-1 text-center py-2 px-3 rounded-xl bg-white border border-vita-border text-xs font-bold text-vita-deep hover:bg-vita-surface transition-colors shadow-2xs"
+                className="flex-1 text-center py-2 px-3 rounded-xl bg-white dark:bg-[#131E17] border border-vita-border dark:border-[#1E2E24] text-xs font-bold text-vita-deep dark:text-gray-200 hover:bg-vita-surface transition-colors shadow-2xs"
               >
-                Connexion
+                {t("nav.login")}
               </Link>
               <Link
                 href="/auth/register"
                 onClick={closeSidebar}
                 className="flex-1 text-center py-2 px-3 rounded-xl bg-[#16A34A] text-xs font-bold text-white hover:bg-[#15803D] transition-colors shadow-2xs"
               >
-                Inscription
+                {t("nav.register")}
               </Link>
             </div>
           </div>
@@ -543,8 +560,8 @@ export function Navbar({ user }: NavbarProps) {
 
         {/* Liens de navigation dans le tiroir */}
         <div className="p-3 overflow-y-auto flex-1 space-y-1">
-          <p className="text-[11px] font-bold text-vita-muted uppercase px-3 pt-1 pb-1">
-            Navigation
+          <p className="text-[11px] font-bold text-vita-muted dark:text-gray-400 uppercase px-3 pt-1 pb-1">
+            {t("nav.navigation")}
           </p>
           {drawerNavLinks.map((item) => {
             const Icon = item.icon;
@@ -561,58 +578,61 @@ export function Navbar({ user }: NavbarProps) {
                 }}
                 className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                   isActive
-                    ? "bg-vita-surface text-vita-deep font-bold"
-                    : "text-vita-text hover:bg-vita-surface/60"
+                    ? "bg-vita-surface dark:bg-emerald-950/40 text-vita-deep dark:text-emerald-300 font-bold"
+                    : "text-vita-text dark:text-gray-200 hover:bg-vita-surface/60 dark:hover:bg-slate-800/50"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <Icon
-                    className={`w-4 h-4 shrink-0 ${isActive ? "text-vita-deep" : "text-vita-medium"}`}
+                    className={`w-4 h-4 shrink-0 ${isActive ? "text-vita-deep dark:text-emerald-400" : "text-vita-medium dark:text-emerald-500"}`}
                   />
-                  <span className="truncate text-sm font-semibold text-vita-text">
+                  <span className="truncate text-sm font-semibold">
                     {item.label}
                   </span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-vita-muted/60 shrink-0 ml-1" />
+                <ChevronRight className="w-4 h-4 text-vita-muted/60 dark:text-gray-500 shrink-0 ml-1" />
               </Link>
             );
           })}
 
-          <div className="pt-2 mt-2 border-t border-vita-border/60">
+          <div className="pt-2 mt-2 border-t border-vita-border/60 dark:border-[#1E2E24]">
             <button
               type="button"
               onClick={openFaqModal}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-vita-text hover:bg-vita-surface/60 transition-colors"
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-vita-text dark:text-gray-200 hover:bg-vita-surface/60 dark:hover:bg-slate-800/50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <Headphones className="w-4 h-4 text-vita-medium" />
-                <span className="text-sm font-semibold text-vita-text">Centre d'Aide</span>
+                <Headphones className="w-4 h-4 text-vita-medium dark:text-emerald-500" />
+                <span className="text-sm font-semibold">{t("nav.helpFaq")}</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-vita-muted/60 shrink-0" />
+              <ChevronRight className="w-4 h-4 text-vita-muted/60 dark:text-gray-500 shrink-0" />
             </button>
           </div>
         </div>
 
-        {/* Pied du tiroir : Déconnexion (affiché uniquement si connecté) */}
+        {/* Pied du tiroir : Déconnexion */}
         {isLoggedIn && (
-          <div className="p-3 border-t border-vita-border bg-gray-50/80">
+          <div className="p-3 border-t border-vita-border dark:border-[#1E2E24] bg-gray-50/80 dark:bg-[#0E1812]">
             <Link
               href="/auth/logout"
               onClick={closeSidebar}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs transition-colors"
+              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 text-sm font-bold transition-colors"
             >
-              <LogOut className="w-4 h-4" />
-              <span>Se déconnecter</span>
+              <LogOut className="w-4 h-4 shrink-0" />
+              <span>{t("nav.logout")}</span>
             </Link>
           </div>
         )}
       </aside>
 
-      {/* Modal complet Assistance & FAQ */}
+      {/* Modale d'Assistance & FAQ */}
       <HelpModal isOpen={helpModalOpen} onClose={() => setHelpModalOpen(false)} />
 
-      {/* Modal Centre Communautaire (WhatsApp & Telegram) */}
-      <CommunityModal isOpen={communityModalOpen} onClose={() => setCommunityModalOpen(false)} />
+      {/* Modale Centre Communautaire (WhatsApp & Telegram) */}
+      <CommunityModal
+        isOpen={communityModalOpen}
+        onClose={() => setCommunityModalOpen(false)}
+      />
     </>
   );
 }
