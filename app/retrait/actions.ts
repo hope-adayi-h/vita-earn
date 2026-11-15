@@ -8,6 +8,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export interface WithdrawalRecord {
   id: string;
   amount: number;
+  fee?: number;
+  netAmount?: number;
   paymentMethod: string;
   phoneNumber: string;
   accountName: string;
@@ -219,25 +221,31 @@ export async function submitWithdrawalAction(formData: FormData): Promise<{
   success?: boolean;
   error?: string;
   message?: string;
+  netAmount?: number;
+  fee?: number;
 }> {
   const amountStr = formData.get("amount") as string;
-  const operator = (formData.get("operator") as string) || "T-Money Togo";
-  const phone = (formData.get("phone") as string)?.trim() || "";
-  const accountName = (formData.get("accountName") as string)?.trim() || "";
+  const operator = (formData.get("operator") as string) || "T-Money Togo (+228)";
 
   const amount = parseInt(amountStr, 10);
   if (isNaN(amount) || amount < 1000) {
     return { error: "Le montant minimum de retrait est de 1 000 FCFA." };
   }
-  if (!phone || phone.length < 6) {
-    return { error: "Veuillez renseigner un numéro Mobile Money valide." };
-  }
-  if (!accountName || accountName.length < 2) {
-    return { error: "Veuillez indiquer le nom complet du titulaire." };
-  }
+
+  const fee = 500;
+  const netAmount = Math.max(0, amount - fee);
 
   const cookieStore = cookies();
-  const isActivated = cookieStore.get("vita_account_activated")?.value === "true";
+  const sessionUserCookie = cookieStore.get("vita_session_user")?.value;
+  let sessionUser: any = null;
+  if (sessionUserCookie) {
+    try {
+      sessionUser = JSON.parse(sessionUserCookie);
+    } catch {}
+  }
+
+  const phone = (formData.get("phone") as string)?.trim() || sessionUser?.phone || "+228 90 00 00 00";
+  const accountName = (formData.get("accountName") as string)?.trim() || sessionUser?.fullName || sessionUser?.username || "Titulaire du compte";
 
   // Sauvegarde dans l'historique des retraits
   let existingRecords: WithdrawalRecord[] = [];
@@ -250,6 +258,8 @@ export async function submitWithdrawalAction(formData: FormData): Promise<{
   const newRecord: WithdrawalRecord = {
     id: "wdr_" + Date.now().toString(36),
     amount,
+    fee,
+    netAmount,
     paymentMethod: operator,
     phoneNumber: phone,
     accountName,
@@ -276,8 +286,8 @@ export async function submitWithdrawalAction(formData: FormData): Promise<{
       await adminClient.from("withdrawals").insert({
         user_id: user.id,
         amount: amount,
-        fee: 0,
-        net_amount: amount,
+        fee: fee,
+        net_amount: netAmount,
         payment_method: operator.toLowerCase().includes("flooz") ? "flooz" : "tmoney",
         phone_number: phone,
         status: "pending",
@@ -293,6 +303,8 @@ export async function submitWithdrawalAction(formData: FormData): Promise<{
 
   return {
     success: true,
-    message: `Votre demande de retrait de ${amount.toLocaleString("fr-FR")} FCFA vers ${operator} (${phone}) a été enregistrée avec succès. Référence : ${newRecord.reference}. Traitement sous 15 à 30 minutes.`,
+    message: `Votre demande de retrait de ${amount.toLocaleString("fr-FR")} FCFA vers ${operator} a été enregistrée avec succès (Frais: 500 FCFA, Net reçu: ${netAmount.toLocaleString("fr-FR")} FCFA). Référence : ${newRecord.reference}.`,
+    netAmount,
+    fee,
   };
 }

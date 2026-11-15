@@ -104,50 +104,37 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
   const TypeIcon = currentType.icon;
 
   const [operator, setOperator] = useState(OPERATORS[0].name);
-  const [accountName, setAccountName] = useState(initialData.user.fullName || initialData.user.username || "");
-  const [phone, setPhone] = useState(initialData.user.phone || "");
-  const [amount, setAmount] = useState<number | "">(initialData.balance > 0 ? Math.min(initialData.balance, 5000) : 2000);
+  const [amount, setAmount] = useState<number | "">("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successResult, setSuccessResult] = useState<{
     reference: string;
     amount: number;
+    netAmount: number;
+    fee: number;
     operator: string;
     phone: string;
   } | null>(null);
 
   const availableBalance = initialData.balance;
   const isActivated = initialData.user.isActivated;
+  const registeredPhone = initialData.user.phone || "+228 90 00 00 00";
+  const registeredName = initialData.user.fullName || initialData.user.username || "Titulaire";
 
-  const handleQuickAmount = (val: number) => {
-    setAmount(val);
-    setErrorMsg("");
-  };
-
-  const handleAllBalance = () => {
-    setAmount(availableBalance);
-    setErrorMsg("");
-  };
+  const numAmount = typeof amount === "number" ? amount : 0;
+  const withdrawalFee = 500;
+  const netAmountCalculated = Math.max(0, numAmount - withdrawalFee);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
-    const numAmount = Number(amount);
     if (!numAmount || numAmount < 1000) {
       setErrorMsg("Le montant minimum de retrait est de 1 000 FCFA.");
       return;
     }
     if (numAmount > availableBalance) {
       setErrorMsg(`Solde insuffisant (${formatFCFA(availableBalance)} disponibles).`);
-      return;
-    }
-    if (!phone || phone.length < 6) {
-      setErrorMsg("Veuillez renseigner un numéro de téléphone Mobile Money valide.");
-      return;
-    }
-    if (!accountName || accountName.length < 2) {
-      setErrorMsg("Veuillez renseigner le nom complet du titulaire.");
       return;
     }
 
@@ -162,8 +149,8 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
       const formData = new FormData();
       formData.set("amount", numAmount.toString());
       formData.set("operator", fullOperatorLabel);
-      formData.set("phone", phone);
-      formData.set("accountName", accountName);
+      formData.set("phone", registeredPhone);
+      formData.set("accountName", registeredName);
 
       const res = await submitWithdrawalAction(formData);
 
@@ -174,8 +161,10 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
         setSuccessResult({
           reference: "WDR-" + Math.random().toString(36).substring(2, 8).toUpperCase(),
           amount: numAmount,
+          netAmount: netAmountCalculated,
+          fee: withdrawalFee,
           operator: fullOperatorLabel,
-          phone,
+          phone: registeredPhone,
         });
         setIsSubmitting(false);
       }
@@ -241,46 +230,22 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
         </div>
       )}
 
-      {/* 3. AVIS IMPORTANT : SÉCURITÉ DU NUMÉRO MOBILE MONEY LIÉ AU COMPTE */}
-      <div className="bg-gradient-to-br from-amber-50 to-orange-50/60 dark:from-amber-950/40 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800/80 rounded-3xl p-5 sm:p-6 shadow-xs space-y-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
-            <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-          </div>
-          <div>
-            <h3 className="text-sm font-black text-amber-950 dark:text-amber-200 tracking-tight">
-              Avis important sur votre retrait
-            </h3>
-            <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
-              Sécurisation automatique et obligatoire de vos fonds
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-2 text-xs text-amber-950/90 dark:text-amber-200 leading-relaxed">
-          <p>
-            Veuillez vous assurer que le retrait est bien destiné à votre numéro Mobile Money <strong>{initialData.user.phone || phone}</strong>. Il est obligatoire d&apos;utiliser le numéro avec lequel vous avez créé votre compte, car le système traite automatiquement le virement vers ce numéro enregistré.
-          </p>
-          <div className="p-3 rounded-2xl bg-white/80 dark:bg-black/30 border border-amber-200/60 dark:border-amber-700/40 text-[11px] space-y-1">
-            <p className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
-              <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-              <span>Pourquoi cette mesure de sécurité est-elle en place ?</span>
-            </p>
-            <p className="text-amber-900/80 dark:text-amber-200/80 leading-relaxed">
-              Il arrive fréquemment que des membres confient la gestion de leur compte à des amis ou des proches pour effectuer leurs tâches quotidiennes. Grâce à cette sécurité inviolable, <strong>aucun tiers ne peut modifier le numéro de retrait ni détourner vos gains</strong>. Vos fonds sont obligatoirement et directement versés sur votre propre numéro Mobile Money.
-            </p>
-          </div>
-        </div>
+      {/* 3. AVIS IMPORTANT : COURT, DIRECT ET RASSURANT */}
+      <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200/90 dark:border-amber-800/70 rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-amber-950 dark:text-amber-200 shadow-2xs">
+        <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+        <p className="leading-relaxed">
+          <strong>Avis important :</strong> Le retrait est obligatoirement et automatiquement envoyé vers le numéro enregistré à votre inscription (<strong>{registeredPhone}</strong>) afin de protéger vos gains contre tout détournement en cas de gestion partagée du compte.
+        </p>
       </div>
 
-      {/* 4. FORMULAIRE DE RETRAIT DE A À Z */}
+      {/* 4. FORMULAIRE ÉPURÉ : 2 CHAMPS UNIQUEMENT + TABLEAU DES FRAIS DE 500 FCFA */}
       <div className="bg-white dark:bg-[#131E17] rounded-3xl border border-gray-200 dark:border-[#1E2E24] p-5 sm:p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-[#1E2E24]">
           <h2 className="text-sm font-bold text-gray-900 dark:text-gray-100">
-            Paramètres du Retrait
+            Effectuer un Retrait
           </h2>
-          <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full">
-            Frais : 0 FCFA (Offerts)
+          <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-full border border-amber-300 dark:border-amber-800">
+            Frais : 500 FCFA
           </span>
         </div>
 
@@ -292,10 +257,10 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Opérateur */}
+          {/* CHAMP 1 : SÉLECTIONNER LE MODE DE PAIEMENT */}
           <div>
-            <label htmlFor="operator-select" className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 block">
-              Opérateur Mobile Money
+            <label htmlFor="operator-select" className="text-xs font-bold text-gray-800 dark:text-gray-200 mb-1.5 block">
+              Sélectionner le mode de paiement
             </label>
             <div className="relative">
               <select
@@ -314,58 +279,11 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
             </div>
           </div>
 
-          {/* Nom du titulaire */}
-          <div>
-            <label htmlFor="accountName" className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 block">
-              Nom complet du titulaire du compte
-            </label>
-            <input
-              id="accountName"
-              type="text"
-              value={accountName}
-              onChange={(e) => setAccountName(e.target.value)}
-              placeholder="Ex: Koffi Mensah"
-              required
-              className="w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#1E2E24] bg-white dark:bg-[#17241C] text-xs sm:text-sm font-medium text-gray-800 dark:text-gray-100 focus:outline-hidden focus:border-[#16A34A]"
-            />
-          </div>
-
-          {/* Numéro de téléphone Mobile Money */}
+          {/* CHAMP 2 : ENTRER LE MONTANT */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label htmlFor="phone" className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                <span>Numéro de téléphone récepteur</span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                  <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                  Lié au compte
-                </span>
-              </label>
-              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
-                Numéro vérifié
-              </span>
-            </div>
-            <div className="relative">
-              <input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Ex: +228 90 12 34 56"
-                required
-                className="w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#1E2E24] bg-gray-50/70 dark:bg-[#17241C] text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 focus:outline-hidden focus:border-[#16A34A] pl-10"
-              />
-              <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-              Numéro Mobile Money sécurisé associé obligatoirement à votre compte ({initialData.user.phone || phone}).
-            </p>
-          </div>
-
-          {/* Montant avec raccourcis */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label htmlFor="amount" className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                Montant à retirer (FCFA)
+              <label htmlFor="amount" className="text-xs font-bold text-gray-800 dark:text-gray-200">
+                Entrer le montant
               </label>
               <span className="text-[10px] text-gray-500">Min: 1 000 FCFA</span>
             </div>
@@ -378,60 +296,45 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
                 max={availableBalance > 0 ? availableBalance : undefined}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value ? parseInt(e.target.value, 10) : "")}
-                placeholder="Ex: 5000"
+                placeholder="Entrer le montant (ex: 5000)"
                 required
                 className="w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#1E2E24] bg-white dark:bg-[#17241C] text-sm font-bold text-gray-900 dark:text-gray-100 focus:outline-hidden focus:border-[#16A34A]"
               />
               <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-extrabold text-gray-400">
-                XOF
-              </span>
-            </div>
-
-            {/* Raccourcis de montants */}
-            <div className="flex items-center gap-1.5 mt-2 overflow-x-auto pb-1">
-              {[1000, 2000, 5000, 10000].map((val) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => handleQuickAmount(val)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors shrink-0 ${
-                    amount === val
-                      ? "bg-[#16A34A] text-white border-[#16A34A]"
-                      : "bg-gray-50 dark:bg-[#17241C] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-[#1E2E24] hover:bg-gray-100"
-                  }`}
-                >
-                  {val.toLocaleString("fr-FR")} F
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={handleAllBalance}
-                className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-colors shrink-0"
-              >
-                Tout retirer
-              </button>
-            </div>
-          </div>
-
-          {/* Récapitulatif du transfert */}
-          <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#17241C] border border-gray-200 dark:border-[#1E2E24] text-xs space-y-1.5 text-gray-600 dark:text-gray-300">
-            <div className="flex items-center justify-between">
-              <span>Frais de transfert réseau :</span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">0 FCFA (Gratuit)</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Délai de réception :</span>
-              <span className="font-bold text-gray-900 dark:text-gray-100">15 à 30 minutes</span>
-            </div>
-            <div className="flex items-center justify-between pt-1 border-t border-gray-200 dark:border-[#1E2E24] font-bold text-gray-900 dark:text-gray-100 text-sm">
-              <span>Montant net à recevoir :</span>
-              <span className="text-emerald-700 dark:text-emerald-400 font-black">
-                {amount ? formatFCFA(Number(amount)) : "0 FCFA"}
+                FCFA
               </span>
             </div>
           </div>
 
-          {/* Bouton de confirmation */}
+          {/* TABLEAU RÉCAPITULATIF DES FRAIS (500 FCFA FIXES) */}
+          <div className="p-4 rounded-2xl bg-gray-50 dark:bg-[#17241C] border border-gray-200 dark:border-[#1E2E24] text-xs space-y-2">
+            <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
+              <span>Montant du retrait demandé :</span>
+              <span className="font-bold text-gray-900 dark:text-gray-100">
+                {numAmount > 0 ? formatFCFA(numAmount) : "0 FCFA"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-amber-700 dark:text-amber-400">
+              <span>Frais de retrait fixes :</span>
+              <span className="font-bold">- 500 FCFA</span>
+            </div>
+            <div className="flex items-center justify-between text-gray-500 dark:text-gray-400 text-[11px]">
+              <span>Numéro récepteur sécurisé :</span>
+              <span className="font-semibold text-gray-800 dark:text-gray-200">{registeredPhone}</span>
+            </div>
+            <div className="flex items-center justify-between text-gray-500 dark:text-gray-400 text-[11px]">
+              <span>Délai de virement automatique :</span>
+              <span className="font-semibold text-gray-700 dark:text-gray-300">15 à 30 minutes</span>
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-[#1E2E24] text-sm font-black">
+              <span className="text-gray-900 dark:text-gray-100">Montant net à recevoir :</span>
+              <span className="text-emerald-700 dark:text-emerald-400 text-base">
+                {numAmount >= 500 ? formatFCFA(netAmountCalculated) : "0 FCFA"}
+              </span>
+            </div>
+          </div>
+
+          {/* BOUTON D'ACTION : PAYER ET FAIRE LE RETRAIT */}
           <button
             type="submit"
             disabled={isSubmitting}
@@ -445,7 +348,7 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
             ) : (
               <>
                 <ShieldCheck className="w-5 h-5 text-white" />
-                <span>Confirmer le Retrait Mobile Money</span>
+                <span>Payer et faire le retrait</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -453,7 +356,7 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
         </form>
       </div>
 
-      {/* 4. MODAL SUCCÈS APRÈS RETRAIT */}
+      {/* 5. MODAL SUCCÈS APRÈS RETRAIT */}
       {successResult && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#131E17] rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl border border-gray-100 dark:border-[#1E2E24] animate-in fade-in zoom-in-95">
@@ -466,7 +369,7 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
                 Demande de Retrait Validée !
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Votre retrait de <strong className="text-emerald-600">{formatFCFA(successResult.amount)}</strong> a été transmis au réseau {successResult.operator}.
+                Votre demande de retrait de <strong className="text-emerald-600">{formatFCFA(successResult.amount)}</strong> a été transmise vers {successResult.operator}.
               </p>
             </div>
 
@@ -478,6 +381,14 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
               <div className="flex justify-between">
                 <span className="text-gray-500">Numéro récepteur :</span>
                 <span className="font-bold text-gray-900 dark:text-gray-100">{successResult.phone}</span>
+              </div>
+              <div className="flex justify-between text-amber-700 dark:text-amber-400">
+                <span>Frais fixes déduits :</span>
+                <span className="font-bold">- 500 FCFA</span>
+              </div>
+              <div className="flex justify-between text-emerald-700 dark:text-emerald-400 font-bold border-t border-gray-200 dark:border-[#1E2E24] pt-1 text-sm">
+                <span>Net envoyé sur votre compte :</span>
+                <span className="font-black">{formatFCFA(successResult.netAmount)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Délai estimé :</span>
