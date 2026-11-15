@@ -71,10 +71,10 @@ export function Navbar({ user }: NavbarProps) {
   // Sous-options du Centre de Retrait
   const withdrawalSubOptions = [
     {
-      id: "total",
-      label: "Retrait Total",
+      id: "solde",
+      label: "Retrait Solde",
       sublabel: "Solde Principal & Réseau",
-      href: "/retrait?type=total",
+      href: "/retrait?type=solde",
       icon: Wallet,
       color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60",
     },
@@ -93,14 +93,6 @@ export function Navbar({ user }: NavbarProps) {
       href: "/retrait?type=youtube",
       icon: PlaySquare,
       color: "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60",
-    },
-    {
-      id: "trivia",
-      label: "Retrait Trivia",
-      sublabel: "Gains Questions & Quiz",
-      href: "/retrait?type=trivia",
-      icon: HelpCircle,
-      color: "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60",
     },
     {
       id: "ads",

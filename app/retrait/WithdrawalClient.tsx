@@ -50,9 +50,16 @@ const WITHDRAWAL_TYPES_CONFIG: Record<
     accentColor: string;
   }
 > = {
+  solde: {
+    title: "Retrait Solde (Solde Principal)",
+    badge: "Retrait Solde",
+    description: "Retrait direct de votre solde disponible vers votre numéro Mobile Money.",
+    icon: Wallet,
+    accentColor: "from-[#16A34A] via-[#16A34A] to-[#15803D]",
+  },
   total: {
-    title: "Retrait Total (Solde Principal)",
-    badge: "Solde Principal & Réseau",
+    title: "Retrait Solde (Solde Principal)",
+    badge: "Retrait Solde",
     description: "Retrait direct de votre solde disponible vers votre numéro Mobile Money.",
     icon: Wallet,
     accentColor: "from-[#16A34A] via-[#16A34A] to-[#15803D]",
@@ -70,13 +77,6 @@ const WITHDRAWAL_TYPES_CONFIG: Record<
     description: "Retrait de vos gains accumulés sur les formations et vidéos YouTube.",
     icon: PlaySquare,
     accentColor: "from-[#DC2626] via-[#B91C1C] to-[#991B1B]",
-  },
-  trivia: {
-    title: "Retrait des Gains Trivia",
-    badge: "Tâche Trivia Questions",
-    description: "Retrait de vos récompenses accumulées sur les quiz et questions culturelles.",
-    icon: HelpCircle,
-    accentColor: "from-[#4F46E5] via-[#4338CA] to-[#3730A3]",
   },
   ads: {
     title: "Retrait des Gains Ads Clics",
@@ -97,8 +97,8 @@ const WITHDRAWAL_TYPES_CONFIG: Record<
 export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentTypeKey = searchParams.get("type") || "total";
-  const currentType = WITHDRAWAL_TYPES_CONFIG[currentTypeKey] || WITHDRAWAL_TYPES_CONFIG.total;
+  const currentTypeKey = searchParams.get("type") || "solde";
+  const currentType = WITHDRAWAL_TYPES_CONFIG[currentTypeKey] || WITHDRAWAL_TYPES_CONFIG.solde;
   const TypeIcon = currentType.icon;
 
   const [operator, setOperator] = useState(OPERATORS[0].name);
@@ -153,7 +153,7 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
 
     try {
       const fullOperatorLabel =
-        currentTypeKey !== "total"
+        currentTypeKey !== "total" && currentTypeKey !== "solde"
           ? `${operator} (${currentType.badge})`
           : operator;
 
