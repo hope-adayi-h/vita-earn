@@ -30,6 +30,7 @@ import { HelpModal } from "@/components/HelpModal";
 interface NavbarProps {
   user?: {
     email?: string | null;
+    name?: string | null;
     isActivated?: boolean;
     role?: string;
   } | null;
@@ -51,12 +52,11 @@ export function Navbar({ user }: NavbarProps) {
   const isActivationPage = pathname.startsWith("/activation");
   const isAuthPage = pathname.startsWith("/auth");
 
-  // Définition de l'utilisateur actif (par défaut Koffi sur le dashboard)
-  const activeUser = user || {
-    email: "koffi@vitaearn.com",
-    isActivated: false,
-    role: "user",
-  };
+  // Définition de l'utilisateur actif
+  const isLoggedIn = Boolean(user);
+  const userDisplayName = user?.name || (user?.email ? user.email.split("@")[0] : "");
+  const userInitial = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : "U";
+  const isActivated = Boolean(user?.isActivated);
 
   const navLinks = [
     { label: "Accueil", href: "/", icon: Home },
@@ -67,7 +67,7 @@ export function Navbar({ user }: NavbarProps) {
     { label: "Profil", href: "/profil", icon: User },
   ];
 
-  if (activeUser.role === "admin") {
+  if (user?.role === "admin") {
     navLinks.push({ label: "Admin", href: "/admin", icon: ShieldCheck });
   }
 
@@ -167,41 +167,60 @@ export function Navbar({ user }: NavbarProps) {
               <span>Aide</span>
             </button>
 
-            {!activeUser.isActivated && !isActivationPage && (
-              <Link
-                href="/activation"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-xs"
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Activer mon compte</span>
-              </Link>
+            {isLoggedIn ? (
+              <>
+                {!isActivated && !isActivationPage && (
+                  <Link
+                    href="/activation"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-xs"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Activer mon compte</span>
+                  </Link>
+                )}
+
+                {user?.role === "admin" && (
+                  <Link
+                    href="/admin"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-xs"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Admin</span>
+                  </Link>
+                )}
+
+                <Link
+                  href="/profil"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-vita-deep bg-vita-surface rounded-lg border border-vita-border hover:bg-white transition-colors"
+                >
+                  <User className="w-3.5 h-3.5 text-vita-medium" />
+                  <span className="truncate max-w-[130px]">{userDisplayName || "Mon compte"}</span>
+                </Link>
+
+                <Link
+                  href="/auth/logout"
+                  className="p-2 text-gray-500 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
+                  title="Se déconnecter"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/auth/login"
+                  className="px-3 py-1.5 text-xs font-semibold text-vita-deep bg-vita-surface rounded-lg border border-vita-border hover:bg-white transition-colors"
+                >
+                  Connexion
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="px-3.5 py-1.5 text-xs font-bold bg-[#16A34A] text-white rounded-lg hover:bg-[#15803D] transition-colors shadow-xs"
+                >
+                  Inscription
+                </Link>
+              </>
             )}
-
-            {activeUser.role === "admin" && (
-              <Link
-                href="/admin"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-xs"
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Admin</span>
-              </Link>
-            )}
-
-            <Link
-              href="/profil"
-              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-vita-deep bg-vita-surface rounded-lg border border-vita-border hover:bg-white transition-colors"
-            >
-              <User className="w-3.5 h-3.5 text-vita-medium" />
-              <span className="truncate max-w-[130px]">{activeUser.email || "Mon compte"}</span>
-            </Link>
-
-            <Link
-              href="/auth/logout"
-              className="p-2 text-gray-500 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
-              title="Se déconnecter"
-            >
-              <LogOut className="w-4 h-4" />
-            </Link>
           </div>
 
           {/* ========================================================================= */}
@@ -376,40 +395,62 @@ export function Navbar({ user }: NavbarProps) {
         </div>
 
         {/* Profil de l'utilisateur dans le tiroir */}
-        <div className="p-4 bg-vita-surface/80 border-b border-vita-border">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-vita-deep text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
-              {activeUser.email ? activeUser.email.charAt(0).toUpperCase() : "U"}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-vita-deep truncate">{activeUser.email}</p>
-              <div className="flex items-center gap-1 mt-0.5">
-                {activeUser.isActivated ? (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                    Compte activé
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
-                    <AlertCircle className="w-3 h-3 text-amber-600" />
-                    Non activé
-                  </span>
-                )}
+        {isLoggedIn ? (
+          <div className="p-4 bg-vita-surface/80 border-b border-vita-border">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-vita-deep text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
+                {userInitial}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-vita-deep truncate">{userDisplayName}</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  {isActivated ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      Compte activé
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
+                      <AlertCircle className="w-3 h-3 text-amber-600" />
+                      Non activé
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {!activeUser.isActivated && (
-            <Link
-              href="/activation"
-              onClick={closeSidebar}
-              className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs transition-colors"
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>Activer mon compte (4 500 F)</span>
-            </Link>
-          )}
-        </div>
+            {!isActivated && (
+              <Link
+                href="/activation"
+                onClick={closeSidebar}
+                className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs transition-colors"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Activer mon compte (4 500 F)</span>
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="p-4 bg-vita-surface/80 border-b border-vita-border">
+            <p className="text-xs font-bold text-vita-deep mb-2">Bienvenue sur Vita Earn</p>
+            <div className="flex gap-2">
+              <Link
+                href="/auth/login"
+                onClick={closeSidebar}
+                className="flex-1 text-center py-2 px-3 rounded-xl bg-white border border-vita-border text-xs font-bold text-vita-deep hover:bg-vita-surface transition-colors shadow-2xs"
+              >
+                Connexion
+              </Link>
+              <Link
+                href="/auth/register"
+                onClick={closeSidebar}
+                className="flex-1 text-center py-2 px-3 rounded-xl bg-[#16A34A] text-xs font-bold text-white hover:bg-[#15803D] transition-colors shadow-2xs"
+              >
+                Inscription
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Liens de navigation dans le tiroir */}
         <div className="p-3 overflow-y-auto flex-1 space-y-1">
@@ -456,17 +497,19 @@ export function Navbar({ user }: NavbarProps) {
           </div>
         </div>
 
-        {/* Pied du tiroir : Déconnexion */}
-        <div className="p-3 border-t border-vita-border bg-gray-50/80">
-          <Link
-            href="/auth/logout"
-            onClick={closeSidebar}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Se déconnecter</span>
-          </Link>
-        </div>
+        {/* Pied du tiroir : Déconnexion (affiché uniquement si connecté) */}
+        {isLoggedIn && (
+          <div className="p-3 border-t border-vita-border bg-gray-50/80">
+            <Link
+              href="/auth/logout"
+              onClick={closeSidebar}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Se déconnecter</span>
+            </Link>
+          </div>
+        )}
       </aside>
 
       {/* Modal complet Assistance & FAQ */}

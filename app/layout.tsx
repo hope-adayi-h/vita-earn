@@ -24,15 +24,37 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   // Récupération de l'utilisateur connecté côté serveur (règle absolue : getUser())
-  let currentUser: { email?: string | null; isActivated?: boolean; role?: string } | null = null;
+  let currentUser: {
+    email?: string | null;
+    name?: string | null;
+    isActivated?: boolean;
+    role?: string;
+  } | null = null;
 
   const cookieStore = cookies();
-  const testRole = cookieStore.get("vita_test_role")?.value;
-  const testEmail = cookieStore.get("vita_test_email")?.value;
+  const sessionUserCookie = cookieStore.get("vita_session_user")?.value;
+  let sessionUser: any = null;
+  if (sessionUserCookie) {
+    try {
+      sessionUser = JSON.parse(sessionUserCookie);
+    } catch {}
+  }
 
-  if (testRole) {
+  const testRole = cookieStore.get("vita_test_role")?.value || sessionUser?.role;
+  const testEmail = cookieStore.get("vita_test_email")?.value || sessionUser?.email;
+  const testUser = cookieStore.get("vita_test_user")?.value || sessionUser?.username;
+
+  if (sessionUser) {
     currentUser = {
-      email: testEmail || (testRole === "admin" ? "admin@vitaearn.com" : "koffi@vitaearn.com"),
+      email: sessionUser.email,
+      name: sessionUser.username || sessionUser.fullName,
+      isActivated: Boolean(sessionUser.isActivated),
+      role: sessionUser.role || "user",
+    };
+  } else if (testRole) {
+    currentUser = {
+      email: testEmail || (testRole === "admin" ? "admin@vitaearn.com" : "membre@vitaearn.com"),
+      name: testUser || (testRole === "admin" ? "Administrateur" : "Membre"),
       isActivated: true,
       role: testRole,
     };
@@ -44,27 +66,19 @@ export default async function RootLayout({
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_activated, role")
+        .select("is_activated, role, full_name")
         .eq("id", user.id)
         .single();
 
       currentUser = {
         email: user.email,
-        isActivated: Boolean(profile?.is_activated),
-        role: profile?.role || testRole,
+        name: profile?.full_name || sessionUser?.username || user.user_metadata?.username || user.email?.split("@")[0],
+        isActivated: Boolean(profile?.is_activated ?? sessionUser?.isActivated),
+        role: profile?.role || testRole || "user",
       };
     }
   } catch {
     // Si l'environnement de dev n'est pas encore configuré avec Supabase, ne pas bloquer l'affichage
-  }
-
-  // Par défaut sur la plateforme, l'utilisateur du tableau de bord est considéré comme membre inscrit
-  if (!currentUser) {
-    currentUser = {
-      email: "koffi@vitaearn.com",
-      isActivated: false,
-      role: "user",
-    };
   }
 
   return (

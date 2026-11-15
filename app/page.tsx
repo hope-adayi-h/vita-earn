@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatFCFA } from "@/lib/utils";
@@ -44,9 +45,33 @@ function getBaseAppUrl(): string {
 }
 
 export default async function HomePage() {
+  const cookieStore = cookies();
+  const sessionUserCookie = cookieStore.get("vita_session_user")?.value;
+  let sessionUser: any = null;
+  if (sessionUserCookie) {
+    try {
+      sessionUser = JSON.parse(sessionUserCookie);
+    } catch {}
+  }
+  const testRole = cookieStore.get("vita_test_role")?.value || sessionUser?.role;
+  const testUser = cookieStore.get("vita_test_user")?.value || sessionUser?.username;
+  const testEmail = cookieStore.get("vita_test_email")?.value || sessionUser?.email;
+
+  const supabase = createClient();
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data?.user || null;
+  } catch {}
+
+  // 1. Protection obligatoire : si l'utilisateur n'est pas connecté, redirection immédiate vers /auth/login
+  if (!user && !sessionUser && !testRole) {
+    redirect("/auth/login");
+  }
+
   let isActivated = false;
-  let userName = "Koffi";
-  let userInitial = "K";
+  let userName = "";
+  let userInitial = "";
   let balance = 0;
   let totalWithdrawn = 0;
   let totalEarned = 0;
@@ -80,18 +105,6 @@ export default async function HomePage() {
   const appUrl = getBaseAppUrl();
 
   try {
-    const isConfigured =
-      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
-      !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder") &&
-      Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) &&
-      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.includes("placeholder");
-
-    if (isConfigured) {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
@@ -99,12 +112,14 @@ export default async function HomePage() {
         .eq("id", user.id)
         .maybeSingle();
 
-      isActivated = Boolean(profile?.is_activated);
+      isActivated = Boolean(profile?.is_activated || sessionUser?.isActivated);
       welcomeBonusClaimed = Boolean(profile?.welcome_bonus_claimed);
 
-      // Récupération stricte du nom d'utilisateur spécifié lors de l'inscription (ex: Koffi)
       const rawName =
         profile?.full_name ||
+        sessionUser?.username ||
+        sessionUser?.fullName ||
+        testUser ||
         (user.user_metadata?.username as string) ||
         (user.user_metadata?.full_name as string) ||
         (user.email ? user.email.split("@")[0] : "");
@@ -112,24 +127,24 @@ export default async function HomePage() {
       if (rawName && rawName.trim().length > 0) {
         userName = rawName.trim().charAt(0).toUpperCase() + rawName.trim().slice(1);
       } else {
-        userName = "Koffi";
+        userName = "Membre";
       }
       userInitial = userName.charAt(0).toUpperCase();
 
-      // Referral code unique
       if (profile?.referral_code) {
         referralCode = profile.referral_code;
       } else {
         const adminClient = createAdminClient();
         const newCode = "VE" + Math.random().toString(36).substring(2, 8).toUpperCase();
-        await adminClient
-          .from("profiles")
-          .update({ referral_code: newCode })
-          .eq("id", user.id);
+        try {
+          await adminClient
+            .from("profiles")
+            .update({ referral_code: newCode })
+            .eq("id", user.id);
+        } catch {}
         referralCode = newCode;
       }
 
-      // Lecture du solde réel depuis la vue wallet_balances (Règle 1 : somme de ledger_entries)
       const { data: wb } = await supabase
         .from("wallet_balances")
         .select("balance, available_balance, pending_balance, total_earned, total_withdrawn")
@@ -142,7 +157,6 @@ export default async function HomePage() {
         totalWithdrawn = Number(wb.total_withdrawn) || 0;
       }
 
-      // Espèces engagées : 4 500 FCFA dès que le compte est activé
       if (isActivated) {
         totalExpenses = 4500;
       }
@@ -270,41 +284,57 @@ export default async function HomePage() {
           created_at: e.created_at,
         }));
       }
+    } else if (sessionUser) {
+    userName = (sessionUser.username || sessionUser.fullName || "Membre").trim();
+    userName = userName.charAt(0).toUpperCase() + userName.slice(1);
+    userInitial = userName ? userName.charAt(0).toUpperCase() : "M";
+    isActivated = Boolean(sessionUser.isActivated);
+    if (isActivated) {
+      totalExpenses = 4500;
+    }
+  } else if (testUser) {
+    userName = testUser.trim();
+    userName = userName.charAt(0).toUpperCase() + userName.slice(1);
+    userInitial = userName ? userName.charAt(0).toUpperCase() : "M";
+    isActivated = true;
+    if (testUser.toLowerCase() === "koffi") {
+      balance = 1070;
+      totalWithdrawn = 445249;
+      totalEarned = 3449121;
+      totalExpenses = 4500;
+      level1Count = 14;
+      level2Count = 8;
+      level3Count = 3;
+      level1Earned = 28000;
+      level2Earned = 8000;
+      level3Earned = 1500;
     }
   }
-
-  // Si pas connecté ou mode démo, initialiser les valeurs de démonstration demandées (ex: Koffi)
-  if (!userName || userName === "Koffi") {
-    userName = "Koffi";
-    userInitial = "K";
-    isActivated = true;
-    balance = 1070;
-    totalWithdrawn = 445249;
-    totalEarned = 3449121;
-    totalExpenses = 4500;
-    level1Count = 14;
-    level2Count = 8;
-    level3Count = 3;
-    level1Earned = 28000;
-    level2Earned = 8000;
-    level3Earned = 1500;
-  }
 } catch {
-  // Mode repli sécurisé
-  userName = "Koffi";
-  userInitial = "K";
-  isActivated = true;
-  balance = 1070;
-  totalWithdrawn = 445249;
-  totalEarned = 3449121;
-  totalExpenses = 4500;
-  level1Count = 14;
-  level2Count = 8;
-  level3Count = 3;
-  level1Earned = 28000;
-  level2Earned = 8000;
-  level3Earned = 1500;
+  // Mode repli sécurisé pour session active
+  if (sessionUser) {
+    userName = (sessionUser.username || sessionUser.fullName || "Membre").trim();
+    userName = userName.charAt(0).toUpperCase() + userName.slice(1);
+    userInitial = userName.charAt(0).toUpperCase();
+    isActivated = Boolean(sessionUser.isActivated);
+    if (isActivated) totalExpenses = 4500;
+  } else if (testUser) {
+    userName = testUser.trim();
+    userName = userName.charAt(0).toUpperCase() + userName.slice(1);
+    userInitial = userName.charAt(0).toUpperCase();
+    isActivated = true;
+  }
 }
+
+  if (!userName) {
+    userName = "Membre";
+    userInitial = "M";
+  }
+
+  // Si le compte n'est pas encore activé, redirection obligatoire vers /activation
+  if (!isActivated) {
+    redirect("/activation");
+  }
 
   // Calcul du Welcome Bonus (900 FCFA débloqués après 20 invitations directes)
   const welcomeBonusTarget = 20;
@@ -331,7 +361,7 @@ export default async function HomePage() {
 
         {/* Profil utilisateur & Salutation */}
         <div className="flex items-start gap-3.5 relative z-10 mb-4">
-          <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white font-black text-2xl shadow-inner flex-shrink-0">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full aspect-square bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white font-black text-xl sm:text-2xl shadow-inner flex-shrink-0">
             {userInitial}
           </div>
           <div className="min-w-0 flex-1">

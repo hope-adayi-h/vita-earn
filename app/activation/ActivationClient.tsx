@@ -57,28 +57,31 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col gap-3 justify-center max-w-sm mx-auto">
             <Link
-              href="/vendre"
-              className="touch-target px-5 py-2.5 rounded-xl bg-vita-deep hover:bg-vita-medium text-white font-semibold text-sm transition-colors shadow-sm inline-flex items-center justify-center gap-2"
+              href="/"
+              className="touch-target px-6 py-3.5 rounded-2xl bg-[#16A34A] hover:bg-[#15803D] text-white font-black text-sm transition-all shadow-md inline-flex items-center justify-center gap-2"
             >
-              <Zap className="w-4 h-4 text-vita-bright" />
-              <span>Publier un article</span>
+              <Zap className="w-4 h-4 text-white" />
+              <span>Accéder à mon Tableau de Bord</span>
+              <ArrowRight className="w-4 h-4 text-white" />
             </Link>
-            <Link
-              href="/marche"
-              className="touch-target px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors shadow-sm inline-flex items-center justify-center gap-2"
-            >
-              <ShoppingBag className="w-4 h-4 text-emerald-100" />
-              <span>Explorer le Marché</span>
-            </Link>
-            <Link
-              href="/portefeuille"
-              className="touch-target px-5 py-2.5 rounded-xl bg-white hover:bg-vita-surface border border-vita-border text-vita-deep font-semibold text-sm transition-colors inline-flex items-center justify-center gap-2"
-            >
-              <span>Mon portefeuille</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Link
+                href="/marche"
+                className="touch-target px-4 py-2 rounded-xl bg-white hover:bg-vita-surface border border-vita-border text-vita-deep font-semibold text-xs transition-colors shadow-xs inline-flex items-center justify-center gap-1.5"
+              >
+                <ShoppingBag className="w-4 h-4 text-emerald-600" />
+                <span>Explorer le Marché</span>
+              </Link>
+              <Link
+                href="/portefeuille"
+                className="touch-target px-4 py-2 rounded-xl bg-white hover:bg-vita-surface border border-vita-border text-vita-deep font-semibold text-xs transition-colors inline-flex items-center justify-center gap-1.5"
+              >
+                <CreditCard className="w-4 h-4 text-vita-medium" />
+                <span>Mon portefeuille</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>

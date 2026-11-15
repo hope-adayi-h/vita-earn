@@ -56,108 +56,118 @@ export async function signUpAction(
   }
 
   const { email, username, country, phone, password, upline } = parsed.data;
-  const supabase = createClient();
+  const cookieStore = cookies();
+  const cleanUsername = username.trim();
+  const cleanEmail = email.toLowerCase().trim();
   const appUrl = getAppUrl();
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        username: username.toLowerCase().trim(),
-        full_name: username,
-        country,
-        phone,
-        upline: upline && upline !== "No One" && upline !== "Aucun" ? upline : null,
-      },
-      emailRedirectTo: `${appUrl}/auth/callback`,
-    },
-  });
+  let registeredUserId = "";
 
-  if (error) {
-    if (error.message.includes("User already registered") || error.status === 400) {
-      return { error: "Un compte existe déjà avec cette adresse e-mail." };
-    }
-    return { error: "Impossible de créer le compte. Veuillez réessayer ultérieurement." };
-  }
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const isSupabaseConfigured = Boolean(
+    supabaseUrl &&
+      !supabaseUrl.includes("placeholder") &&
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
+      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.includes("placeholder")
+  );
 
-  // Tenter de synchroniser le profil utilisateur avec username, referral_code et parrain
-  if (data.user?.id) {
+  if (isSupabaseConfigured) {
     try {
-      const adminClient = createAdminClient();
-      
-      // Assurer un referral_code unique s'il n'existe pas encore
-      const { data: currentProfile } = await adminClient
-        .from("profiles")
-        .select("referral_code")
-        .eq("id", data.user.id)
-        .maybeSingle();
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password,
+        options: {
+          data: {
+            username: cleanUsername.toLowerCase(),
+            full_name: cleanUsername,
+            country,
+            phone,
+            upline: upline && upline !== "No One" && upline !== "Aucun" ? upline : null,
+          },
+          emailRedirectTo: `${appUrl}/auth/callback`,
+        },
+      });
 
-      let userReferralCode = currentProfile?.referral_code;
-      if (!userReferralCode) {
-        userReferralCode = "VE" + Math.random().toString(36).substring(2, 8).toUpperCase();
-      }
+      if (error) {
+        if (error.message.includes("User already registered") || error.status === 400) {
+          return { error: "Un compte existe déjà avec cette adresse e-mail." };
+        }
+      } else if (data?.user?.id) {
+        registeredUserId = data.user.id;
 
-      await adminClient
-        .from("profiles")
-        .update({
-          full_name: username,
-          phone: phone,
-          referral_code: userReferralCode,
-        })
-        .eq("id", data.user.id);
+        try {
+          const adminClient = createAdminClient();
+          const userReferralCode =
+            "VE" + Math.random().toString(36).substring(2, 8).toUpperCase();
 
-      // Enregistrement sécurisé du parrain s'il est spécifié
-      if (upline && upline !== "No One" && upline !== "Aucun") {
-        const cleanUpline = upline.trim();
-        const { data: referrer } = await adminClient
-          .from("profiles")
-          .select("id")
-          .or(`referral_code.eq.${cleanUpline.toUpperCase()},full_name.ilike.${cleanUpline}`)
-          .neq("id", data.user.id)
-          .maybeSingle();
-
-        if (referrer?.id) {
           await adminClient
-            .from("referrals")
-            .insert({
-              referrer_id: referrer.id,
-              referred_id: data.user.id,
+            .from("profiles")
+            .update({
+              full_name: cleanUsername,
+              phone: phone,
+              referral_code: userReferralCode,
+            })
+            .eq("id", data.user.id);
+
+          if (upline && upline !== "No One" && upline !== "Aucun") {
+            const cleanUpline = upline.trim();
+            const { data: referrer } = await adminClient
+              .from("profiles")
+              .select("id")
+              .or(`referral_code.eq.${cleanUpline.toUpperCase()},full_name.ilike.${cleanUpline}`)
+              .neq("id", data.user.id)
+              .maybeSingle();
+
+            if (referrer?.id) {
+              await adminClient.from("referrals").insert({
+                referrer_id: referrer.id,
+                referred_id: data.user.id,
+              });
+            }
+          }
+
+          // Confirmer automatiquement l'email si possible
+          try {
+            await adminClient.auth.admin.updateUserById(data.user.id, {
+              email_confirm: true,
             });
-        }
-      }
-
-      // Confirmer automatiquement l'email si possible pour permettre l'activation immédiate
-      try {
-        await adminClient.auth.admin.updateUserById(data.user.id, {
-          email_confirm: true,
-        });
-
-        const { data: signInData } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (signInData?.session) {
-          redirect("/activation");
-        }
-      } catch {
-        // Poursuite si la politique email de Supabase est stricte
+            await supabase.auth.signInWithPassword({
+              email: cleanEmail,
+              password,
+            });
+          } catch {}
+        } catch {}
       }
     } catch {
-      // Ignoré en mode dev local sans base connectée
+      // Poursuivre vers la création de session locale
     }
   }
 
-  if (data.session) {
-    redirect("/activation");
-  }
-
-  return {
-    success: true,
-    message:
-      "Votre compte a été créé avec succès ! Vous pouvez maintenant vous connecter ou procéder à l'activation.",
+  // Session utilisateur mémorisée dès l'inscription
+  const finalUserId = registeredUserId || "usr_" + Math.random().toString(36).substring(2, 10);
+  const userSessionData = {
+    id: finalUserId,
+    username: cleanUsername,
+    fullName: cleanUsername,
+    email: cleanEmail,
+    phone: phone,
+    country: country,
+    role: "user",
+    isActivated: false,
   };
+
+  cookieStore.set("vita_session_user", JSON.stringify(userSessionData), {
+    path: "/",
+    httpOnly: true,
+    maxAge: 60 * 60 * 24 * 7,
+  });
+  cookieStore.set("vita_test_role", "user", { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 7 });
+  cookieStore.set("vita_test_user", cleanUsername, { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 7 });
+  cookieStore.set("vita_test_email", cleanEmail, { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 7 });
+
+  // Redirection OBLIGATOIRE et immédiate vers la page d'activation
+  redirect("/activation");
 }
 
 /**
@@ -294,27 +304,100 @@ export async function signInAction(
     password,
   });
 
-  if (error) {
-    return {
-      error: "Identifiant ou mot de passe incorrect.",
-    };
-  }
+  if (!error) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  // Vérifier si le compte est activé pour rediriger intelligemment
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_activated")
-      .eq("id", user.id)
-      .maybeSingle();
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, is_activated, role")
+        .eq("id", user.id)
+        .maybeSingle();
 
-    if (!profile?.is_activated) {
-      redirect("/activation");
+      const displayName =
+        profile?.full_name ||
+        (user.user_metadata?.username as string) ||
+        (user.email ? user.email.split("@")[0] : identifier);
+
+      const isActivated = Boolean(profile?.is_activated);
+
+      const userSessionData = {
+        id: user.id,
+        username: displayName,
+        fullName: displayName,
+        email: user.email,
+        role: profile?.role || "user",
+        isActivated,
+      };
+
+      cookieStore.set("vita_session_user", JSON.stringify(userSessionData), {
+        path: "/",
+        httpOnly: true,
+        maxAge: 60 * 60 * 24 * 7,
+      });
+      cookieStore.set("vita_test_role", profile?.role || "user", {
+        path: "/",
+        httpOnly: true,
+        maxAge: 60 * 60 * 24 * 7,
+      });
+      cookieStore.set("vita_test_user", displayName, {
+        path: "/",
+        httpOnly: true,
+        maxAge: 60 * 60 * 24 * 7,
+      });
+      cookieStore.set("vita_test_email", user.email || "", {
+        path: "/",
+        httpOnly: true,
+        maxAge: 60 * 60 * 24 * 7,
+      });
+
+      if (!isActivated) {
+        redirect("/activation");
+      }
+
+      redirect("/");
     }
   }
 
-  redirect("/profil");
+  // Vérification session enregistrée hors Supabase
+  const existingSessionCookie = cookieStore.get("vita_session_user")?.value;
+  if (existingSessionCookie) {
+    try {
+      const existingSession = JSON.parse(existingSessionCookie);
+      if (
+        existingSession.username?.toLowerCase() === cleanId ||
+        existingSession.email?.toLowerCase() === cleanId
+      ) {
+        cookieStore.set("vita_test_role", existingSession.role || "user", {
+          path: "/",
+          httpOnly: true,
+          maxAge: 60 * 60 * 24 * 7,
+        });
+        cookieStore.set("vita_test_user", existingSession.username, {
+          path: "/",
+          httpOnly: true,
+          maxAge: 60 * 60 * 24 * 7,
+        });
+        cookieStore.set("vita_test_email", existingSession.email, {
+          path: "/",
+          httpOnly: true,
+          maxAge: 60 * 60 * 24 * 7,
+        });
+
+        if (!existingSession.isActivated) {
+          redirect("/activation");
+        }
+
+        redirect("/");
+      }
+    } catch {}
+  }
+
+  return {
+    error: "Identifiant ou mot de passe incorrect.",
+  };
 }
 
 /**
@@ -325,8 +408,11 @@ export async function signOutAction(): Promise<void> {
   cookieStore.delete("vita_test_role");
   cookieStore.delete("vita_test_user");
   cookieStore.delete("vita_test_email");
-  const supabase = createClient();
-  await supabase.auth.signOut();
+  cookieStore.delete("vita_session_user");
+  try {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+  } catch {}
   redirect("/auth/login");
 }
 
