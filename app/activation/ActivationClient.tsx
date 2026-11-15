@@ -18,6 +18,7 @@ import {
   AlertCircle,
   Smartphone,
   ChevronDown,
+  ArrowUp,
 } from "lucide-react";
 
 interface ActivationClientProps {
@@ -220,21 +221,8 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
             </div>
           </div>
 
-          {/* Nom du propriétaire */}
-          <div>
-            <label htmlFor="fullName" className="text-xs font-semibold text-gray-700 mb-1.5 block">
-              {t("act.fullName")}
-            </label>
-            <input
-              id="fullName"
-              name="fullName"
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Ex: Koffi Mensah"
-              className="w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs sm:text-sm font-medium text-gray-800 focus:outline-hidden focus:border-[#16A34A] focus:ring-1 focus:ring-[#16A34A]"
-            />
-          </div>
+          {/* Nom du propriétaire masqué pour garder l'alignement strict avec l'écran STK */}
+          <input type="hidden" name="fullName" value={fullName} />
 
           {/* Numéro de portefeuille */}
           <div>
@@ -303,6 +291,34 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
           </div>
         </form>
       </div>
+
+      {/* BOUTON DU BAS : Aller au tableau de bord */}
+      <div className="flex justify-end pt-1">
+        <Link
+          href="/"
+          className="touch-target px-4 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs sm:text-sm inline-flex items-center gap-2 shadow-xs transition-colors"
+        >
+          <Home className="w-4 h-4 text-white" />
+          <span>{t("act.dashboard")}</span>
+        </Link>
+      </div>
+
+      {/* PILL DU SITE (vitaearn.com) */}
+      <div className="text-center pt-2 pb-2">
+        <span className="inline-block px-4 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-[11px] font-semibold text-gray-600 dark:text-gray-300 shadow-xs">
+          vitaearn.com
+        </span>
+      </div>
+
+      {/* BOUTON FLOTTANT RETOUR EN HAUT (Scroll to top) */}
+      <button
+        type="button"
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className="fixed bottom-20 right-4 z-40 w-11 h-11 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-lg flex items-center justify-center transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+        aria-label="Retour en haut"
+      >
+        <ArrowUp className="w-5 h-5 text-white" />
+      </button>
 
       {/* MODAL SIMULATION STK PUSH */}
       {showStkModal && (
