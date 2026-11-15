@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import type { ActivationData } from "./types";
 import { quickActivateAction } from "./actions";
@@ -12,6 +13,7 @@ import {
   ShoppingBag,
   CreditCard,
   Lock,
+  Loader2,
 } from "lucide-react";
 
 interface ActivationClientProps {
@@ -19,6 +21,22 @@ interface ActivationClientProps {
 }
 
 export function ActivationClient({ initialData }: ActivationClientProps) {
+  const [isActivating, setIsActivating] = useState(false);
+
+  const handleActivation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isActivating) return;
+    setIsActivating(true);
+
+    try {
+      await fetch("/api/auth/quick-activate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch {}
+
+    window.location.href = "/";
+  };
   // Écran compte déjà pleinement activé
   if (initialData.isActivated) {
     return (
@@ -159,14 +177,30 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
 
           {/* Bouton d'action principal vers l'activation immédiate */}
           <div className="pt-2 space-y-2.5">
-            <form action={quickActivateAction}>
+            <form
+              method="POST"
+              action="/api/auth/quick-activate"
+              onSubmit={handleActivation}
+            >
               <button
                 type="submit"
-                className="w-full touch-target rounded-2xl bg-gradient-to-r from-vita-deep via-vita-medium to-[#236014] hover:from-vita-medium hover:to-vita-deep text-white font-extrabold text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2.5 py-4 group"
+                disabled={isActivating}
+                className={`w-full touch-target rounded-2xl bg-gradient-to-r from-vita-deep via-vita-medium to-[#236014] hover:from-vita-medium hover:to-vita-deep text-white font-extrabold text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2.5 py-4 group ${
+                  isActivating ? "opacity-80 cursor-wait" : ""
+                }`}
               >
-                <ShieldCheck className="w-5 h-5 text-vita-bright" />
-                <span>Activer mon compte (4 500 F) & Accéder au Tableau de Bord</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                {isActivating ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin text-vita-bright" />
+                    <span>Activation en cours... Redirection...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-5 h-5 text-vita-bright" />
+                    <span>Activer mon compte (4 500 F) & Accéder au Tableau de Bord</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
               </button>
             </form>
 
