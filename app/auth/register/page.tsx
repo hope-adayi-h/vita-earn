@@ -9,8 +9,6 @@ import { Logo3D } from "@/components/Logo3D";
 import { TermsAccordion } from "@/components/TermsAccordion";
 import { CountrySelect, type Country } from "@/components/CountrySelect";
 import {
-  Mail,
-  User,
   Phone,
   Lock,
   Eye,
@@ -19,12 +17,13 @@ import {
   ArrowRight,
   AlertCircle,
   CheckCircle2,
-  Users2,
 } from "lucide-react";
 
 function RegisterForm() {
   const searchParams = useSearchParams();
-  const uplineParam = searchParams.get("ref") || searchParams.get("upline") || "No One";
+  const rawUpline = searchParams.get("ref") || searchParams.get("upline");
+  const hasUpline = Boolean(rawUpline && rawUpline.trim().length > 0);
+  const uplineValue = hasUpline ? rawUpline!.trim() : "Aucun";
 
   // Par défaut sur Rien (null) selon la demande de l'utilisateur
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
@@ -55,6 +54,7 @@ function RegisterForm() {
     if (rawPhone && !rawPhone.startsWith("+")) {
       formData.set("phone", `${selectedCountry.dialCode} ${rawPhone.trim()}`);
     }
+    formData.set("upline", uplineValue);
     formData.set("termsAccepted", termsAccepted ? "true" : "false");
 
     startTransition(async () => {
@@ -140,14 +140,13 @@ function RegisterForm() {
               Adresse e-mail
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-vita-muted" />
               <input
                 type="email"
                 name="email"
                 required
                 autoComplete="email"
-                placeholder="nom@exemple.com"
-                className="w-full touch-target rounded-xl border border-vita-border bg-vita-surface/50 pl-10 pr-3.5 text-xs sm:text-sm text-vita-text focus:outline-none focus:border-vita-medium focus:bg-white focus:ring-2 focus:ring-vita-bright/30 transition-all shadow-sm"
+                placeholder="Entrer adresse email"
+                className="w-full touch-target rounded-xl border border-vita-border bg-vita-surface/50 px-3.5 text-xs sm:text-sm text-vita-text focus:outline-none focus:border-vita-medium focus:bg-white focus:ring-2 focus:ring-vita-bright/30 transition-all shadow-sm"
               />
             </div>
             {state?.fieldErrors?.email && (
@@ -161,14 +160,13 @@ function RegisterForm() {
               Nom d'utilisateur
             </label>
             <div className="relative">
-              <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-vita-muted" />
               <input
                 type="text"
                 name="username"
                 required
                 autoComplete="username"
-                placeholder="Ex. koffi228"
-                className="w-full touch-target rounded-xl border border-vita-border bg-vita-surface/50 pl-10 pr-3.5 text-xs sm:text-sm text-vita-text focus:outline-none focus:border-vita-medium focus:bg-white focus:ring-2 focus:ring-vita-bright/30 transition-all shadow-sm"
+                placeholder="Entrer nom d'utilisateur"
+                className="w-full touch-target rounded-xl border border-vita-border bg-vita-surface/50 px-3.5 text-xs sm:text-sm text-vita-text focus:outline-none focus:border-vita-medium focus:bg-white focus:ring-2 focus:ring-vita-bright/30 transition-all shadow-sm"
               />
             </div>
             {state?.fieldErrors?.username && (
@@ -216,24 +214,19 @@ function RegisterForm() {
             )}
           </div>
 
-          {/* 5. My Upline (Parrain / Référence) */}
+          {/* 5. Parrain */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-bold text-vita-text uppercase tracking-wider flex items-center gap-1.5">
-                <Users2 className="w-3.5 h-3.5 text-vita-muted" />
-                <span>Parrain / Code d'invitation</span>
-              </label>
-              <span className="text-[10px] text-vita-muted font-medium bg-vita-surface px-2 py-0.5 rounded-full border border-vita-border">
-                Optionnel
-              </span>
-            </div>
+            <label className="block text-xs font-bold text-vita-text uppercase tracking-wider mb-1.5">
+              Parrain
+            </label>
             <div className="relative">
               <input
                 type="text"
                 name="upline"
-                defaultValue={uplineParam}
-                placeholder="Aucun (No One)"
-                className="w-full touch-target rounded-xl border border-vita-border bg-vita-surface/30 pl-3.5 pr-3.5 text-xs sm:text-sm text-vita-muted focus:outline-none focus:border-vita-medium focus:bg-white transition-all shadow-sm"
+                value={uplineValue}
+                readOnly
+                tabIndex={-1}
+                className="w-full touch-target rounded-xl border border-vita-border bg-gray-100/90 px-3.5 text-xs sm:text-sm text-gray-700 font-semibold cursor-not-allowed select-none focus:outline-none shadow-xs"
               />
             </div>
           </div>
