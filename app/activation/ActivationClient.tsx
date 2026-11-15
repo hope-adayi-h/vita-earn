@@ -193,6 +193,10 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
           onSubmit={handleStartPayment}
           className="space-y-4"
         >
+          {/* Données d'identification de l'utilisateur pour activation garantie */}
+          <input type="hidden" name="username" value={displayUsername} />
+          <input type="hidden" name="email" value={initialData.user.email || ""} />
+
           {/* Sélection du canal */}
           <div>
             <label htmlFor="channel-select" className="text-xs font-semibold text-gray-700 mb-1.5 block">
@@ -201,6 +205,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
             <div className="relative">
               <select
                 id="channel-select"
+                name="channel"
                 value={selectedChannel}
                 onChange={(e) => setSelectedChannel(e.target.value)}
                 className="w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs sm:text-sm font-medium text-gray-800 appearance-none focus:outline-hidden focus:border-[#16A34A] focus:ring-1 focus:ring-[#16A34A] pr-9"
@@ -222,6 +227,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
             </label>
             <input
               id="fullName"
+              name="fullName"
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
@@ -237,6 +243,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
             </label>
             <input
               id="walletNumber"
+              name="walletNumber"
               type="tel"
               value={walletNumber}
               onChange={(e) => setWalletNumber(e.target.value)}
@@ -257,6 +264,7 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
               </span>
               <input
                 id="amount"
+                name="amount"
                 type="text"
                 value={feeAmount}
                 readOnly

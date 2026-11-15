@@ -119,12 +119,29 @@ export async function getActivationData(): Promise<ActivationData> {
     isActivated = activatedCookie;
   }
 
-  if (!sessionUser && !testUser) {
-    try {
-      const rawAccounts = cookieStore.get("vita_accounts")?.value;
-      if (rawAccounts) {
-        const accs = JSON.parse(rawAccounts);
-        if (Array.isArray(accs) && accs.length > 0) {
+  try {
+    const rawAccounts = cookieStore.get("vita_accounts")?.value;
+    if (rawAccounts) {
+      const accs = JSON.parse(rawAccounts);
+      if (Array.isArray(accs) && accs.length > 0) {
+        const lastReal = [...accs].reverse().find(
+          (a) =>
+            a.username &&
+            a.username.toLowerCase() !== "membre" &&
+            a.username.toLowerCase() !== "admin"
+        );
+        if (
+          lastReal &&
+          (!username ||
+            username.toLowerCase() === "membre" ||
+            username.toLowerCase() === "utilisateur" ||
+            username.toLowerCase() === "nouvel utilisateur")
+        ) {
+          username = lastReal.username;
+          fullName = lastReal.fullName || lastReal.username;
+          if (!phone && lastReal.phone) phone = lastReal.phone;
+          if (!country && lastReal.country) country = lastReal.country;
+        } else if (!sessionUser && !testUser) {
           const lastAcc = accs[accs.length - 1];
           username = lastAcc.username || "Utilisateur";
           fullName = lastAcc.username || "Utilisateur";
@@ -133,8 +150,8 @@ export async function getActivationData(): Promise<ActivationData> {
           isActivated = Boolean(lastAcc.isActivated || activatedCookie);
         }
       }
-    } catch {}
-  }
+    }
+  } catch {}
 
   if (user) {
     const { data: profile } = await supabase

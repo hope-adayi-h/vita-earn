@@ -46,17 +46,40 @@ export default async function RootLayout({
   const testEmail = cookieStore.get("vita_test_email")?.value || sessionUser?.email;
   const testUser = cookieStore.get("vita_test_user")?.value || sessionUser?.username;
 
+  let resolvedName = sessionUser?.username || sessionUser?.fullName || testUser;
+
+  // Si le nom est "Membre", vérifier le dernier compte réel dans vita_accounts
+  if (!resolvedName || resolvedName.toLowerCase() === "membre") {
+    try {
+      const rawAccounts = cookieStore.get("vita_accounts")?.value;
+      if (rawAccounts) {
+        const accs = JSON.parse(rawAccounts);
+        if (Array.isArray(accs) && accs.length > 0) {
+          const realAcc = [...accs].reverse().find(
+            (a) =>
+              a.username &&
+              a.username.toLowerCase() !== "membre" &&
+              a.username.toLowerCase() !== "admin"
+          );
+          if (realAcc?.username) {
+            resolvedName = realAcc.username;
+          }
+        }
+      }
+    } catch {}
+  }
+
   if (sessionUser) {
     currentUser = {
       email: sessionUser.email,
-      name: sessionUser.username || sessionUser.fullName,
+      name: resolvedName || sessionUser.username || sessionUser.fullName,
       isActivated: Boolean(sessionUser.isActivated || isActivatedCookie),
       role: sessionUser.role || "user",
     };
   } else if (testRole) {
     currentUser = {
       email: testEmail || (testRole === "admin" ? "admin@vitaearn.com" : "membre@vitaearn.com"),
-      name: testUser || (testRole === "admin" ? "Administrateur" : "Membre"),
+      name: resolvedName || (testRole === "admin" ? "Administrateur" : "Membre"),
       isActivated: true,
       role: testRole,
     };
@@ -66,7 +89,14 @@ export default async function RootLayout({
       if (rawAccounts) {
         const accs = JSON.parse(rawAccounts);
         if (Array.isArray(accs) && accs.length > 0) {
-          const lastAcc = accs[accs.length - 1];
+          const lastAcc =
+            [...accs].reverse().find(
+              (a) =>
+                a.username &&
+                a.username.toLowerCase() !== "membre" &&
+                a.username.toLowerCase() !== "admin"
+            ) || accs[accs.length - 1];
+
           currentUser = {
             email: lastAcc.email,
             name: lastAcc.username,

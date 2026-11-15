@@ -130,20 +130,17 @@ export default async function HomePage() {
       welcomeBonusClaimed = Boolean(profile?.welcome_bonus_claimed);
 
       const rawName =
-        profile?.full_name ||
         sessionUser?.username ||
         sessionUser?.fullName ||
+        profile?.full_name ||
         testUser ||
         (user.user_metadata?.username as string) ||
         (user.user_metadata?.full_name as string) ||
         (user.email ? user.email.split("@")[0] : "");
 
-      if (rawName && rawName.trim().length > 0) {
+      if (rawName && rawName.trim().length > 0 && rawName.toLowerCase() !== "membre") {
         userName = rawName.trim().charAt(0).toUpperCase() + rawName.trim().slice(1);
-      } else {
-        userName = "Membre";
       }
-      userInitial = userName.charAt(0).toUpperCase();
 
       if (profile?.referral_code) {
         referralCode = profile.referral_code;
@@ -299,51 +296,76 @@ export default async function HomePage() {
         }));
       }
     } else if (sessionUser) {
-    userName = (sessionUser.username || sessionUser.fullName || "Membre").trim();
-    userName = userName.charAt(0).toUpperCase() + userName.slice(1);
-    userInitial = userName ? userName.charAt(0).toUpperCase() : "M";
-    isActivated = Boolean(sessionUser.isActivated || isActivatedCookie);
-    if (isActivated) {
-      totalExpenses = 4500;
+      const sName = sessionUser.username || sessionUser.fullName || "";
+      if (sName && sName.toLowerCase() !== "membre") {
+        userName = sName.trim().charAt(0).toUpperCase() + sName.trim().slice(1);
+      }
+      isActivated = Boolean(sessionUser.isActivated || isActivatedCookie);
+      if (isActivated) {
+        totalExpenses = 4500;
+      }
+    } else if (testUser) {
+      if (testUser.toLowerCase() !== "membre") {
+        userName = testUser.trim().charAt(0).toUpperCase() + testUser.trim().slice(1);
+      }
+      isActivated = true;
+      if (testUser.toLowerCase() === "koffi") {
+        balance = 1070;
+        totalWithdrawn = 445249;
+        totalEarned = 3449121;
+        totalExpenses = 4500;
+        level1Count = 14;
+        level2Count = 8;
+        level3Count = 3;
+        level1Earned = 28000;
+        level2Earned = 8000;
+        level3Earned = 1500;
+      }
     }
-  } else if (testUser) {
-    userName = testUser.trim();
-    userName = userName.charAt(0).toUpperCase() + userName.slice(1);
-    userInitial = userName ? userName.charAt(0).toUpperCase() : "M";
-    isActivated = true;
-    if (testUser.toLowerCase() === "koffi") {
-      balance = 1070;
-      totalWithdrawn = 445249;
-      totalEarned = 3449121;
-      totalExpenses = 4500;
-      level1Count = 14;
-      level2Count = 8;
-      level3Count = 3;
-      level1Earned = 28000;
-      level2Earned = 8000;
-      level3Earned = 1500;
+  } catch {
+    // Mode repli sécurisé pour session active
+    if (sessionUser) {
+      const sName = sessionUser.username || sessionUser.fullName || "";
+      if (sName && sName.toLowerCase() !== "membre") {
+        userName = sName.trim().charAt(0).toUpperCase() + sName.trim().slice(1);
+      }
+      isActivated = Boolean(sessionUser.isActivated || isActivatedCookie);
+      if (isActivated) totalExpenses = 4500;
+    } else if (testUser && testUser.toLowerCase() !== "membre") {
+      userName = testUser.trim().charAt(0).toUpperCase() + testUser.trim().slice(1);
+      isActivated = true;
     }
   }
-} catch {
-  // Mode repli sécurisé pour session active
-  if (sessionUser) {
-    userName = (sessionUser.username || sessionUser.fullName || "Membre").trim();
-    userName = userName.charAt(0).toUpperCase() + userName.slice(1);
-    userInitial = userName.charAt(0).toUpperCase();
-    isActivated = Boolean(sessionUser.isActivated || isActivatedCookie);
-    if (isActivated) totalExpenses = 4500;
-  } else if (testUser) {
-    userName = testUser.trim();
-    userName = userName.charAt(0).toUpperCase() + userName.slice(1);
-    userInitial = userName.charAt(0).toUpperCase();
-    isActivated = true;
+
+  // Si le nom est toujours vide ou vaut "Membre", récupérer le compte réel dans le coffre persistant vita_accounts
+  if (!userName || userName.toLowerCase() === "membre" || userName.toLowerCase() === "utilisateur") {
+    if (testUser && testUser.toLowerCase() !== "membre" && testUser.toLowerCase() !== "utilisateur") {
+      userName = testUser.trim().charAt(0).toUpperCase() + testUser.trim().slice(1);
+    } else {
+      try {
+        const rawAccounts = cookieStore.get("vita_accounts")?.value;
+        if (rawAccounts) {
+          const accs = JSON.parse(rawAccounts);
+          if (Array.isArray(accs) && accs.length > 0) {
+            const realAcc = [...accs].reverse().find(
+              (a) =>
+                a.username &&
+                a.username.toLowerCase() !== "membre" &&
+                a.username.toLowerCase() !== "admin"
+            );
+            if (realAcc?.username) {
+              userName = realAcc.username.trim().charAt(0).toUpperCase() + realAcc.username.trim().slice(1);
+            }
+          }
+        }
+      } catch {}
+    }
   }
-}
 
   if (!userName) {
     userName = "Membre";
-    userInitial = "M";
   }
+  userInitial = userName.charAt(0).toUpperCase();
 
   // Calcul du Welcome Bonus (900 FCFA débloqués après 20 invitations directes)
   const welcomeBonusTarget = 20;
