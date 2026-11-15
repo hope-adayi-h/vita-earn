@@ -10,6 +10,8 @@ import {
   Wallet,
   ArrowRight,
   ShieldCheck,
+  ShieldAlert,
+  Lock,
   AlertCircle,
   CheckCircle2,
   Clock,
@@ -239,7 +241,39 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
         </div>
       )}
 
-      {/* 3. FORMULAIRE DE RETRAIT DE A À Z */}
+      {/* 3. AVIS IMPORTANT : SÉCURITÉ DU NUMÉRO MOBILE MONEY LIÉ AU COMPTE */}
+      <div className="bg-gradient-to-br from-amber-50 to-orange-50/60 dark:from-amber-950/40 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800/80 rounded-3xl p-5 sm:p-6 shadow-xs space-y-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
+            <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-black text-amber-950 dark:text-amber-200 tracking-tight">
+              Avis important sur votre retrait
+            </h3>
+            <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
+              Sécurisation automatique et obligatoire de vos fonds
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-2 text-xs text-amber-950/90 dark:text-amber-200 leading-relaxed">
+          <p>
+            Veuillez vous assurer que le retrait est bien destiné à votre numéro Mobile Money <strong>{initialData.user.phone || phone}</strong>. Il est obligatoire d&apos;utiliser le numéro avec lequel vous avez créé votre compte, car le système traite automatiquement le virement vers ce numéro enregistré.
+          </p>
+          <div className="p-3 rounded-2xl bg-white/80 dark:bg-black/30 border border-amber-200/60 dark:border-amber-700/40 text-[11px] space-y-1">
+            <p className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span>Pourquoi cette mesure de sécurité est-elle en place ?</span>
+            </p>
+            <p className="text-amber-900/80 dark:text-amber-200/80 leading-relaxed">
+              Il arrive fréquemment que des membres confient la gestion de leur compte à des amis ou des proches pour effectuer leurs tâches quotidiennes. Grâce à cette sécurité inviolable, <strong>aucun tiers ne peut modifier le numéro de retrait ni détourner vos gains</strong>. Vos fonds sont obligatoirement et directement versés sur votre propre numéro Mobile Money.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. FORMULAIRE DE RETRAIT DE A À Z */}
       <div className="bg-white dark:bg-[#131E17] rounded-3xl border border-gray-200 dark:border-[#1E2E24] p-5 sm:p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-[#1E2E24]">
           <h2 className="text-sm font-bold text-gray-900 dark:text-gray-100">
@@ -298,9 +332,18 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
 
           {/* Numéro de téléphone Mobile Money */}
           <div>
-            <label htmlFor="phone" className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 block">
-              Numéro de téléphone récepteur
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="phone" className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                <span>Numéro de téléphone récepteur</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                  Lié au compte
+                </span>
+              </label>
+              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                Numéro vérifié
+              </span>
+            </div>
             <div className="relative">
               <input
                 id="phone"
@@ -309,10 +352,13 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Ex: +228 90 12 34 56"
                 required
-                className="w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#1E2E24] bg-white dark:bg-[#17241C] text-xs sm:text-sm font-medium text-gray-800 dark:text-gray-100 focus:outline-hidden focus:border-[#16A34A] pl-10"
+                className="w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#1E2E24] bg-gray-50/70 dark:bg-[#17241C] text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 focus:outline-hidden focus:border-[#16A34A] pl-10"
               />
-              <Smartphone className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+              Numéro Mobile Money sécurisé associé obligatoirement à votre compte ({initialData.user.phone || phone}).
+            </p>
           </div>
 
           {/* Montant avec raccourcis */}
