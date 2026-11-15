@@ -59,6 +59,22 @@ export default async function RootLayout({
       isActivated: true,
       role: testRole,
     };
+  } else {
+    try {
+      const rawAccounts = cookieStore.get("vita_accounts")?.value;
+      if (rawAccounts) {
+        const accs = JSON.parse(rawAccounts);
+        if (Array.isArray(accs) && accs.length > 0) {
+          const lastAcc = accs[accs.length - 1];
+          currentUser = {
+            email: lastAcc.email,
+            name: lastAcc.username,
+            isActivated: Boolean(lastAcc.isActivated || isActivatedCookie),
+            role: lastAcc.role || "user",
+          };
+        }
+      }
+    } catch {}
   }
 
   try {

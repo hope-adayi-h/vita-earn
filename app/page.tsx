@@ -65,8 +65,21 @@ export default async function HomePage() {
     user = data?.user || null;
   } catch {}
 
+  // Récupération automatique si le coffre de comptes persistant est présent
+  if (!user && !sessionUser && !testRole && !testUser) {
+    try {
+      const rawAccounts = cookieStore.get("vita_accounts")?.value;
+      if (rawAccounts) {
+        const accs = JSON.parse(rawAccounts);
+        if (Array.isArray(accs) && accs.length > 0) {
+          sessionUser = accs[accs.length - 1];
+        }
+      }
+    } catch {}
+  }
+
   // 1. Protection obligatoire : si l'utilisateur n'est pas connecté, redirection immédiate vers /auth/login
-  if (!user && !sessionUser && !testRole) {
+  if (!user && !sessionUser && !testRole && !testUser) {
     redirect("/auth/login");
   }
 
@@ -330,11 +343,6 @@ export default async function HomePage() {
   if (!userName) {
     userName = "Membre";
     userInitial = "M";
-  }
-
-  // Si le compte n'est pas encore activé, redirection obligatoire vers /activation
-  if (!isActivated) {
-    redirect("/activation");
   }
 
   // Calcul du Welcome Bonus (900 FCFA débloqués après 20 invitations directes)

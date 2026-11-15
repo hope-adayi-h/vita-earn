@@ -365,10 +365,6 @@ export async function signInAction(
         redirect("/admin");
       }
 
-      if (!isActivated) {
-        redirect("/activation");
-      }
-
       redirect("/");
     }
   }

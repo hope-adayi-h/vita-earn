@@ -10,7 +10,17 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  // 1. Routes publiques d'authentification
+  // 1. Routes publiques exemptées (API, ressources statiques)
+  if (
+    path.startsWith("/api/") ||
+    path.startsWith("/_next/") ||
+    path.startsWith("/images/") ||
+    path === "/favicon.ico"
+  ) {
+    return NextResponse.next();
+  }
+
+  // 1b. Routes publiques d'authentification
   const isAuthPath =
     path.startsWith("/auth/login") ||
     path.startsWith("/auth/register") ||
@@ -21,10 +31,13 @@ export async function middleware(request: NextRequest) {
   // 2. Vérification de la session utilisateur
   let isAuthenticated = false;
 
-  // Vérification cookie de session directe (test / session active)
+  // Vérification cookie de session directe (test / session active / coffre persistant)
   const sessionUserCookie = request.cookies.get("vita_session_user")?.value;
   const testRoleCookie = request.cookies.get("vita_test_role")?.value;
-  if (sessionUserCookie || testRoleCookie) {
+  const testUserCookie = request.cookies.get("vita_test_user")?.value;
+  const activatedCookie = request.cookies.get("vita_account_activated")?.value;
+
+  if (sessionUserCookie || testRoleCookie || testUserCookie || activatedCookie) {
     isAuthenticated = true;
   }
 
@@ -120,6 +133,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public assets (.png, .jpg, .webp, .svg, etc.)
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

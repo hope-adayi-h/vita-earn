@@ -23,19 +23,8 @@ interface ActivationClientProps {
 export function ActivationClient({ initialData }: ActivationClientProps) {
   const [isActivating, setIsActivating] = useState(false);
 
-  const handleActivation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isActivating) return;
+  const handleActivation = () => {
     setIsActivating(true);
-
-    try {
-      await fetch("/api/auth/quick-activate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch {}
-
-    window.location.href = "/";
   };
   // Écran compte déjà pleinement activé
   if (initialData.isActivated) {
