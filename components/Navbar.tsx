@@ -87,89 +87,66 @@ export function Navbar({ user }: NavbarProps) {
     navLinks.push({ label: "Admin", href: "/admin", icon: ShieldCheck });
   }
 
-  // Liens officiels numérotés du tiroir de navigation mobile (1 à 12 + Centre d'Aide)
+  // Liens officiels du tiroir de navigation mobile (épurés, sans numérotation ni sous-texte)
   const drawerNavLinks = [
     {
-      number: 1,
-      label: "1. Accueil",
+      label: "Accueil",
       href: "/",
       icon: Home,
     },
     {
-      number: 2,
-      label: "2. Centre Communautaire",
-      desc: "Canaux WhatsApp & Telegram",
+      label: "Centre Communautaire",
       href: "/communaute",
       icon: MessageSquare,
       isCommunity: true,
     },
     {
-      number: 3,
-      label: "3. Centre de Retrait",
-      desc: "Types de retraits & historique",
+      label: "Centre de Retrait",
       href: "/portefeuille",
       icon: Wallet,
     },
     {
-      number: 4,
-      label: "4. Équipe",
-      desc: "Niveaux N1, N2, N3 & inactifs",
+      label: "Équipe",
       href: "/#equipe",
       icon: Users,
     },
     {
-      number: 5,
-      label: "5. Récompense de Démarrage",
-      desc: "Bonus de bienvenue 900 F",
+      label: "Récompense de Démarrage",
       href: "/#welcome-bonus",
       icon: Gift,
     },
     {
-      number: 6,
-      label: "6. Roue de la Chance",
-      desc: "Tirage & gains quotidiens",
+      label: "Roue de la Chance",
       href: "/roue",
       icon: Disc,
     },
     {
-      number: 7,
-      label: "7. Tâches",
-      desc: "Missions & gains journaliers",
+      label: "Tâches",
       href: "/taches",
       icon: CalendarCheck,
     },
     {
-      number: 8,
-      label: "8. Marketplace",
-      desc: "Produits & boutiques",
+      label: "Marketplace",
       href: "/marche",
       icon: ShoppingBag,
     },
     {
-      number: 9,
-      label: "9. Emploi",
-      desc: "Offres & opportunités",
+      label: "Emploi",
       href: "/emploi",
       icon: Briefcase,
     },
     {
-      number: 10,
-      label: "10. Application Premium",
-      desc: "Outils & apps exclusives",
+      label: "Application Premium",
       href: "/applications-premium",
       icon: Sparkles,
     },
     {
-      number: 11,
-      label: "11. Formations",
-      desc: "Ressources & apprentissage",
+      label: "Formations",
       href: "/formations",
       icon: GraduationCap,
     },
     {
-      number: 12,
-      label: "12. Profil",
-      desc: "Paramètres du compte",
+      label: "Profil",
       href: "/profil",
       icon: User,
     },
@@ -177,9 +154,7 @@ export function Navbar({ user }: NavbarProps) {
 
   if (user?.role === "admin") {
     drawerNavLinks.push({
-      number: 13,
-      label: "13. Admin",
-      desc: "Modération & gestion",
+      label: "Administration",
       href: "/admin",
       icon: ShieldCheck,
     });
@@ -594,16 +569,9 @@ export function Navbar({ user }: NavbarProps) {
                   <Icon
                     className={`w-4 h-4 shrink-0 ${isActive ? "text-vita-deep" : "text-vita-medium"}`}
                   />
-                  <div className="min-w-0">
-                    <span className="block truncate text-xs sm:text-sm font-bold text-gray-800">
-                      {item.label}
-                    </span>
-                    {item.desc && (
-                      <span className="block truncate text-[10px] text-gray-500 font-normal">
-                        {item.desc}
-                      </span>
-                    )}
-                  </div>
+                  <span className="truncate text-sm font-semibold text-vita-text">
+                    {item.label}
+                  </span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-vita-muted/60 shrink-0 ml-1" />
               </Link>
@@ -618,10 +586,7 @@ export function Navbar({ user }: NavbarProps) {
             >
               <div className="flex items-center gap-3">
                 <Headphones className="w-4 h-4 text-vita-medium" />
-                <div className="text-left">
-                  <span className="block text-xs sm:text-sm font-bold text-gray-800">Centre d'Aide</span>
-                  <span className="block text-[10px] text-gray-500 font-normal">Assistance & FAQ</span>
-                </div>
+                <span className="text-sm font-semibold text-vita-text">Centre d'Aide</span>
               </div>
               <ChevronRight className="w-4 h-4 text-vita-muted/60 shrink-0" />
             </button>
