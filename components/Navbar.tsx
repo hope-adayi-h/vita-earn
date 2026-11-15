@@ -63,6 +63,11 @@ export function Navbar({ user }: NavbarProps) {
   const isActivationPage = pathname.startsWith("/activation");
   const isAuthPage = pathname.startsWith("/auth");
 
+  // Masquer intégralement le header (hamburger 3 traits, logo, nom et 3 points) sur les pages d'authentification (connexion, inscription...)
+  if (isAuthPage) {
+    return null;
+  }
+
   // Définition de l'utilisateur actif
   const isLoggedIn = Boolean(user);
   const userDisplayName = user?.name || (user?.email ? user.email.split("@")[0] : "");

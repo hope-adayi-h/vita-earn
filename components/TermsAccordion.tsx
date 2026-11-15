@@ -10,8 +10,8 @@ interface TermsAccordionProps {
 }
 
 export function TermsAccordion({ checked, onChange, error }: TermsAccordionProps) {
-  // Ouvert par défaut pour inciter à la lecture des conditions et de l'avertissement
-  const [isOpen, setIsOpen] = useState(true);
+  // Fermé par défaut selon la demande utilisateur (s'ouvre si l'utilisateur clique)
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="space-y-3">
