@@ -369,6 +369,24 @@ export default async function HomePage() {
   }
   userInitial = userName.charAt(0).toUpperCase();
 
+  // Solde par défaut pour compte activé si non chargé depuis la base
+  if (isActivated && balance === 0 && totalWithdrawn === 0) {
+    balance = 4500;
+  }
+
+  // Déduction immédiate de tous les retraits effectués enregistrés
+  try {
+    const rawW = cookieStore.get("vita_withdrawals")?.value;
+    if (rawW) {
+      const records = JSON.parse(rawW);
+      if (Array.isArray(records) && records.length > 0) {
+        const sumWithdrawn = records.reduce((acc: number, r: any) => acc + (Number(r.amount) || 0), 0);
+        totalWithdrawn += sumWithdrawn;
+        balance = Math.max(0, balance - sumWithdrawn);
+      }
+    }
+  } catch {}
+
   // Calcul du Welcome Bonus (900 FCFA débloqués après 20 invitations directes)
   const welcomeBonusTarget = 20;
   const welcomeBonusAmount = 900;

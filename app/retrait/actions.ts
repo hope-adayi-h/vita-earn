@@ -15,7 +15,9 @@ export interface WithdrawalRecord {
   accountName: string;
   status: "pending" | "processing" | "completed";
   createdAt: string;
+  processedAt?: string;
   reference: string;
+  estimatedDelay?: string;
 }
 
 export interface WithdrawalPageData {
@@ -56,6 +58,7 @@ export async function getWithdrawalData(): Promise<WithdrawalPageData> {
   let isActivated = Boolean(isActivatedCookie);
   let balance = 4500; // Solde par défaut ou crédité
   let totalWithdrawn = 0;
+  let sumWithdrawnCookie = 0;
 
   // Récupérer depuis les comptes locaux
   if (sessionUser) {
@@ -101,15 +104,13 @@ export async function getWithdrawalData(): Promise<WithdrawalPageData> {
     totalWithdrawn = 445249;
   }
 
-  // Calcul du solde après retraits locaux sauvegardés
+  // Calcul des retraits locaux sauvegardés
   try {
     const rawW = cookieStore.get("vita_withdrawals")?.value;
     if (rawW) {
       const records: WithdrawalRecord[] = JSON.parse(rawW);
       if (Array.isArray(records)) {
-        const sumWithdrawn = records.reduce((acc, r) => acc + (r.amount || 0), 0);
-        totalWithdrawn += sumWithdrawn;
-        balance = Math.max(0, balance - sumWithdrawn);
+        sumWithdrawnCookie = records.reduce((acc, r) => acc + (r.amount || 0), 0);
       }
     }
   } catch {}
@@ -144,6 +145,12 @@ export async function getWithdrawalData(): Promise<WithdrawalPageData> {
     }
   } catch {}
 
+  // Application stricte de la déduction immédiate de tous les retraits
+  if (sumWithdrawnCookie > 0) {
+    totalWithdrawn += sumWithdrawnCookie;
+    balance = Math.max(0, balance - sumWithdrawnCookie);
+  }
+
   return {
     user: {
       id: sessionUser?.id || "usr_current",
@@ -155,7 +162,7 @@ export async function getWithdrawalData(): Promise<WithdrawalPageData> {
     },
     balance,
     totalWithdrawn,
-    minWithdrawal: 1000,
+    minWithdrawal: 4500,
   };
 }
 
@@ -169,8 +176,15 @@ export async function getWithdrawalHistory(): Promise<WithdrawalRecord[]> {
   try {
     const rawW = cookieStore.get("vita_withdrawals")?.value;
     if (rawW) {
-      localRecords = JSON.parse(rawW);
-      if (!Array.isArray(localRecords)) localRecords = [];
+      const parsed = JSON.parse(rawW);
+      if (Array.isArray(parsed)) {
+        localRecords = parsed.map((r) => ({
+          ...r,
+          fee: r.fee ?? 500,
+          netAmount: r.netAmount ?? Math.max(0, (r.amount || 0) - 500),
+          estimatedDelay: r.estimatedDelay ?? "10 minutes à 24 heures",
+        }));
+      }
     }
   } catch {}
 
@@ -255,8 +269,9 @@ export async function submitWithdrawalAction(formData: FormData): Promise<{
   const operator = (formData.get("operator") as string) || "T-Money Togo (+228)";
 
   const amount = parseInt(amountStr, 10);
-  if (isNaN(amount) || amount < 1000) {
-    return { error: "Le montant minimum de retrait est de 1 000 FCFA." };
+  const minWithdrawal = 4500;
+  if (isNaN(amount) || amount < minWithdrawal) {
+    return { error: `Le montant minimum de retrait est de ${minWithdrawal.toLocaleString("fr-FR")} FCFA.` };
   }
 
   const fee = 500;
@@ -309,6 +324,7 @@ export async function submitWithdrawalAction(formData: FormData): Promise<{
     status: "processing",
     createdAt: new Date().toISOString(),
     reference: "WDR-" + Math.random().toString(36).substring(2, 8).toUpperCase(),
+    estimatedDelay: "10 minutes à 24 heures",
   };
 
   existingRecords.unshift(newRecord);
@@ -346,8 +362,44 @@ export async function submitWithdrawalAction(formData: FormData): Promise<{
 
   return {
     success: true,
-    message: `Votre demande de retrait de ${amount.toLocaleString("fr-FR")} FCFA vers ${operator} a été enregistrée avec succès (Frais: 500 FCFA, Net reçu: ${netAmount.toLocaleString("fr-FR")} FCFA). Référence : ${newRecord.reference}.`,
+    message: `Votre demande de retrait de ${amount.toLocaleString("fr-FR")} FCFA vers ${operator} a été enregistrée avec succès (Frais: 500 FCFA, Net reçu: ${netAmount.toLocaleString("fr-FR")} FCFA). Référence : ${newRecord.reference}. Délai estimé de virement : 10 minutes à 24 heures.`,
     netAmount,
     fee,
   };
 }
+
+/**
+ * Valide un retrait (simulation ou déclenchement admin) pour notification instantanée
+ */
+export async function simulateValidateWithdrawalAction(withdrawalId: string): Promise<{
+  success: boolean;
+  message?: string;
+}> {
+  const cookieStore = cookies();
+  try {
+    const raw = cookieStore.get("vita_withdrawals")?.value;
+    if (raw) {
+      const records: WithdrawalRecord[] = JSON.parse(raw);
+      if (Array.isArray(records)) {
+        const item = records.find((r) => r.id === withdrawalId || r.reference === withdrawalId);
+        if (item) {
+          item.status = "completed";
+          item.processedAt = new Date().toISOString();
+          cookieStore.set("vita_withdrawals", JSON.stringify(records), {
+            path: "/",
+            httpOnly: true,
+            maxAge: 60 * 60 * 24 * 365,
+            sameSite: "lax",
+          });
+          revalidatePath("/retrait");
+          revalidatePath("/retrait/historique");
+          revalidatePath("/portefeuille");
+          revalidatePath("/");
+          return { success: true, message: "Le paiement a été validé et notifié avec succès." };
+        }
+      }
+    }
+  } catch {}
+  return { success: false, message: "Retrait introuvable." };
+}
+

@@ -80,6 +80,8 @@ export default async function PortefeuillePage() {
     created_at: string;
   }> = [];
 
+  let sumWithdrawnFromCookie = 0;
+
   // Lecture des retraits locaux depuis le cookie vita_withdrawals
   try {
     const rawW = cookieStore.get("vita_withdrawals")?.value;
@@ -89,16 +91,16 @@ export default async function PortefeuillePage() {
         const localWithdrawals: WithdrawalItem[] = records.map((r: any) => ({
           id: r.id || `w-${Date.now()}`,
           amount: Number(r.amount) || 0,
-          net_amount: Number(r.amount) || 0,
+          net_amount: Number(r.netAmount || r.amount - 500) || 0,
           payment_method: r.paymentMethod || "T-Money",
           phone_number: r.phoneNumber || "",
           status: (r.status as any) || "processing",
           created_at: r.createdAt || new Date().toISOString(),
         }));
         withdrawals = [...localWithdrawals, ...withdrawals];
-        const sumWithdrawn = records.reduce((acc: number, r: any) => acc + (Number(r.amount) || 0), 0);
-        totalWithdrawn += sumWithdrawn;
-        availableBalance = Math.max(0, availableBalance - sumWithdrawn);
+        sumWithdrawnFromCookie = records.reduce((acc: number, r: any) => acc + (Number(r.amount) || 0), 0);
+        totalWithdrawn += sumWithdrawnFromCookie;
+        availableBalance = Math.max(0, availableBalance - sumWithdrawnFromCookie);
       }
     }
   } catch {}
@@ -214,6 +216,10 @@ export default async function PortefeuillePage() {
     } catch {
       // Supabase non connecté ou table vide
     }
+  }
+
+  if (sumWithdrawnFromCookie > 0) {
+    availableBalance = Math.max(0, availableBalance - sumWithdrawnFromCookie);
   }
 
   const getStatusBadge = (status: WithdrawalItem["status"]) => {

@@ -157,8 +157,9 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
       return;
     }
 
-    if (!numAmount || numAmount < 1000) {
-      setErrorMsg("Le montant minimum de retrait est de 1 000 FCFA.");
+    const minWithdrawal = 4500;
+    if (!numAmount || numAmount < minWithdrawal) {
+      setErrorMsg(`Le montant minimum de retrait est de ${formatFCFA(minWithdrawal)}.`);
       return;
     }
     if (numAmount > availableBalance) {
@@ -321,18 +322,18 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
               <label htmlFor="amount" className="text-xs font-bold text-gray-800 dark:text-gray-200">
                 Entrer le montant
               </label>
-              <span className="text-[10px] text-gray-500">Min: 1 000 FCFA</span>
+              <span className="text-[10px] text-gray-500">Min: 4 500 FCFA</span>
             </div>
 
             <div className="relative">
               <input
                 id="amount"
                 type="number"
-                min={1000}
+                min={4500}
                 max={availableBalance > 0 ? availableBalance : undefined}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value ? parseInt(e.target.value, 10) : "")}
-                placeholder="Entrer le montant (ex: 5000)"
+                placeholder="Entrer le montant (ex: 4 500)"
                 required
                 className="w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#1E2E24] bg-white dark:bg-[#17241C] text-sm font-bold text-gray-900 dark:text-gray-100 focus:outline-hidden focus:border-[#16A34A]"
               />
@@ -360,7 +361,7 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
             </div>
             <div className="flex items-center justify-between text-gray-500 dark:text-gray-400 text-[11px]">
               <span>Délai de virement automatique :</span>
-              <span className="font-semibold text-gray-700 dark:text-gray-300">15 à 30 minutes</span>
+              <span className="font-semibold text-gray-700 dark:text-gray-300">10 minutes à 24 heures</span>
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-[#1E2E24] text-sm font-black">
               <span className="text-gray-900 dark:text-gray-100">Montant net à recevoir :</span>
@@ -428,7 +429,7 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Délai estimé :</span>
-                <span className="font-bold text-emerald-600">15 à 30 minutes</span>
+                <span className="font-bold text-emerald-600">10 minutes à 24 heures</span>
               </div>
             </div>
 

@@ -1,21 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { formatFCFA } from "@/lib/utils";
 import type { WithdrawalRecord } from "../actions";
+import { simulateValidateWithdrawalAction } from "../actions";
 import {
   ArrowLeft,
-  Wallet,
   Clock,
   CheckCircle2,
   AlertCircle,
   History,
-  ArrowUpRight,
   PlusCircle,
   Smartphone,
   ShieldCheck,
   Search,
+  Calendar,
+  Zap,
+  ArrowDownLeft,
 } from "lucide-react";
 
 interface HistoryClientProps {
@@ -23,11 +26,33 @@ interface HistoryClientProps {
   totalWithdrawn: number;
 }
 
+function formatDateTime(dateStr?: string) {
+  if (!dateStr) return "À l'instant";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
 export function HistoryClient({ initialHistory, totalWithdrawn }: HistoryClientProps) {
+  const router = useRouter();
+  const [isPendingTransition, startTransition] = useTransition();
   const [filter, setFilter] = useState<"all" | "completed" | "processing">("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [validatingId, setValidatingId] = useState<string | null>(null);
+  const [localHistory, setLocalHistory] = useState<WithdrawalRecord[]>(initialHistory);
 
-  const filtered = initialHistory.filter((item) => {
+  const filtered = localHistory.filter((item) => {
     if (filter === "completed" && item.status !== "completed") return false;
     if (filter === "processing" && item.status !== "processing" && item.status !== "pending") return false;
     if (searchTerm) {
@@ -40,6 +65,27 @@ export function HistoryClient({ initialHistory, totalWithdrawn }: HistoryClientP
     }
     return true;
   });
+
+  const handleSimulateValidate = async (id: string) => {
+    setValidatingId(id);
+    try {
+      const res = await simulateValidateWithdrawalAction(id);
+      if (res.success) {
+        setLocalHistory((prev) =>
+          prev.map((item) =>
+            item.id === id || item.reference === id
+              ? { ...item, status: "completed", processedAt: new Date().toISOString() }
+              : item
+          )
+        );
+        startTransition(() => {
+          router.refresh();
+        });
+      }
+    } finally {
+      setValidatingId(null);
+    }
+  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 pb-12">
@@ -67,13 +113,13 @@ export function HistoryClient({ initialHistory, totalWithdrawn }: HistoryClientP
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white backdrop-blur mb-1">
               <History className="w-3.5 h-3.5" />
-              <span>Historique Global</span>
+              <span>Historique &amp; Traçabilité</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white">
               Historique des Retraits
             </h1>
             <p className="text-xs text-emerald-100 mt-0.5">
-              Traçabilité complète de l&apos;ensemble de vos virements Mobile Money.
+              Suivi en temps réel de vos demandes et confirmation des virements Mobile Money.
             </p>
           </div>
 
@@ -86,10 +132,10 @@ export function HistoryClient({ initialHistory, totalWithdrawn }: HistoryClientP
         </div>
 
         <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between text-xs text-emerald-100">
-          <span>Nombre total d&apos;opérations : <strong>{initialHistory.length}</strong></span>
+          <span>Nombre total d&apos;opérations : <strong>{localHistory.length}</strong></span>
           <span className="flex items-center gap-1">
             <ShieldCheck className="w-4 h-4 text-emerald-300" />
-            <span>Paiements vérifiés</span>
+            <span>Paiements sécurisés (10 min à 24h)</span>
           </span>
         </div>
       </div>
@@ -107,18 +153,7 @@ export function HistoryClient({ initialHistory, totalWithdrawn }: HistoryClientP
                 : "text-gray-600 dark:text-gray-300 hover:text-gray-900"
             }`}
           >
-            Tous ({initialHistory.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter("completed")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              filter === "completed"
-                ? "bg-[#16A34A] text-white shadow-xs"
-                : "text-gray-600 dark:text-gray-300 hover:text-gray-900"
-            }`}
-          >
-            Validés
+            Tous ({localHistory.length})
           </button>
           <button
             type="button"
@@ -129,7 +164,18 @@ export function HistoryClient({ initialHistory, totalWithdrawn }: HistoryClientP
                 : "text-gray-600 dark:text-gray-300 hover:text-gray-900"
             }`}
           >
-            En cours
+            En attente ({localHistory.filter((i) => i.status !== "completed").length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter("completed")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              filter === "completed"
+                ? "bg-[#16A34A] text-white shadow-xs"
+                : "text-gray-600 dark:text-gray-300 hover:text-gray-900"
+            }`}
+          >
+            Validés ({localHistory.filter((i) => i.status === "completed").length})
           </button>
         </div>
 
@@ -139,15 +185,15 @@ export function HistoryClient({ initialHistory, totalWithdrawn }: HistoryClientP
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Rechercher par réf. ou opérateur..."
+            placeholder="Rechercher par réf., tél. ou opérateur..."
             className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-gray-200 dark:border-[#1E2E24] bg-white dark:bg-[#131E17] text-xs text-gray-800 dark:text-gray-200 focus:outline-hidden focus:border-[#16A34A]"
           />
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
       </div>
 
-      {/* 3. LISTE DES RETRAITS */}
-      <div className="space-y-2.5">
+      {/* 3. LISTE DES RETRAITS AVEC DÉTAILS COMPLETS & NOTIFICATIONS */}
+      <div className="space-y-3.5">
         {filtered.length === 0 ? (
           <div className="bg-white dark:bg-[#131E17] rounded-3xl border border-gray-200 dark:border-[#1E2E24] p-8 text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-400 flex items-center justify-center mx-auto">
@@ -170,65 +216,168 @@ export function HistoryClient({ initialHistory, totalWithdrawn }: HistoryClientP
             </Link>
           </div>
         ) : (
-          filtered.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white dark:bg-[#131E17] rounded-2xl border border-gray-200 dark:border-[#1E2E24] p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:border-emerald-300 dark:hover:border-emerald-600 transition-colors"
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                    item.status === "completed"
-                      ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400"
-                      : "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400"
-                  }`}
-                >
-                  <Smartphone className="w-5 h-5" />
+          filtered.map((item) => {
+            const fee = item.fee ?? 500;
+            const netAmount = item.netAmount ?? Math.max(0, item.amount - fee);
+            const isCompleted = item.status === "completed";
+            const delay = item.estimatedDelay || "10 minutes à 24 heures";
+
+            return (
+              <div
+                key={item.id}
+                className="bg-white dark:bg-[#131E17] rounded-3xl border border-gray-200 dark:border-[#1E2E24] p-4 sm:p-5 shadow-sm space-y-4 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors"
+              >
+                {/* A. EN-TÊTE : Opérateur + Référence + Statut Badge */}
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 dark:border-[#1E2E24] pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                        isCompleted
+                          ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400"
+                          : "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400"
+                      }`}
+                    >
+                      <Smartphone className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-sm text-gray-900 dark:text-gray-100">
+                          {item.paymentMethod}
+                        </span>
+                        <span className="text-[10px] font-mono text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-bold">
+                          {item.reference}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-gray-500">
+                        Bénéficiaire : <strong className="text-gray-800 dark:text-gray-200">{item.phoneNumber}</strong>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Badge de statut */}
+                  <div>
+                    {isCompleted ? (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-100 dark:bg-emerald-950/70 dark:text-emerald-300 px-3 py-1 rounded-full border border-emerald-300 dark:border-emerald-800">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Validé &amp; Payé</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-100 dark:bg-amber-950/70 dark:text-amber-300 px-3 py-1 rounded-full border border-amber-300 dark:border-amber-800">
+                        <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                        <span>En attente de traitement</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-gray-900 dark:text-gray-100">
-                      {item.paymentMethod}
-                    </span>
-                    <span className="text-[10px] font-mono text-gray-500 bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
-                      {item.reference}
+
+                {/* B. GRILLE DES DÉTAILS FINANCIERS : Brut, Frais, Net direct */}
+                <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-gray-50 dark:bg-[#17241C] border border-gray-100 dark:border-[#1E2E24] text-center">
+                  <div className="p-1.5">
+                    <span className="block text-[10px] text-gray-500 font-medium">Montant demandé</span>
+                    <span className="text-xs sm:text-sm font-black text-gray-900 dark:text-gray-100">
+                      {formatFCFA(item.amount)}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Vers : <strong className="text-gray-700 dark:text-gray-300">{item.phoneNumber}</strong>
-                  </p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">
-                    {new Date(item.createdAt).toLocaleDateString("fr-FR", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                </div>
-              </div>
 
-              <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 dark:border-[#1E2E24]">
-                <span className="text-base font-black text-gray-900 dark:text-gray-100">
-                  {formatFCFA(item.amount)}
-                </span>
-                <div className="mt-0.5">
-                  {item.status === "completed" ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                      Validé &amp; Payé
+                  <div className="p-1.5 border-x border-gray-200 dark:border-[#223528]">
+                    <span className="block text-[10px] text-gray-500 font-medium">Frais déduits</span>
+                    <span className="text-xs sm:text-sm font-black text-rose-600 dark:text-rose-400">
+                      - {formatFCFA(fee)}
                     </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 dark:bg-amber-950/60 dark:text-amber-300 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
-                      <Clock className="w-3 h-3 text-amber-600" />
-                      En cours de transfert
+                  </div>
+
+                  <div className="p-1.5 bg-emerald-100/60 dark:bg-emerald-900/30 rounded-xl">
+                    <span className="block text-[10px] text-emerald-800 dark:text-emerald-300 font-bold uppercase tracking-tight">
+                      Net à recevoir
                     </span>
+                    <span className="text-xs sm:text-sm font-black text-[#16A34A] dark:text-emerald-400">
+                      {formatFCFA(netAmount)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* C. INFORMATIONS D'HORODATAGE & DÉLAI */}
+                <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300 pt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1 text-gray-500 text-[11px]">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>Demandé le :</span>
+                    </span>
+                    <span className="font-semibold text-gray-800 dark:text-gray-200 text-[11px]">
+                      {formatDateTime(item.createdAt)}
+                    </span>
+                  </div>
+
+                  {!isCompleted && (
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1 text-gray-500 text-[11px]">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>Délai estimé :</span>
+                      </span>
+                      <span className="font-bold text-amber-700 dark:text-amber-400 text-[11px]">
+                        {delay}
+                      </span>
+                    </div>
+                  )}
+
+                  {isCompleted && item.processedAt && (
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1 text-gray-500 text-[11px]">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Validé et payé le :</span>
+                      </span>
+                      <span className="font-bold text-emerald-700 dark:text-emerald-400 text-[11px]">
+                        {formatDateTime(item.processedAt)}
+                      </span>
+                    </div>
                   )}
                 </div>
+
+                {/* D. ENCADRÉ DE NOTIFICATION OFFICIELLE PROFESSIONNELLE */}
+                {isCompleted ? (
+                  <div className="rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3.5 text-xs space-y-1">
+                    <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-bold">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Notification : Paiement validé et viré avec succès</span>
+                    </div>
+                    <p className="text-[11px] text-emerald-900/90 dark:text-emerald-200/90 leading-relaxed">
+                      Votre virement net de <strong>{formatFCFA(netAmount)}</strong> a été <strong>bel et bien validé</strong> et déposé sur votre numéro <strong>{item.phoneNumber}</strong> ({item.paymentMethod}) le <strong>{formatDateTime(item.processedAt || item.createdAt)}</strong>. Transaction vérifiée et archivée sous la référence <code>{item.reference}</code>.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 p-3.5 text-xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-amber-900 dark:text-amber-300 font-bold">
+                        <Clock className="w-4 h-4 text-amber-600 shrink-0 animate-pulse" />
+                        <span>Notification : Retrait en cours de traitement</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-200/60 dark:bg-amber-900/60 px-2 py-0.5 rounded-full">
+                        Délai : 10 min à 24h
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
+                      Votre demande de retrait de <strong>{formatFCFA(item.amount)}</strong> a été enregistrée à <strong>{formatDateTime(item.createdAt)}</strong>. Frais fixes : <strong>{formatFCFA(fee)}</strong>. Vous allez recevoir la somme nette de <strong>{formatFCFA(netAmount)}</strong> directement sur votre numéro <strong>{item.phoneNumber}</strong> ({item.paymentMethod}) dans un délai de <strong>10 minutes à 24 heures</strong>.
+                    </p>
+
+                    {/* Bouton de simulation de validation pour tests */}
+                    <div className="pt-1 flex items-center justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleSimulateValidate(item.id)}
+                        disabled={validatingId === item.id}
+                        className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 hover:text-emerald-900 dark:text-emerald-400 bg-emerald-100/70 hover:bg-emerald-200/80 dark:bg-emerald-900/40 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                        title="Simuler instantanément la réception du virement pour tester la notification"
+                      >
+                        <Zap className="w-3 h-3 text-emerald-600" />
+                        <span>{validatingId === item.id ? "Validation en cours..." : "Simuler la réception validée (Test)"}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
