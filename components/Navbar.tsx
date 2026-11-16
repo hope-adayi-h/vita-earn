@@ -66,6 +66,8 @@ export function Navbar({ user }: NavbarProps) {
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [withdrawalMenuOpen, setWithdrawalMenuOpen] = useState(false);
   const [desktopWithdrawalOpen, setDesktopWithdrawalOpen] = useState(false);
+  const [teamMenuOpen, setTeamMenuOpen] = useState(false);
+  const [desktopTeamOpen, setDesktopTeamOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [communityModalOpen, setCommunityModalOpen] = useState(false);
 
@@ -127,6 +129,34 @@ export function Navbar({ user }: NavbarProps) {
     },
   ];
 
+  // Sous-options de Mon Équipe (Niveau 1, 2, 3, Inactifs)
+  const teamSubOptions = [
+    {
+      id: "level-1",
+      label: "Niveau 1",
+      sublabel: "Filleuls Directs (2 000 FCFA)",
+      href: "/equipe?level=1",
+    },
+    {
+      id: "level-2",
+      label: "Niveau 2",
+      sublabel: "2e Génération (1 000 FCFA)",
+      href: "/equipe?level=2",
+    },
+    {
+      id: "level-3",
+      label: "Niveau 3",
+      sublabel: "3e Génération (500 FCFA)",
+      href: "/equipe?level=3",
+    },
+    {
+      id: "inactifs",
+      label: "Inactifs",
+      sublabel: "En attente d'activation",
+      href: "/equipe?level=inactifs",
+    },
+  ];
+
   const isActivationPage = pathname.startsWith("/activation");
   const isAuthPage = pathname.startsWith("/auth");
 
@@ -161,6 +191,7 @@ export function Navbar({ user }: NavbarProps) {
     { label: t("nav.market"), href: "/marche", icon: ShoppingBag },
     { label: t("nav.tasks"), href: "/taches", icon: CalendarCheck },
     { label: t("nav.withdrawal"), href: "/retrait", icon: Wallet },
+    { label: t("nav.team"), href: "/equipe", icon: Users },
     { label: t("nav.profile"), href: "/profil", icon: User },
   ];
 
@@ -173,7 +204,7 @@ export function Navbar({ user }: NavbarProps) {
     { label: t("nav.home"), href: "/", icon: Home },
     { label: t("nav.community"), href: "/communaute", icon: MessageSquare, isCommunity: true },
     { label: t("nav.withdrawal"), href: "/retrait", icon: Wallet },
-    { label: t("nav.team"), href: "/#equipe", icon: Users },
+    { label: t("nav.team"), href: "/equipe", icon: Users },
     { label: t("nav.welcomeBonus"), href: "/#welcome-bonus", icon: Gift },
     { label: t("nav.wheel"), href: "/roue", icon: Disc },
     { label: t("nav.tasks"), href: "/taches", icon: CalendarCheck },
@@ -189,6 +220,7 @@ export function Navbar({ user }: NavbarProps) {
     setProfileDropdownOpen(false);
     setLangDropdownOpen(false);
     setDesktopWithdrawalOpen(false);
+    setDesktopTeamOpen(false);
   };
 
   const openFaqModal = () => {
@@ -262,6 +294,7 @@ export function Navbar({ user }: NavbarProps) {
                         type="button"
                         onClick={() => {
                           setDesktopWithdrawalOpen(!desktopWithdrawalOpen);
+                          setDesktopTeamOpen(false);
                           setProfileDropdownOpen(false);
                           setLangDropdownOpen(false);
                         }}
@@ -304,6 +337,67 @@ export function Navbar({ user }: NavbarProps) {
                                       ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 font-bold"
                                       : "text-gray-700 dark:text-gray-200 hover:bg-vita-surface dark:hover:bg-slate-800/60"
                                   }`}
+                                >
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300">
+                                      {sub.label}
+                                    </p>
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                                      {sub.sublabel}
+                                    </p>
+                                  </div>
+                                  <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-emerald-600 shrink-0 ml-2" />
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                if (item.href === "/equipe") {
+                  return (
+                    <div key="desktop-team" className="relative">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDesktopTeamOpen(!desktopTeamOpen);
+                          setDesktopWithdrawalOpen(false);
+                          setProfileDropdownOpen(false);
+                          setLangDropdownOpen(false);
+                        }}
+                        className={`text-sm font-semibold transition-colors px-2.5 py-1.5 rounded-lg flex items-center gap-1 ${
+                          pathname.startsWith("/equipe") || desktopTeamOpen
+                            ? "text-vita-deep dark:text-[#86EFAC] font-bold bg-vita-surface/80 dark:bg-emerald-950/40"
+                            : "text-vita-text dark:text-gray-300 hover:text-vita-deep hover:bg-gray-50 dark:hover:bg-slate-800/50"
+                        }`}
+                        aria-expanded={desktopTeamOpen}
+                      >
+                        <span>{item.label}</span>
+                        <ChevronDown
+                          className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                            desktopTeamOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+
+                      {desktopTeamOpen && (
+                        <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-[#131E17] rounded-2xl shadow-xl border border-gray-100 dark:border-[#1E2E24] p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                          <div className="px-2.5 py-1.5 mb-1 border-b border-gray-100 dark:border-[#1E2E24]">
+                            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                              Mon Équipe & Réseau
+                            </p>
+                          </div>
+                          <div className="space-y-0.5">
+                            {teamSubOptions.map((sub) => {
+                              return (
+                                <Link
+                                  key={sub.id}
+                                  href={sub.href}
+                                  onClick={() => setDesktopTeamOpen(false)}
+                                  className="flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-colors group text-gray-700 dark:text-gray-200 hover:bg-vita-surface dark:hover:bg-slate-800/60"
                                 >
                                   <div className="min-w-0">
                                     <p className="text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300">
@@ -785,6 +879,70 @@ export function Navbar({ user }: NavbarProps) {
                                 ? "bg-emerald-100/70 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200 font-bold"
                                 : "text-gray-700 dark:text-gray-300 hover:bg-vita-surface dark:hover:bg-slate-800/60"
                             }`}
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300 transition-colors">
+                                {sub.label}
+                              </p>
+                              <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                                {sub.sublabel}
+                              </p>
+                            </div>
+                            <ChevronRight className="w-3 h-3 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 shrink-0 ml-2" />
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            if (item.href === "/equipe") {
+              const isSectionActive = pathname.startsWith("/equipe");
+              return (
+                <div key={item.label} className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => setTeamMenuOpen((prev) => !prev)}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                      isSectionActive || teamMenuOpen
+                        ? "bg-vita-surface dark:bg-emerald-950/40 text-vita-deep dark:text-emerald-300 font-bold"
+                        : "text-vita-text dark:text-gray-200 hover:bg-vita-surface/60 dark:hover:bg-slate-800/50"
+                    }`}
+                    aria-expanded={teamMenuOpen}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Icon
+                        className={`w-4 h-4 shrink-0 ${
+                          isSectionActive || teamMenuOpen
+                            ? "text-vita-deep dark:text-emerald-400"
+                            : "text-vita-medium dark:text-emerald-500"
+                        }`}
+                      />
+                      <span className="truncate text-sm font-semibold">
+                        {item.label}
+                      </span>
+                    </div>
+                    <ChevronDown
+                      className={`w-4 h-4 text-vita-muted/60 dark:text-gray-400 shrink-0 ml-1 transition-transform duration-200 ${
+                        teamMenuOpen ? "rotate-180 text-emerald-600 dark:text-emerald-400" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {/* Options déroulantes de Mon Équipe */}
+                  {teamMenuOpen && (
+                    <div className="mt-1 ml-4 pl-3 py-1 space-y-1 border-l-2 border-emerald-500/30 dark:border-emerald-500/20">
+                      {teamSubOptions.map((sub) => {
+                        return (
+                          <Link
+                            key={sub.id}
+                            href={sub.href}
+                            onClick={() => {
+                              closeSidebar();
+                            }}
+                            className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors group text-gray-700 dark:text-gray-300 hover:bg-vita-surface dark:hover:bg-slate-800/60"
                           >
                             <div className="min-w-0">
                               <p className="truncate text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300 transition-colors">
