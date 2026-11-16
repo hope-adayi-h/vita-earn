@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { formatFCFA } from "@/lib/utils";
 import type { WithdrawalPageData } from "./actions";
 import { submitWithdrawalAction } from "./actions";
+import { PlatformLogo } from "@/components/PlatformLogo";
 import {
   Wallet,
   ArrowRight,
@@ -49,6 +50,7 @@ const WITHDRAWAL_TYPES_CONFIG: Record<
     badge: string;
     description: string;
     icon: any;
+    platform: string;
     accentColor: string;
   }
 > = {
@@ -57,6 +59,7 @@ const WITHDRAWAL_TYPES_CONFIG: Record<
     badge: "Retrait Solde",
     description: "Retrait direct de votre solde disponible vers votre numéro Mobile Money.",
     icon: Wallet,
+    platform: "solde",
     accentColor: "from-[#16A34A] via-[#16A34A] to-[#15803D]",
   },
   total: {
@@ -64,6 +67,7 @@ const WITHDRAWAL_TYPES_CONFIG: Record<
     badge: "Retrait Solde",
     description: "Retrait direct de votre solde disponible vers votre numéro Mobile Money.",
     icon: Wallet,
+    platform: "solde",
     accentColor: "from-[#16A34A] via-[#16A34A] to-[#15803D]",
   },
   tiktok: {
@@ -71,28 +75,32 @@ const WITHDRAWAL_TYPES_CONFIG: Record<
     badge: "Tâche TikTok Vidéos",
     description: "Retrait de vos rémunérations accumulées sur les tâches vidéos TikTok.",
     icon: Video,
-    accentColor: "from-[#BE185D] via-[#9D174D] to-[#831843]",
+    platform: "tiktok",
+    accentColor: "from-[#111827] via-[#000000] to-[#111827]",
   },
   youtube: {
     title: "Retrait des Gains YouTube",
     badge: "Tâche YouTube Vidéos",
     description: "Retrait de vos gains accumulés sur les formations et vidéos YouTube.",
     icon: PlaySquare,
+    platform: "youtube",
     accentColor: "from-[#DC2626] via-[#B91C1C] to-[#991B1B]",
   },
   ads: {
-    title: "Retrait des Gains Ads Clics",
-    badge: "Tâche Clics Publicitaires",
-    description: "Retrait de vos gains accumulés sur les visites d'annonces sponsorisées.",
+    title: "Retrait des Gains AdSense",
+    badge: "Tâche Clics Publicitaires AdSense",
+    description: "Retrait de vos gains accumulés sur les visites d'annonces Google AdSense.",
     icon: MousePointerClick,
-    accentColor: "from-[#D97706] via-[#B45309] to-[#92400E]",
+    platform: "adsense",
+    accentColor: "from-[#2563EB] via-[#1D4ED8] to-[#1E40AF]",
   },
   instagram: {
     title: "Retrait des Gains Instagram",
     badge: "Tâche Vidéos Instagram",
     description: "Retrait de vos gains accumulés sur les contenus vidéos Instagram.",
     icon: Camera,
-    accentColor: "from-[#7C3AED] via-[#6D28D9] to-[#5B21B6]",
+    platform: "instagram",
+    accentColor: "from-[#C13584] via-[#833AB4] to-[#5851DB]",
   },
 };
 
@@ -210,11 +218,12 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
         <div className="flex items-start justify-between gap-3 relative z-10">
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white backdrop-blur mb-1.5">
-              <TypeIcon className="w-3.5 h-3.5" />
+              <PlatformLogo platform={currentType.platform} className="w-4 h-4 rounded-xs shrink-0" />
               <span>{currentType.badge}</span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-              {currentType.title}
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+              <span>{currentType.title}</span>
+              <PlatformLogo platform={currentType.platform} className="w-6 h-6 rounded-md inline-block shadow-sm" />
             </h1>
             <p className="text-xs text-white/90 mt-0.5">
               {currentType.description}

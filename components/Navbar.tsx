@@ -41,6 +41,7 @@ import {
   PlaySquare,
   MousePointerClick,
 } from "lucide-react";
+import { PlatformLogo } from "./PlatformLogo";
 import { HelpModal } from "@/components/HelpModal";
 import { CommunityModal } from "@/components/CommunityModal";
 
@@ -75,6 +76,7 @@ export function Navbar({ user }: NavbarProps) {
       label: "Retrait Solde",
       sublabel: "Solde Principal & Réseau",
       href: "/retrait?type=solde",
+      platform: "solde",
       icon: Wallet,
       color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60",
     },
@@ -83,6 +85,7 @@ export function Navbar({ user }: NavbarProps) {
       label: "Retrait TikTok",
       sublabel: "Gains Tâches Vidéos TikTok",
       href: "/retrait?type=tiktok",
+      platform: "tiktok",
       icon: Video,
       color: "text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950/60",
     },
@@ -91,14 +94,16 @@ export function Navbar({ user }: NavbarProps) {
       label: "Retrait YouTube",
       sublabel: "Gains Tâches Vidéos YouTube",
       href: "/retrait?type=youtube",
+      platform: "youtube",
       icon: PlaySquare,
       color: "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60",
     },
     {
       id: "ads",
-      label: "Retrait Ads Clics",
-      sublabel: "Gains Clics Publicitaires",
+      label: "Retrait AdSense",
+      sublabel: "Gains Clics Publicitaires AdSense",
       href: "/retrait?type=ads",
+      platform: "adsense",
       icon: MousePointerClick,
       color: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60",
     },
@@ -107,6 +112,7 @@ export function Navbar({ user }: NavbarProps) {
       label: "Retrait Instagram",
       sublabel: "Gains Vidéos Instagram",
       href: "/retrait?type=instagram",
+      platform: "instagram",
       icon: Camera,
       color: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60",
     },
@@ -115,6 +121,7 @@ export function Navbar({ user }: NavbarProps) {
       label: "Historique",
       sublabel: "Journal de tous vos retraits",
       href: "/retrait/historique",
+      platform: null,
       icon: History,
       color: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60",
     },
@@ -299,14 +306,21 @@ export function Navbar({ user }: NavbarProps) {
                                   }`}
                                 >
                                   <div className="flex items-center gap-2.5 min-w-0">
-                                    <span
-                                      className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${sub.color}`}
-                                    >
-                                      <SubIcon className="w-3.5 h-3.5" />
-                                    </span>
-                                    <div>
-                                      <p className="text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300">
-                                        {sub.label}
+                                    {sub.platform ? (
+                                      <PlatformLogo platform={sub.platform} className="w-6 h-6 shrink-0" />
+                                    ) : (
+                                      <span
+                                        className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${sub.color}`}
+                                      >
+                                        <SubIcon className="w-3.5 h-3.5" />
+                                      </span>
+                                    )}
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300 flex items-center gap-1.5">
+                                        <span>{sub.label}</span>
+                                        {sub.platform && (
+                                          <PlatformLogo platform={sub.platform} className="w-3.5 h-3.5 rounded-xs inline-block" />
+                                        )}
                                       </p>
                                       <p className="text-[10px] text-gray-400 dark:text-gray-500">
                                         {sub.sublabel}
@@ -787,13 +801,20 @@ export function Navbar({ user }: NavbarProps) {
                             }`}
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <span
-                                className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${sub.color}`}
-                              >
-                                <SubIcon className="w-3.5 h-3.5" />
-                              </span>
-                              <span className="truncate group-hover:text-vita-deep dark:group-hover:text-emerald-300 transition-colors">
-                                {sub.label}
+                              {sub.platform ? (
+                                <PlatformLogo platform={sub.platform} className="w-6 h-6 shrink-0" />
+                              ) : (
+                                <span
+                                  className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${sub.color}`}
+                                >
+                                  <SubIcon className="w-3.5 h-3.5" />
+                                </span>
+                              )}
+                              <span className="truncate group-hover:text-vita-deep dark:group-hover:text-emerald-300 transition-colors font-bold flex items-center gap-1.5">
+                                <span>{sub.label}</span>
+                                {sub.platform && (
+                                  <PlatformLogo platform={sub.platform} className="w-3.5 h-3.5 rounded-xs shrink-0" />
+                                )}
                               </span>
                             </div>
                             <ChevronRight className="w-3 h-3 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 shrink-0" />

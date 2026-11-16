@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { formatFCFA } from "@/lib/utils";
 import { submitTriviaAnswerAction, completeGenericTaskAction, transferTaskEarningsAction } from "@/lib/actions/tasks";
+import { PlatformLogo } from "./PlatformLogo";
 
 export interface TaskItem {
   id: string;
@@ -117,39 +118,19 @@ export function TimeTableSection({ tasks: initialTasks }: TimeTableSectionProps)
   const [feedbackMessage, setFeedbackMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [videoTimer, setVideoTimer] = useState<number | null>(null);
 
-  // Icône SVG propre pour chaque tâche (aucun emoji)
+  // Vrais logos officiels pour chaque tâche (TikTok, YouTube, AdSense, Instagram, Trivia)
   const getTaskIcon = (id: string) => {
     switch (id) {
       case "trivia":
-        return (
-          <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center shadow-sm">
-            <HelpCircle className="w-5 h-5" />
-          </div>
-        );
+        return <PlatformLogo platform="trivia" className="w-11 h-11" />;
       case "tiktok":
-        return (
-          <div className="w-11 h-11 rounded-2xl bg-zinc-900 border border-zinc-700 text-white flex items-center justify-center shadow-sm">
-            <Video className="w-5 h-5 text-rose-400" />
-          </div>
-        );
+        return <PlatformLogo platform="tiktok" className="w-11 h-11" />;
       case "youtube":
-        return (
-          <div className="w-11 h-11 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shadow-sm">
-            <PlaySquare className="w-5 h-5" />
-          </div>
-        );
+        return <PlatformLogo platform="youtube" className="w-11 h-11" />;
       case "ads":
-        return (
-          <div className="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shadow-sm">
-            <MousePointerClick className="w-5 h-5" />
-          </div>
-        );
+        return <PlatformLogo platform="adsense" className="w-11 h-11" />;
       case "instagram":
-        return (
-          <div className="w-11 h-11 rounded-2xl bg-purple-50 border border-purple-200 text-purple-600 flex items-center justify-center shadow-sm">
-            <Camera className="w-5 h-5" />
-          </div>
-        );
+        return <PlatformLogo platform="instagram" className="w-11 h-11" />;
       default:
         return (
           <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shadow-sm">
@@ -289,13 +270,17 @@ export function TimeTableSection({ tasks: initialTasks }: TimeTableSectionProps)
               key={task.id}
               className="p-3.5 sm:p-4 rounded-2xl bg-vita-surface/40 hover:bg-vita-surface/80 border border-vita-border/70 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
             >
-              {/* Côté gauche : Logo + Nom + Heure */}
+              {/* Côté gauche : Logo officiel + Nom + Logo après titre + Heure */}
               <div className="flex items-center gap-3 min-w-0">
                 {getTaskIcon(task.id)}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-extrabold text-vita-text truncate">
-                      {task.title}
+                    <h3 className="text-sm font-extrabold text-vita-text truncate flex items-center gap-1.5">
+                      <span>{task.title}</span>
+                      <PlatformLogo
+                        platform={task.id === "ads" ? "adsense" : task.id}
+                        className="w-4 h-4 rounded-xs inline-block"
+                      />
                     </h3>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 flex-shrink-0">
                       {task.dayLabel}
@@ -307,14 +292,18 @@ export function TimeTableSection({ tasks: initialTasks }: TimeTableSectionProps)
                 </div>
               </div>
 
-              {/* Centre & Côté droit : Compteur dédié + Bouton d'action selon validation Admin */}
+              {/* Centre & Côté droit : Compteur dédié Cash avec logo + Bouton d'action selon validation Admin */}
               <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-vita-border/40">
-                {/* Compteur individuel devant chaque tâche */}
+                {/* Compteur individuel Cash avec vrai logo */}
                 <div className="text-left sm:text-right">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-vita-muted block">
-                    Cagnotte Tâche
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-vita-muted flex items-center sm:justify-end gap-1 mb-0.5">
+                    <PlatformLogo
+                      platform={task.id === "ads" ? "adsense" : task.id}
+                      className="w-3.5 h-3.5 rounded-xs"
+                    />
+                    <span>Cash {task.id === "ads" ? "AdSense" : task.id.charAt(0).toUpperCase() + task.id.slice(1)}</span>
                   </span>
-                  <div className="flex items-baseline gap-1">
+                  <div className="flex items-baseline gap-1 sm:justify-end">
                     <span className="text-sm sm:text-base font-black text-emerald-700">
                       {formatFCFA(task.accumulatedAmount)}
                     </span>
