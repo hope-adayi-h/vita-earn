@@ -306,21 +306,17 @@ export function Navbar({ user }: NavbarProps) {
                                   }`}
                                 >
                                   <div className="flex items-center gap-2.5 min-w-0">
-                                    {sub.platform ? (
-                                      <PlatformLogo platform={sub.platform} className="w-6 h-6 shrink-0" />
-                                    ) : (
-                                      <span
-                                        className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${sub.color}`}
-                                      >
-                                        <SubIcon className="w-3.5 h-3.5" />
-                                      </span>
-                                    )}
+                                    <span
+                                      className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${sub.color}`}
+                                    >
+                                      <SubIcon className="w-3.5 h-3.5" />
+                                    </span>
                                     <div className="min-w-0">
                                       <p className="text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300 flex items-center gap-1.5">
-                                        <span>{sub.label}</span>
                                         {sub.platform && (
-                                          <PlatformLogo platform={sub.platform} className="w-3.5 h-3.5 rounded-xs inline-block" />
+                                          <PlatformLogo platform={sub.platform} className="w-4 h-4 rounded-xs shrink-0 inline-block" />
                                         )}
+                                        <span>{sub.label}</span>
                                       </p>
                                       <p className="text-[10px] text-gray-400 dark:text-gray-500">
                                         {sub.sublabel}
@@ -801,20 +797,16 @@ export function Navbar({ user }: NavbarProps) {
                             }`}
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
-                              {sub.platform ? (
-                                <PlatformLogo platform={sub.platform} className="w-6 h-6 shrink-0" />
-                              ) : (
-                                <span
-                                  className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${sub.color}`}
-                                >
-                                  <SubIcon className="w-3.5 h-3.5" />
-                                </span>
-                              )}
+                              <span
+                                className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${sub.color}`}
+                              >
+                                <SubIcon className="w-3.5 h-3.5" />
+                              </span>
                               <span className="truncate group-hover:text-vita-deep dark:group-hover:text-emerald-300 transition-colors font-bold flex items-center gap-1.5">
-                                <span>{sub.label}</span>
                                 {sub.platform && (
-                                  <PlatformLogo platform={sub.platform} className="w-3.5 h-3.5 rounded-xs shrink-0" />
+                                  <PlatformLogo platform={sub.platform} className="w-4 h-4 rounded-xs shrink-0 inline-block" />
                                 )}
+                                <span>{sub.label}</span>
                               </span>
                             </div>
                             <ChevronRight className="w-3 h-3 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 shrink-0" />

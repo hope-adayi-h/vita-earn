@@ -434,9 +434,9 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* BLOCS MÉTRIQUES : ESPÈCES (4 500 FCFA) & PROFITS */}
+        {/* BLOCS MÉTRIQUES : DÉPENSES (4 500 FCFA) & PROFITS */}
         <div className="grid grid-cols-2 gap-3 pt-2 relative z-10">
-          {/* Bloc Espèces (Dépenses d'activation du compte) */}
+          {/* Bloc Dépenses (Frais d'activation du compte) */}
           <div className="rounded-2xl bg-black/20 backdrop-blur-md border border-white/20 p-3.5 sm:p-4 relative overflow-hidden flex flex-col justify-between transition-all hover:bg-black/30 shadow-inner">
             {/* Liseré indicateur latéral rose/corail */}
             <div className="absolute left-0 top-2 bottom-2 w-1.5 rounded-r bg-rose-400" />
@@ -445,7 +445,7 @@ export default async function HomePage() {
                 <ArrowDownLeft className="w-4 h-4" />
               </div>
               <span className="text-[11px] sm:text-xs font-black tracking-wider text-rose-200 uppercase">
-                ESPÈCES
+                DÉPENSES
               </span>
             </div>
             <div className="pl-1.5">
