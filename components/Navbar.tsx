@@ -62,7 +62,7 @@ export function Navbar({ user }: NavbarProps) {
 
   // États des menus et modales
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [withdrawalMenuOpen, setWithdrawalMenuOpen] = useState(false);
   const [desktopWithdrawalOpen, setDesktopWithdrawalOpen] = useState(false);
   const [teamMenuOpen, setTeamMenuOpen] = useState(false);
@@ -206,7 +206,7 @@ export function Navbar({ user }: NavbarProps) {
 
   const closeSidebar = () => setSidebarOpen(false);
   const closeDropdowns = () => {
-    setLangDropdownOpen(false);
+    setProfileDropdownOpen(false);
     setDesktopWithdrawalOpen(false);
     setDesktopTeamOpen(false);
   };
@@ -224,7 +224,7 @@ export function Navbar({ user }: NavbarProps) {
           {/* ========================================================================= */}
           {/* 1. ZONE GAUCHE : Bouton Menu ☰ (inchangé)                                 */}
           {/* ========================================================================= */}
-          <div className="flex items-center shrink-0 w-14 sm:w-20 justify-start">
+          <div className="flex items-center shrink-0 w-20 sm:w-24 justify-start">
             <button
               type="button"
               onClick={() => {
@@ -239,7 +239,7 @@ export function Navbar({ user }: NavbarProps) {
           </div>
 
           {/* ========================================================================= */}
-          {/* 2. ZONE CENTRE : Logo "V" (36-40px) + Nom "VITA EARN" (18-22px)           */}
+          {/* 2. ZONE CENTRE : Logo "V" + Nom "VITA EARN" (proportions équilibrées)     */}
           {/* ========================================================================= */}
           <div className="flex-1 flex items-center justify-center min-w-0 px-1">
             <Link
@@ -253,78 +253,26 @@ export function Navbar({ user }: NavbarProps) {
               <Image
                 src="/images/logo-icon.png"
                 alt="Vita Earn"
-                width={44}
-                height={40}
-                className="h-9 sm:h-10 w-auto object-contain transition-transform group-hover:scale-105 duration-200 shrink-0"
+                width={38}
+                height={32}
+                className="h-7 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105 duration-200 shrink-0"
                 priority
               />
               <Image
                 src="/images/logo-text.png"
                 alt="Vita Earn"
-                width={120}
-                height={24}
-                className="h-[18px] sm:h-[22px] w-auto object-contain dark:brightness-200 shrink-0"
+                width={110}
+                height={18}
+                className="h-4 sm:h-[18px] w-auto object-contain dark:brightness-200 shrink-0"
                 priority
               />
             </Link>
           </div>
 
           {/* ========================================================================= */}
-          {/* 3. ZONE DROITE : Sélecteur de langue "FR" suivi du bouton thème (lune)   */}
+          {/* 3. ZONE DROITE : Bouton thème (lune/soleil) + Avatar avec point vert en ligne */}
           {/* ========================================================================= */}
-          <div className="flex items-center justify-end shrink-0 w-14 sm:w-20 gap-0.5 sm:gap-1.5 relative">
-            {/* Sélecteur de langue (FR / EN) */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => {
-                  setLangDropdownOpen(!langDropdownOpen);
-                }}
-                className="flex items-center gap-1 px-1.5 sm:px-2 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-vita-deep hover:bg-vita-surface dark:hover:bg-slate-800 transition-colors"
-                aria-label="Changer de langue / Change language"
-                title="Langue / Language"
-              >
-                <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span className="uppercase text-xs">{language}</span>
-              </button>
-
-              {langDropdownOpen && (
-                <div className="absolute right-0 top-11 z-50 w-36 bg-white dark:bg-[#131E17] rounded-xl shadow-2xl border border-gray-100 dark:border-[#1E2E24] p-1.5 animate-in fade-in zoom-in-95 duration-150">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLanguage("fr");
-                      setLangDropdownOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                      language === "fr"
-                        ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800"
-                    }`}
-                  >
-                    <span>Français (FR)</span>
-                    {language === "fr" && <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLanguage("en");
-                      setLangDropdownOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                      language === "en"
-                        ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800"
-                    }`}
-                  >
-                    <span>English (EN)</span>
-                    {language === "en" && <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
-                  </button>
-                </div>
-              )}
-            </div>
-
+          <div className="flex items-center justify-end shrink-0 w-20 sm:w-24 gap-1.5 sm:gap-2.5 relative">
             {/* Bouton Mode Sombre / Clair (Lune / Soleil) */}
             <button
               type="button"
@@ -339,6 +287,168 @@ export function Navbar({ user }: NavbarProps) {
                 <Moon className="w-4 h-4 text-gray-700 dark:text-gray-200 hover:text-emerald-600 transition-colors" />
               )}
             </button>
+
+            {/* Avatar de profil (petite tête avec point vert en ligne en haut) */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileDropdownOpen(!profileDropdownOpen);
+                  setSidebarOpen(false);
+                }}
+                className="relative rounded-full focus:outline-hidden p-0.5 border border-transparent hover:border-emerald-400 transition-colors block cursor-pointer"
+                aria-label="Profil et options"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={avatar}
+                  alt={userDisplayName || "Avatar"}
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border border-emerald-500/40 shadow-xs"
+                />
+                {/* Point vert en haut montrant le statut en ligne */}
+                <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-[#16A34A] border-2 border-white dark:border-[#131E17]"></span>
+                </span>
+              </button>
+
+              {/* Menu Pop-up sous l'avatar */}
+              {profileDropdownOpen && (
+                <>
+                  {/* Backdrop invisible pour fermer au clic extérieur */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={closeDropdowns}
+                    aria-hidden="true"
+                  />
+                  <div className="absolute right-0 top-11 z-50 w-72 sm:w-80 bg-white dark:bg-[#131E17] rounded-2xl shadow-2xl border border-gray-100 dark:border-[#1E2E24] p-3.5 animate-in fade-in zoom-in-95 duration-150">
+                    {/* Profil & Statut */}
+                    <div className="pb-3 mb-3 border-b border-gray-100 dark:border-[#1E2E24]">
+                      <div className="flex items-center gap-3">
+                        <div className="relative shrink-0">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={avatar}
+                            alt={userDisplayName || "Avatar"}
+                            className="w-11 h-11 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow-xs"
+                          />
+                          <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#16A34A] border-2 border-white dark:border-[#131E17]"></span>
+                          </span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">
+                            {userDisplayName || t("prof.myAccount")}
+                          </p>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                            {user?.email || "membre@vitaearn.com"}
+                          </p>
+                          <div className="mt-1">
+                            {isActivated ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                                {t("nav.accountActive")}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
+                                <AlertCircle className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                                {t("nav.accountInactive")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Option de changement de photo de profil */}
+                      <div className="mt-2.5">
+                        <label className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gray-50 dark:bg-[#17241C] hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-gray-700 dark:text-gray-300 hover:text-emerald-800 dark:hover:text-emerald-300 text-xs font-semibold border border-gray-200 dark:border-[#1E2E24] cursor-pointer transition-colors">
+                          <Camera className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                          <span>{t("prof.changeAvatar")}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleAvatarUpload}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Actions & Raccourcis */}
+                    <div className="space-y-1">
+                      {/* Mon Profil */}
+                      <Link
+                        href="/profil"
+                        onClick={closeDropdowns}
+                        className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="text-xs font-semibold">{t("prof.viewProfile")}</span>
+                        </div>
+                        <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                      </Link>
+
+                      {/* Centre de Retrait Mobile Money */}
+                      <Link
+                        href="/retrait"
+                        onClick={closeDropdowns}
+                        className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="text-xs font-semibold">Demande de Retrait</span>
+                        </div>
+                        <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                      </Link>
+
+                      {/* Historique des Retraits */}
+                      <Link
+                        href="/retrait/historique"
+                        onClick={closeDropdowns}
+                        className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <History className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="text-xs font-semibold">Historique des Retraits</span>
+                        </div>
+                        <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                      </Link>
+
+                      {/* Activer mon compte si non activé */}
+                      {!isActivated && (
+                        <Link
+                          href="/activation"
+                          onClick={closeDropdowns}
+                          className="flex items-center justify-between p-2 rounded-xl bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 text-amber-800 dark:text-amber-300 transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                            <span className="text-xs font-bold">{t("prof.howToActivate")}</span>
+                          </div>
+                          <ChevronRight className="w-3.5 h-3.5 text-amber-600" />
+                        </Link>
+                      )}
+
+                      {/* Déconnexion */}
+                      <div className="pt-2 mt-2 border-t border-gray-100 dark:border-[#1E2E24]">
+                        <Link
+                          href="/auth/logout"
+                          onClick={closeDropdowns}
+                          className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <LogOut className="w-4 h-4 text-red-500 shrink-0" />
+                            <span className="text-xs font-bold">{t("nav.logout")}</span>
+                          </div>
+                          <ChevronRight className="w-3.5 h-3.5 text-red-400" />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
