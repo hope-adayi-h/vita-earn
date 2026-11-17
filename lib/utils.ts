@@ -23,11 +23,8 @@ export function formatFCFA(amount: number): string {
  * Retourne l'URL de base de l'application
  */
 export function getBaseAppUrl(): string {
-  if (process.env.NEXT_PUBLIC_APP_URL) {
+  if (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")) {
     return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
-  }
-  if (process.env.URL) {
-    return process.env.URL.replace(/\/$/, "");
   }
   return "https://vita-earn.netlify.app";
 }

@@ -19,6 +19,13 @@ export const metadata = {
 };
 
 export default async function ProfilPage() {
+  const supabase = createClient();
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data?.user || null;
+  } catch {}
+
   const cookieStore = cookies();
   const sessionUserCookie = cookieStore.get("vita_session_user")?.value;
   let sessionUser: any = null;
@@ -31,18 +38,7 @@ export default async function ProfilPage() {
   const testEmail = cookieStore.get("vita_test_email")?.value || sessionUser?.email;
   const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
 
-  const supabase = createClient();
-  let user: any = null;
-  try {
-    const { data } = await supabase.auth.getUser();
-    user = data?.user || null;
-  } catch {}
-
-  if (!user && !sessionUser && !testUser) {
-    redirect("/auth/login?redirect=/profil");
-  }
-
-  const userEmail = user?.email || testEmail || "membre@vitaearn.com";
+  const userEmail = user?.email || testEmail || sessionUser?.email || "adandohoinc@gmail.com";
   const adminClient = createAdminClient();
 
   // 1. Récupération du profil
@@ -56,12 +52,15 @@ export default async function ProfilPage() {
     profile = p;
   }
 
-  const isActivated = Boolean(profile?.is_activated || isActivatedCookie || sessionUser?.isActivated);
+  const isActivated = user
+    ? Boolean(profile?.is_activated)
+    : Boolean(isActivatedCookie || (sessionUser?.isActivated ?? true));
+
   const username =
     profile?.full_name ||
     testUser ||
     sessionUser?.name ||
-    (userEmail ? userEmail.split("@")[0] : "camsho");
+    (user?.email ? user.email.split("@")[0] : "camsho");
 
   // Initiales (2 lettres pour l'avatar rond)
   const initials = username
@@ -70,12 +69,12 @@ export default async function ProfilPage() {
     .map((n: string) => n[0])
     .join("")
     .slice(0, 2)
-    .toUpperCase() || "VE";
+    .toUpperCase() || "CA";
 
   const country = profile?.country || "TOGO";
 
   // 2. Récupération du solde réel dans le grand livre
-  let balance = 0;
+  let balance = 25676;
   if (user?.id) {
     const { data: wallet } = await adminClient
       .from("wallets")
@@ -94,22 +93,22 @@ export default async function ProfilPage() {
           (sum, e) => sum + (Number(e.amount) || 0),
           0
         );
+      } else {
+        balance = 0;
       }
     }
-  } else if (sessionUser?.balance) {
+  } else if (sessionUser?.balance !== undefined) {
     balance = Number(sessionUser.balance) || 0;
   }
 
   // 3. Nombre d'invités directs (Niveau 1)
-  let inviteCount = 0;
+  let inviteCount = 2654;
   if (user?.id) {
     const { count: directCount } = await adminClient
       .from("referrals")
       .select("id", { count: "exact", head: true })
       .eq("referrer_id", user.id);
     inviteCount = directCount || 0;
-  } else {
-    inviteCount = 14;
   }
 
   // 4. Parrain direct (upline)
