@@ -1,16 +1,29 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { DEFAULT_WHEEL_SEGMENTS, WheelSegment } from "@/lib/wheel-constants";
 
 /**
- * Récupère le statut quotidien de la roue pour l'utilisateur connecté.
- * Heure de Lomé = UTC (remise à zéro à 00:00:00 UTC).
+ * Récupère le statut du tour de bienvenue pour l'utilisateur connecté.
+ * Règle système : 1 seul tour à vie par compte, réservé aux comptes activés.
  */
 export async function getDailySpinStatusAction() {
   try {
+    const cookieStore = cookies();
+    const hasSpunCookie = cookieStore.get("vita_wheel_spun")?.value === "true";
+    const rewardCookie = cookieStore.get("vita_wheel_reward")?.value;
+    const sessionUserCookie = cookieStore.get("vita_session_user")?.value;
+    let sessionUser: any = null;
+    if (sessionUserCookie) {
+      try {
+        sessionUser = JSON.parse(sessionUserCookie);
+      } catch {}
+    }
+    const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
+
     const isConfigured =
       Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
       !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
@@ -18,8 +31,9 @@ export async function getDailySpinStatusAction() {
     if (!isConfigured) {
       return {
         isLoggedIn: true,
-        isActivated: true,
-        hasSpunToday: false,
+        isActivated: Boolean(isActivatedCookie || sessionUser?.isActivated),
+        hasSpunToday: hasSpunCookie,
+        todayReward: rewardCookie ? Number(rewardCookie) : (hasSpunCookie ? 56 : undefined),
         segments: DEFAULT_WHEEL_SEGMENTS,
       };
     }
@@ -31,9 +45,10 @@ export async function getDailySpinStatusAction() {
 
     if (!user) {
       return {
-        isLoggedIn: false,
-        isActivated: false,
-        hasSpunToday: false,
+        isLoggedIn: Boolean(sessionUser),
+        isActivated: Boolean(isActivatedCookie || sessionUser?.isActivated),
+        hasSpunToday: hasSpunCookie,
+        todayReward: rewardCookie ? Number(rewardCookie) : (hasSpunCookie ? 56 : undefined),
         segments: DEFAULT_WHEEL_SEGMENTS,
       };
     }
@@ -47,7 +62,7 @@ export async function getDailySpinStatusAction() {
       .eq("id", user.id)
       .maybeSingle();
 
-    const isActivated = Boolean(profile?.is_activated);
+    const isActivated = Boolean(profile?.is_activated || isActivatedCookie || sessionUser?.isActivated);
 
     // Portefeuille
     const { data: wallet } = await adminClient
@@ -60,28 +75,27 @@ export async function getDailySpinStatusAction() {
       return {
         isLoggedIn: true,
         isActivated,
-        hasSpunToday: false,
+        hasSpunToday: hasSpunCookie,
+        todayReward: rewardCookie ? Number(rewardCookie) : undefined,
         segments: DEFAULT_WHEEL_SEGMENTS,
       };
     }
 
-    // Date du jour en UTC (heure de Lomé)
-    const today = new Date().toISOString().split("T")[0];
-    const referenceId = `wheel_spin_${today}`;
-
-    // Vérifier si un gain de la roue a déjà été inscrit aujourd'hui
+    // Vérifier si un gain de la roue a déjà été inscrit (un seul tour à vie par utilisateur)
     const { data: entry } = await adminClient
       .from("ledger_entries")
       .select("amount")
       .eq("wallet_id", wallet.id)
-      .eq("reference_id", referenceId)
+      .like("reference_id", "wheel_%")
       .maybeSingle();
+
+    const hasSpun = Boolean(entry) || hasSpunCookie;
 
     return {
       isLoggedIn: true,
       isActivated,
-      hasSpunToday: Boolean(entry),
-      todayReward: entry?.amount ? Number(entry.amount) : undefined,
+      hasSpunToday: hasSpun,
+      todayReward: entry?.amount ? Number(entry.amount) : (hasSpun ? 56 : undefined),
       segments: DEFAULT_WHEEL_SEGMENTS,
     };
   } catch (error) {
@@ -96,9 +110,11 @@ export async function getDailySpinStatusAction() {
 }
 
 /**
- * Lance la roue du jour côté serveur.
- * Tire le résultat de façon déterministe et sécurisée côté serveur,
- * crédite le grand livre immuable et renvoie l'index gagnant pour l'animation.
+ * Lance la roue de bienvenue côté serveur.
+ * Règle système :
+ * - Un seul tour à vie par compte utilisateur.
+ * - Le tirage s'arrête SYSTÉMATIQUEMENT sur les 56 FCFA (segment index 7).
+ * - Les 56 FCFA sont inscrits dans le grand livre et s'ajoutent au solde de retrait.
  */
 export async function spinWheelAction(): Promise<{
   success: boolean;
@@ -108,20 +124,63 @@ export async function spinWheelAction(): Promise<{
   label?: string;
 }> {
   try {
+    const cookieStore = cookies();
+    const hasSpunCookie = cookieStore.get("vita_wheel_spun")?.value === "true";
+    if (hasSpunCookie) {
+      return {
+        success: false,
+        message: "Vous avez déjà utilisé votre tour de bienvenue.",
+      };
+    }
+
+    const segments = DEFAULT_WHEEL_SEGMENTS;
+    // Règle absolue : le gain est obligatoirement le segment de 56 FCFA
+    const targetSegment = segments.find((s) => s.amount === 56) || segments[7] || {
+      index: 7,
+      amount: 56,
+      label: "XOF 56",
+      color: "#6366F1",
+      weight: 100,
+    };
+
     const isConfigured =
       Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
       !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
 
+    const sessionUserCookie = cookieStore.get("vita_session_user")?.value;
+    let sessionUser: any = null;
+    if (sessionUserCookie) {
+      try {
+        sessionUser = JSON.parse(sessionUserCookie);
+      } catch {}
+    }
+    const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
+
     if (!isConfigured) {
-      // Simulation locale
-      const winningIndex = Math.floor(Math.random() * DEFAULT_WHEEL_SEGMENTS.length);
-      const segment = DEFAULT_WHEEL_SEGMENTS[winningIndex];
+      // Simulation / session cookie
+      cookieStore.set("vita_wheel_spun", "true", { path: "/", maxAge: 60 * 60 * 24 * 365 });
+      cookieStore.set("vita_wheel_reward", "56", { path: "/", maxAge: 60 * 60 * 24 * 365 });
+
+      if (sessionUser) {
+        sessionUser.balance = (Number(sessionUser.balance) || 0) + 56;
+        cookieStore.set("vita_session_user", JSON.stringify(sessionUser), {
+          path: "/",
+          maxAge: 60 * 60 * 24 * 7,
+        });
+      }
+
+      revalidatePath("/roue");
+      revalidatePath("/");
+      revalidatePath("/portefeuille");
+      revalidatePath("/retrait");
+      revalidatePath("/profil");
+
       return {
         success: true,
-        winningIndex: segment.index,
-        amount: segment.amount,
-        label: segment.label,
-        message: `Félicitations ! Vous avez gagné ${segment.label} ajouté à votre solde.`,
+        winningIndex: targetSegment.index,
+        amount: 56,
+        label: "XOF 56",
+        message: "Félicitations ! Vous avez gagné XOF 56 crédité sur votre solde de retrait.",
       };
     }
 
@@ -131,6 +190,31 @@ export async function spinWheelAction(): Promise<{
     } = await supabase.auth.getUser();
 
     if (!user) {
+      // Si utilisateur en mode session locale
+      if (sessionUser) {
+        cookieStore.set("vita_wheel_spun", "true", { path: "/", maxAge: 60 * 60 * 24 * 365 });
+        cookieStore.set("vita_wheel_reward", "56", { path: "/", maxAge: 60 * 60 * 24 * 365 });
+        sessionUser.balance = (Number(sessionUser.balance) || 0) + 56;
+        cookieStore.set("vita_session_user", JSON.stringify(sessionUser), {
+          path: "/",
+          maxAge: 60 * 60 * 24 * 7,
+        });
+
+        revalidatePath("/roue");
+        revalidatePath("/");
+        revalidatePath("/portefeuille");
+        revalidatePath("/retrait");
+        revalidatePath("/profil");
+
+        return {
+          success: true,
+          winningIndex: targetSegment.index,
+          amount: 56,
+          label: "XOF 56",
+          message: "Félicitations ! Vous avez gagné XOF 56 crédité sur votre solde de retrait.",
+        };
+      }
+
       return {
         success: false,
         message: "Vous devez être connecté pour tourner la roue.",
@@ -146,10 +230,11 @@ export async function spinWheelAction(): Promise<{
       .eq("id", user.id)
       .maybeSingle();
 
-    if (!profile?.is_activated) {
+    const isActivated = Boolean(profile?.is_activated || isActivatedCookie || sessionUser?.isActivated);
+    if (!isActivated) {
       return {
         success: false,
-        message: "Vous devez activer votre compte pour participer au tour quotidien.",
+        message: "Vous devez activer votre compte pour participer au tour de la roue.",
       };
     }
 
@@ -167,57 +252,31 @@ export async function spinWheelAction(): Promise<{
       };
     }
 
-    // 3. Règle absolue : un seul tour par jour et par utilisateur (minuit UTC / Lomé)
-    const today = new Date().toISOString().split("T")[0];
-    const referenceId = `wheel_spin_${today}`;
+    // 3. Règle absolue : un seul tour à vie par utilisateur
+    const referenceId = "wheel_welcome_spin";
 
     const { data: existingEntry } = await adminClient
       .from("ledger_entries")
       .select("id")
       .eq("wallet_id", wallet.id)
-      .eq("reference_id", referenceId)
+      .like("reference_id", "wheel_%")
       .maybeSingle();
 
     if (existingEntry) {
+      cookieStore.set("vita_wheel_spun", "true", { path: "/", maxAge: 60 * 60 * 24 * 365 });
       return {
         success: false,
-        message: "Vous avez déjà utilisé votre tour du jour. Reviens demain pour un nouveau tour.",
+        message: "Vous avez déjà utilisé votre tour de bienvenue.",
       };
     }
 
-    // 4. Lecture des montants et probabilités (table platform_settings si disponible)
-    let segments = DEFAULT_WHEEL_SEGMENTS;
-    const { data: customConfig } = await adminClient
-      .from("platform_settings")
-      .select("value")
-      .eq("key", "wheel_config")
-      .maybeSingle();
-
-    if (customConfig?.value && Array.isArray(customConfig.value) && customConfig.value.length === 12) {
-      segments = customConfig.value as WheelSegment[];
-    }
-
-    // 5. Tirage pondéré côté serveur (impossible à manipuler depuis le client)
-    const totalWeight = segments.reduce((sum, s) => sum + (s.weight || 1), 0);
-    const randomVal = Math.random() * totalWeight;
-
-    let cumulative = 0;
-    let winningSegment = segments[0];
-    for (const seg of segments) {
-      cumulative += seg.weight || 1;
-      if (randomVal <= cumulative) {
-        winningSegment = seg;
-        break;
-      }
-    }
-
-    // 6. Inscription dans le grand livre immuable (ledger_entries)
+    // 4. Inscription dans le grand livre immuable (56 FCFA ajoutés au solde de retrait)
     const { error: ledgerError } = await adminClient.from("ledger_entries").insert({
       wallet_id: wallet.id,
-      amount: winningSegment.amount,
+      amount: 56,
       entry_type: "adjustment",
       reference_id: referenceId,
-      description: `Gain Tour de Chance Quotidien (${winningSegment.label})`,
+      description: "Gain Tour de Bienvenue (XOF 56)",
     });
 
     if (ledgerError) {
@@ -228,17 +287,31 @@ export async function spinWheelAction(): Promise<{
       };
     }
 
+    // Marquer le tour comme utilisé
+    cookieStore.set("vita_wheel_spun", "true", { path: "/", maxAge: 60 * 60 * 24 * 365 });
+    cookieStore.set("vita_wheel_reward", "56", { path: "/", maxAge: 60 * 60 * 24 * 365 });
+
+    if (sessionUser) {
+      sessionUser.balance = (Number(sessionUser.balance) || 0) + 56;
+      cookieStore.set("vita_session_user", JSON.stringify(sessionUser), {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
     // Revalidation des pages
     revalidatePath("/roue");
+    revalidatePath("/");
     revalidatePath("/portefeuille");
+    revalidatePath("/retrait");
     revalidatePath("/profil");
 
     return {
       success: true,
-      winningIndex: winningSegment.index,
-      amount: winningSegment.amount,
-      label: winningSegment.label,
-      message: `Félicitations ! Vous avez gagné ${winningSegment.label} crédité sur votre portefeuille.`,
+      winningIndex: targetSegment.index,
+      amount: 56,
+      label: "XOF 56",
+      message: "Félicitations ! Vous avez gagné XOF 56 crédité sur votre solde de retrait.",
     };
   } catch (error) {
     console.error("Erreur spinWheelAction:", error);

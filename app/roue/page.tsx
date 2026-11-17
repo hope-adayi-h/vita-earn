@@ -68,8 +68,7 @@ export default function RouePage() {
       const winningIndex = res.winningIndex;
       const targetDegrees = 360 - (winningIndex * 30 + 15);
       const extraSpins = 360 * 6; // 6 tours complets pour l'effet spectaculaire
-      const jitter = (Math.random() - 0.5) * 8; // Légère variation naturelle
-      const finalAngle = rotation + extraSpins + targetDegrees + jitter;
+      const finalAngle = rotation + extraSpins + targetDegrees;
 
       setRotation(finalAngle);
 
@@ -77,9 +76,9 @@ export default function RouePage() {
       setTimeout(() => {
         setIsSpinning(false);
         setHasSpunToday(true);
-        setTodayReward(res.amount);
+        setTodayReward(res.amount || 56);
         setWinMessage(
-          res.message || `Félicitations ! Vous avez gagné ${res.label} crédité sur votre portefeuille.`
+          res.message || `Félicitations ! Vous avez gagné ${res.label || "XOF 56"} crédité sur votre solde de retrait.`
         );
       }, 4600);
     } catch (err) {
@@ -108,7 +107,7 @@ export default function RouePage() {
           </Link>
           <div className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-3 py-1 rounded-full uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Tour Gratuit</span>
+            <span>1 Tour Offert</span>
           </div>
         </div>
 
@@ -116,13 +115,13 @@ export default function RouePage() {
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/80 dark:bg-emerald-950/60 text-[#14500C] dark:text-[#A3E635] text-[11px] font-black tracking-widest uppercase select-none">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>TOUR DE CHANCE QUOTIDIEN</span>
+            <span>TOUR DE BIENVENUE</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-[#14201A] dark:text-white tracking-tight">
-            Tourne la roue du jour
+            Tourne la roue de la chance
           </h1>
           <p className="text-xs sm:text-sm text-[#5B6B60] dark:text-gray-300 max-w-md mx-auto leading-relaxed">
-            Un tour gratuit chaque jour. Ta récompense est ajoutée à ton portefeuille.
+            Fais tourner la roue et réclame ta récompense créditée directement sur ton solde de retrait.
           </p>
         </div>
 
@@ -132,7 +131,7 @@ export default function RouePage() {
             <div className="flex items-center gap-2.5">
               <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0" />
               <p className="text-xs font-bold text-amber-900 dark:text-amber-200">
-                L'activation de votre compte est requise pour réclamer vos tours quotidiens.
+                L'activation de votre compte est requise pour utiliser votre tour de bienvenue.
               </p>
             </div>
             <Link
@@ -363,8 +362,8 @@ export default function RouePage() {
                   DÉJÀ UTILISÉ
                 </button>
                 <p className="text-xs text-white/80 font-medium">
-                  Reviens demain pour un nouveau tour.
-                  {todayReward ? ` (Gain du jour : XOF ${todayReward})` : ""}
+                  Vous avez déjà utilisé votre tour de bienvenue.
+                  {todayReward ? ` (Récompense : XOF ${todayReward})` : ""}
                 </p>
               </div>
             )}

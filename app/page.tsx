@@ -590,7 +590,22 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* 6. CARTE OUTILS & FORMATIONS DÉBLOQUÉS */}
+      {/* 6. INVITATION DES AMIS (Lien d'invitation avec fond vert, WhatsApp, X, Facebook) */}
+      <div id="equipe">
+        <ReferralSection
+          referralCode={referralCode}
+          appUrl={appUrl}
+          level1Count={level1Count}
+          level2Count={level2Count}
+          level3Count={level3Count}
+          level1Earned={level1Earned}
+          level2Earned={level2Earned}
+          level3Earned={level3Earned}
+          referrals={referralsList}
+        />
+      </div>
+
+      {/* 7. CARTE OUTILS & FORMATIONS DÉBLOQUÉS */}
       <div className="rounded-2xl bg-gradient-to-r from-purple-700 via-indigo-700 to-indigo-900 p-4 sm:p-5 text-white shadow-md relative overflow-hidden">
         <div className="flex items-start justify-between mb-1.5">
           <div className="flex items-center gap-2.5">
@@ -619,23 +634,8 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* 7. TIME TABLE - PLANNING DES 5 TÂCHES RÉMUNÉRÉES (TRIVIA, TIKTOK, YOUTUBE, ADS, INSTAGRAM) */}
+      {/* 8. TIME TABLE - PLANNING DES 5 TÂCHES RÉMUNÉRÉES (TRIVIA, TIKTOK, YOUTUBE, ADS, INSTAGRAM) */}
       <TimeTableSection />
-
-      {/* 7. SECTION RÉSEAU & PARRAINAGE 3 NIVEAUX */}
-      <div id="equipe">
-        <ReferralSection
-          referralCode={referralCode}
-          appUrl={appUrl}
-          level1Count={level1Count}
-          level2Count={level2Count}
-          level3Count={level3Count}
-          level1Earned={level1Earned}
-          level2Earned={level2Earned}
-          level3Earned={level3Earned}
-          referrals={referralsList}
-        />
-      </div>
 
       {/* 8. RACCOURCIS D'ACTION RAPIDE */}
       <div className="grid grid-cols-2 gap-3 pt-2">
