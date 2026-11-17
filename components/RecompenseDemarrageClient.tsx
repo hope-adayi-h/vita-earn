@@ -8,19 +8,16 @@ import {
   Users,
   CheckCircle2,
   Sparkles,
-  Phone,
-  UserCheck,
 } from "lucide-react";
 import { claimWelcomeBonusAction } from "@/lib/actions/tasks";
 import { formatFCFA } from "@/lib/utils";
-import { CountryFlag } from "@/components/CountryFlag";
 
 export interface Level1Member {
   id: string;
   username: string;
   fullName: string;
-  phone: string;
-  country: string;
+  phone?: string;
+  country?: string;
   date: string;
   timeAgo: string;
   amountPaid: number;
@@ -223,12 +220,19 @@ export function RecompenseDemarrageClient({
               </p>
             </div>
           </div>
-          <span className="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400">
-            {members.length} au total
+          <span className="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-[#1E2E24] px-3 py-1 rounded-full">
+            {Math.max(level1Count, members.length)} au total
           </span>
         </div>
 
-        {/* Liste / Tableau */}
+        {/* En-têtes de colonnes (DATE / HEURE, NOM D'UTILISATEUR, REVENU) */}
+        <div className="grid grid-cols-12 px-4 sm:px-6 py-2.5 bg-gray-50/80 dark:bg-[#0E1812] border-b border-gray-100 dark:border-[#1E2E24] text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+          <div className="col-span-4 sm:col-span-4">DATE / HEURE</div>
+          <div className="col-span-5 sm:col-span-5">NOM D&apos;UTILISATEUR</div>
+          <div className="col-span-3 sm:col-span-3 text-right">REVENU</div>
+        </div>
+
+        {/* Lignes du tableau (sans numéros de téléphone ni drapeaux) */}
         <div className="divide-y divide-gray-100 dark:divide-[#1E2E24]">
           {members.length === 0 ? (
             <div className="p-8 text-center text-gray-400 text-xs">
@@ -238,41 +242,29 @@ export function RecompenseDemarrageClient({
             members.map((member) => (
               <div
                 key={member.id}
-                className="p-3.5 sm:p-4 flex items-center justify-between gap-3 hover:bg-gray-50/70 dark:hover:bg-[#17241C] transition-colors"
+                className="grid grid-cols-12 items-center px-4 sm:px-6 py-3.5 hover:bg-gray-50/70 dark:hover:bg-[#17241C] transition-colors"
               >
-                {/* Colonne 1 : Nom d'utilisateur & Téléphone */}
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center justify-center shrink-0 border border-emerald-200 dark:border-emerald-800">
-                    {member.username.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white truncate">
-                        @{member.username}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                      <span className="flex items-center gap-1">
-                        <Phone className="w-3 h-3 text-gray-400 shrink-0" />
-                        <span>{member.phone}</span>
-                      </span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <CountryFlag country={member.country} className="w-3.5 h-2.5 rounded-2xs" />
-                        <span className="truncate">{member.country}</span>
-                      </span>
-                    </div>
-                  </div>
+                {/* Colonne 1 : DATE / HEURE */}
+                <div className="col-span-4 sm:col-span-4 min-w-0 pr-2">
+                  <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">
+                    {member.date}
+                  </p>
+                  <p className="text-[10px] text-gray-400 truncate">
+                    {member.timeAgo}
+                  </p>
                 </div>
 
-                {/* Colonne 2 : Revenu & Statut Actif */}
-                <div className="text-right shrink-0 space-y-1">
-                  <p className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400">
+                {/* Colonne 2 : NOM D'UTILISATEUR */}
+                <div className="col-span-5 sm:col-span-5 min-w-0 pr-2">
+                  <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white truncate block">
+                    @{member.username}
+                  </span>
+                </div>
+
+                {/* Colonne 3 : REVENU */}
+                <div className="col-span-3 sm:col-span-3 text-right">
+                  <span className="text-xs sm:text-sm font-black text-gray-900 dark:text-white">
                     XOF {member.commissionEarned.toLocaleString("fr-FR")}
-                  </p>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                    <UserCheck className="w-3 h-3" />
-                    <span>Actif</span>
                   </span>
                 </div>
               </div>
