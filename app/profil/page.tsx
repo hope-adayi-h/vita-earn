@@ -44,12 +44,14 @@ export default async function ProfilPage() {
   // 1. Récupération du profil
   let profile: any = null;
   if (user?.id) {
-    const { data: p } = await adminClient
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle();
-    profile = p;
+    try {
+      const { data: p } = await adminClient
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+      profile = p;
+    } catch {}
   }
 
   const isActivated = user
@@ -76,27 +78,29 @@ export default async function ProfilPage() {
   // 2. Récupération du solde réel dans le grand livre
   let balance = 25676;
   if (user?.id) {
-    const { data: wallet } = await adminClient
-      .from("wallets")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    try {
+      const { data: wallet } = await adminClient
+        .from("wallets")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-    if (wallet) {
-      const { data: entries } = await adminClient
-        .from("ledger_entries")
-        .select("amount")
-        .eq("wallet_id", wallet.id);
+      if (wallet) {
+        const { data: entries } = await adminClient
+          .from("ledger_entries")
+          .select("amount")
+          .eq("wallet_id", wallet.id);
 
-      if (entries && entries.length > 0) {
-        balance = entries.reduce(
-          (sum, e) => sum + (Number(e.amount) || 0),
-          0
-        );
-      } else {
-        balance = 0;
+        if (entries && entries.length > 0) {
+          balance = entries.reduce(
+            (sum, e) => sum + (Number(e.amount) || 0),
+            0
+          );
+        } else {
+          balance = 0;
+        }
       }
-    }
+    } catch {}
   } else if (sessionUser?.balance !== undefined) {
     balance = Number(sessionUser.balance) || 0;
   }
@@ -104,33 +108,39 @@ export default async function ProfilPage() {
   // 3. Nombre d'invités directs (Niveau 1)
   let inviteCount = 2654;
   if (user?.id) {
-    const { count: directCount } = await adminClient
-      .from("referrals")
-      .select("id", { count: "exact", head: true })
-      .eq("referrer_id", user.id);
-    inviteCount = directCount || 0;
+    try {
+      const { count: directCount } = await adminClient
+        .from("referrals")
+        .select("id", { count: "exact", head: true })
+        .eq("referrer_id", user.id);
+      inviteCount = directCount || 0;
+    } catch {}
   }
 
   // 4. Parrain direct (upline)
   let uplineUsername = "greatness";
   if (user?.id) {
-    const { data: refRecord } = await adminClient
-      .from("referrals")
-      .select("referrer_id")
-      .eq("referred_id", user.id)
-      .maybeSingle();
-
-    if (refRecord?.referrer_id) {
-      const { data: uplineProfile } = await adminClient
-        .from("profiles")
-        .select("full_name")
-        .eq("id", refRecord.referrer_id)
+    try {
+      const { data: refRecord } = await adminClient
+        .from("referrals")
+        .select("referrer_id")
+        .eq("referred_id", user.id)
         .maybeSingle();
 
-      if (uplineProfile?.full_name) {
-        uplineUsername = uplineProfile.full_name;
+      if (refRecord?.referrer_id) {
+        const { data: uplineProfile } = await adminClient
+          .from("profiles")
+          .select("full_name")
+          .eq("id", refRecord.referrer_id)
+          .maybeSingle();
+
+        if (uplineProfile?.full_name) {
+          uplineUsername = uplineProfile.full_name;
+        }
+      } else {
+        uplineUsername = "—";
       }
-    } else {
+    } catch {
       uplineUsername = "—";
     }
   }
@@ -296,7 +306,7 @@ export default async function ProfilPage() {
               E-MAIL
             </p>
             <p className="text-sm sm:text-base font-semibold text-[#14201A] dark:text-gray-100 mt-0.5 truncate">
-              {user.email || "Non renseigné"}
+              {userEmail || "Non renseigné"}
             </p>
           </div>
 
