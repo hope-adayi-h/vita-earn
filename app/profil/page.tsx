@@ -190,7 +190,7 @@ export default async function ProfilPage() {
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#D9F99D] text-[#14500C] font-black text-2xl sm:text-3xl flex items-center justify-center border-4 border-white dark:border-[#131E17] shadow-md shrink-0 select-none">
                   {initials}
                 </div>
-                <div className="mb-1">
+                <div className="pt-8 sm:pt-10">
                   <h2 className="text-lg sm:text-xl font-black text-[#14201A] dark:text-white truncate">
                     {username}
                   </h2>
