@@ -6,12 +6,14 @@ import { Sparkles, ChevronLeft, ShieldCheck, CheckCircle2, RotateCw } from "luci
 import {
   DEFAULT_WHEEL_SEGMENTS,
   WheelSegment,
+} from "@/lib/wheel-constants";
+import {
   getDailySpinStatusAction,
   spinWheelAction,
 } from "@/lib/actions/wheel";
 
 export default function RouePage() {
-  const [segments] = useState<WheelSegment[]>(DEFAULT_WHEEL_SEGMENTS);
+  const [segments, setSegments] = useState<WheelSegment[]>(DEFAULT_WHEEL_SEGMENTS);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isActivated, setIsActivated] = useState(false);
@@ -31,6 +33,9 @@ export default function RouePage() {
         setIsActivated(status.isActivated);
         setHasSpunToday(status.hasSpunToday);
         setTodayReward(status.todayReward);
+        if (status.segments && Array.isArray(status.segments)) {
+          setSegments(status.segments);
+        }
       } catch (e) {
         console.error("Erreur statut roue:", e);
       } finally {
