@@ -76,7 +76,6 @@ export function Navbar({ user }: NavbarProps) {
     {
       id: "solde",
       label: "Retrait Solde",
-      sublabel: "Solde Principal & Réseau",
       href: "/retrait?type=solde",
       platform: "solde",
       icon: Wallet,
@@ -85,7 +84,6 @@ export function Navbar({ user }: NavbarProps) {
     {
       id: "tiktok",
       label: "Retrait TikTok",
-      sublabel: "Gains Tâches Vidéos TikTok",
       href: "/retrait?type=tiktok",
       platform: "tiktok",
       icon: Video,
@@ -94,7 +92,6 @@ export function Navbar({ user }: NavbarProps) {
     {
       id: "youtube",
       label: "Retrait YouTube",
-      sublabel: "Gains Tâches Vidéos YouTube",
       href: "/retrait?type=youtube",
       platform: "youtube",
       icon: PlaySquare,
@@ -103,7 +100,6 @@ export function Navbar({ user }: NavbarProps) {
     {
       id: "ads",
       label: "Retrait AdSense",
-      sublabel: "Gains Clics Publicitaires AdSense",
       href: "/retrait?type=ads",
       platform: "adsense",
       icon: MousePointerClick,
@@ -112,7 +108,6 @@ export function Navbar({ user }: NavbarProps) {
     {
       id: "instagram",
       label: "Retrait Instagram",
-      sublabel: "Gains Vidéos Instagram",
       href: "/retrait?type=instagram",
       platform: "instagram",
       icon: Camera,
@@ -121,7 +116,6 @@ export function Navbar({ user }: NavbarProps) {
     {
       id: "historique",
       label: "Historique",
-      sublabel: "Journal de tous vos retraits",
       href: "/retrait/historique",
       platform: null,
       icon: History,
@@ -134,25 +128,21 @@ export function Navbar({ user }: NavbarProps) {
     {
       id: "level-1",
       label: "Niveau 1",
-      sublabel: "Filleuls Directs (2 000 FCFA)",
       href: "/equipe?level=1",
     },
     {
       id: "level-2",
       label: "Niveau 2",
-      sublabel: "2e Génération (1 000 FCFA)",
       href: "/equipe?level=2",
     },
     {
       id: "level-3",
       label: "Niveau 3",
-      sublabel: "3e Génération (500 FCFA)",
       href: "/equipe?level=3",
     },
     {
       id: "inactifs",
       label: "Inactifs",
-      sublabel: "En attente d'activation",
       href: "/equipe?level=inactifs",
     },
   ];
@@ -338,14 +328,9 @@ export function Navbar({ user }: NavbarProps) {
                                       : "text-gray-700 dark:text-gray-200 hover:bg-vita-surface dark:hover:bg-slate-800/60"
                                   }`}
                                 >
-                                  <div className="min-w-0">
-                                    <p className="text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300">
-                                      {sub.label}
-                                    </p>
-                                    <p className="text-[10px] text-gray-400 dark:text-gray-500">
-                                      {sub.sublabel}
-                                    </p>
-                                  </div>
+                                  <span className="text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300">
+                                    {sub.label}
+                                  </span>
                                   <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-emerald-600 shrink-0 ml-2" />
                                 </Link>
                               );
@@ -399,14 +384,9 @@ export function Navbar({ user }: NavbarProps) {
                                   onClick={() => setDesktopTeamOpen(false)}
                                   className="flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-colors group text-gray-700 dark:text-gray-200 hover:bg-vita-surface dark:hover:bg-slate-800/60"
                                 >
-                                  <div className="min-w-0">
-                                    <p className="text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300">
-                                      {sub.label}
-                                    </p>
-                                    <p className="text-[10px] text-gray-400 dark:text-gray-500">
-                                      {sub.sublabel}
-                                    </p>
-                                  </div>
+                                  <span className="text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300">
+                                    {sub.label}
+                                  </span>
                                   <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-emerald-600 shrink-0 ml-2" />
                                 </Link>
                               );
@@ -880,14 +860,9 @@ export function Navbar({ user }: NavbarProps) {
                                 : "text-gray-700 dark:text-gray-300 hover:bg-vita-surface dark:hover:bg-slate-800/60"
                             }`}
                           >
-                            <div className="min-w-0">
-                              <p className="truncate text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300 transition-colors">
-                                {sub.label}
-                              </p>
-                              <p className="text-[10px] text-gray-400 dark:text-gray-500">
-                                {sub.sublabel}
-                              </p>
-                            </div>
+                            <span className="truncate text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300 transition-colors">
+                              {sub.label}
+                            </span>
                             <ChevronRight className="w-3 h-3 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 shrink-0 ml-2" />
                           </Link>
                         );
@@ -944,14 +919,9 @@ export function Navbar({ user }: NavbarProps) {
                             }}
                             className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors group text-gray-700 dark:text-gray-300 hover:bg-vita-surface dark:hover:bg-slate-800/60"
                           >
-                            <div className="min-w-0">
-                              <p className="truncate text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300 transition-colors">
-                                {sub.label}
-                              </p>
-                              <p className="text-[10px] text-gray-400 dark:text-gray-500">
-                                {sub.sublabel}
-                              </p>
-                            </div>
+                            <span className="truncate text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300 transition-colors">
+                              {sub.label}
+                            </span>
                             <ChevronRight className="w-3 h-3 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 shrink-0 ml-2" />
                           </Link>
                         );

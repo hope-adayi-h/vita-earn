@@ -70,15 +70,33 @@ export function EquipeView({
   }, [activeTab, referrals]);
 
   const filteredMembers = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return currentTabMembers;
-    return currentTabMembers.filter(
-      (m) =>
-        m.username.toLowerCase().includes(query) ||
-        m.fullName.toLowerCase().includes(query) ||
-        m.phone.toLowerCase().includes(query) ||
-        m.country.toLowerCase().includes(query)
-    );
+    const rawQuery = searchQuery.trim().toLowerCase();
+    if (!rawQuery) return currentTabMembers;
+
+    // Suppression de tous les caractères non numériques pour la recherche téléphonique flexible
+    const digitsOnlyQuery = rawQuery.replace(/[\s\-\.\+\(\)]/g, "");
+
+    return currentTabMembers.filter((m) => {
+      // Correspondance sur le nom d'utilisateur, le nom complet ou le pays
+      const textMatch =
+        m.username.toLowerCase().includes(rawQuery) ||
+        m.fullName.toLowerCase().includes(rawQuery) ||
+        m.country.toLowerCase().includes(rawQuery);
+
+      if (textMatch) return true;
+
+      // Correspondance directe sur le champ téléphone brut
+      if (m.phone.toLowerCase().includes(rawQuery)) return true;
+
+      // Correspondance numérique flexible : compare les chiffres uniquement
+      // Permet de trouver "90234512" même si saisi avec ou sans espaces, avec ou sans "+", avec ou sans indicatif pays
+      if (digitsOnlyQuery.length >= 2) {
+        const cleanMemberPhone = m.phone.replace(/[\s\-\.\+\(\)]/g, "");
+        if (cleanMemberPhone.includes(digitsOnlyQuery)) return true;
+      }
+
+      return false;
+    });
   }, [currentTabMembers, searchQuery]);
 
   // Configuration dynamique selon la section
