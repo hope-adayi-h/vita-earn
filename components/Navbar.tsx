@@ -62,7 +62,6 @@ export function Navbar({ user }: NavbarProps) {
 
   // États des menus et modales
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [withdrawalMenuOpen, setWithdrawalMenuOpen] = useState(false);
   const [desktopWithdrawalOpen, setDesktopWithdrawalOpen] = useState(false);
@@ -207,7 +206,6 @@ export function Navbar({ user }: NavbarProps) {
 
   const closeSidebar = () => setSidebarOpen(false);
   const closeDropdowns = () => {
-    setProfileDropdownOpen(false);
     setLangDropdownOpen(false);
     setDesktopWithdrawalOpen(false);
     setDesktopTeamOpen(false);
@@ -222,18 +220,18 @@ export function Navbar({ user }: NavbarProps) {
   return (
     <>
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#131E17]/95 backdrop-blur-md border-b border-gray-100 dark:border-[#1E2E24] shadow-xs transition-colors">
-        <div className="max-w-5xl mx-auto px-2.5 sm:px-4 h-15 sm:h-18 flex items-center justify-between gap-1 sm:gap-3">
+        <div className="max-w-5xl mx-auto px-2 sm:px-4 h-15 sm:h-16 flex items-center justify-between">
           {/* ========================================================================= */}
-          {/* 1. GAUCHE MOBILE : Bouton Hamburger (3 traits)                            */}
+          {/* 1. ZONE GAUCHE : Bouton Menu ☰ (inchangé)                                 */}
           {/* ========================================================================= */}
-          <div className="flex md:hidden items-center shrink-0">
+          <div className="flex items-center shrink-0 w-14 sm:w-20 justify-start">
             <button
               type="button"
               onClick={() => {
                 setSidebarOpen(true);
                 closeDropdowns();
               }}
-              className="p-1.5 -ml-1 rounded-xl text-gray-800 dark:text-gray-100 hover:text-vita-deep hover:bg-vita-surface transition-colors focus:outline-hidden"
+              className="p-1.5 -ml-1 rounded-xl text-gray-800 dark:text-gray-100 hover:text-vita-deep hover:bg-vita-surface dark:hover:bg-slate-800 transition-colors focus:outline-hidden cursor-pointer"
               aria-label="Ouvrir le menu de navigation"
             >
               <Menu className="w-5 h-5 sm:w-6 sm:h-6 text-gray-800 dark:text-gray-100" />
@@ -241,199 +239,53 @@ export function Navbar({ user }: NavbarProps) {
           </div>
 
           {/* ========================================================================= */}
-          {/* 2. LOGO VITA EARN (Dimensions calibrées pour éviter tout chevauchement)    */}
+          {/* 2. ZONE CENTRE : Logo "V" (36-40px) + Nom "VITA EARN" (18-22px)           */}
           {/* ========================================================================= */}
-          <div className="flex items-center justify-start shrink min-w-0 mr-auto pl-1 sm:pl-2">
+          <div className="flex-1 flex items-center justify-center min-w-0 px-1">
             <Link
               href="/"
               onClick={() => {
                 closeSidebar();
                 closeDropdowns();
               }}
-              className="flex items-center gap-1.5 sm:gap-2 group py-1"
+              className="flex items-center gap-1.5 sm:gap-2 group py-1 shrink-0"
             >
               <Image
                 src="/images/logo-icon.png"
                 alt="Vita Earn"
-                width={36}
-                height={28}
-                className="h-6 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105 duration-200 shrink-0"
+                width={44}
+                height={40}
+                className="h-9 sm:h-10 w-auto object-contain transition-transform group-hover:scale-105 duration-200 shrink-0"
                 priority
               />
               <Image
                 src="/images/logo-text.png"
                 alt="Vita Earn"
-                width={110}
-                height={16}
-                className="h-3.5 sm:h-5.5 w-auto object-contain dark:brightness-200 shrink-0"
+                width={120}
+                height={24}
+                className="h-[18px] sm:h-[22px] w-auto object-contain dark:brightness-200 shrink-0"
                 priority
               />
             </Link>
           </div>
 
           {/* ========================================================================= */}
-          {/* 3. NAVIGATION DESKTOP                                                     */}
+          {/* 3. ZONE DROITE : Sélecteur de langue "FR" suivi du bouton thème (lune)   */}
           {/* ========================================================================= */}
-          {!isActivationPage && !isAuthPage && (
-            <nav className="hidden md:flex items-center gap-2 lg:gap-3">
-              {navLinks.map((item) => {
-                if (item.href === "/retrait") {
-                  return (
-                    <div key="desktop-withdrawal" className="relative">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDesktopWithdrawalOpen(!desktopWithdrawalOpen);
-                          setDesktopTeamOpen(false);
-                          setProfileDropdownOpen(false);
-                          setLangDropdownOpen(false);
-                        }}
-                        className={`text-sm font-semibold transition-colors px-2.5 py-1.5 rounded-lg flex items-center gap-1 ${
-                          pathname.startsWith("/retrait") || desktopWithdrawalOpen
-                            ? "text-vita-deep dark:text-[#86EFAC] font-bold bg-vita-surface/80 dark:bg-emerald-950/40"
-                            : "text-vita-text dark:text-gray-300 hover:text-vita-deep hover:bg-gray-50 dark:hover:bg-slate-800/50"
-                        }`}
-                        aria-expanded={desktopWithdrawalOpen}
-                      >
-                        <span>{item.label}</span>
-                        <ChevronDown
-                          className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                            desktopWithdrawalOpen ? "rotate-180" : ""
-                          }`}
-                        />
-                      </button>
-
-                      {desktopWithdrawalOpen && (
-                        <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-[#131E17] rounded-2xl shadow-xl border border-gray-100 dark:border-[#1E2E24] p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                          <div className="px-2.5 py-1.5 mb-1 border-b border-gray-100 dark:border-[#1E2E24]">
-                            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                              Centre de Retrait
-                            </p>
-                          </div>
-                          <div className="space-y-0.5">
-                            {withdrawalSubOptions.map((sub) => {
-                              const SubIcon = sub.icon;
-                              const isSubActive =
-                                sub.id === "historique"
-                                  ? pathname === "/retrait/historique"
-                                  : pathname === sub.href;
-                              return (
-                                <Link
-                                  key={sub.id}
-                                  href={sub.href}
-                                  onClick={() => setDesktopWithdrawalOpen(false)}
-                                  className={`flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-colors group ${
-                                    isSubActive
-                                      ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 font-bold"
-                                      : "text-gray-700 dark:text-gray-200 hover:bg-vita-surface dark:hover:bg-slate-800/60"
-                                  }`}
-                                >
-                                  <span className="text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300">
-                                    {sub.label}
-                                  </span>
-                                  <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-emerald-600 shrink-0 ml-2" />
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                if (item.href === "/equipe") {
-                  return (
-                    <div key="desktop-team" className="relative">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDesktopTeamOpen(!desktopTeamOpen);
-                          setDesktopWithdrawalOpen(false);
-                          setProfileDropdownOpen(false);
-                          setLangDropdownOpen(false);
-                        }}
-                        className={`text-sm font-semibold transition-colors px-2.5 py-1.5 rounded-lg flex items-center gap-1 ${
-                          pathname.startsWith("/equipe") || desktopTeamOpen
-                            ? "text-vita-deep dark:text-[#86EFAC] font-bold bg-vita-surface/80 dark:bg-emerald-950/40"
-                            : "text-vita-text dark:text-gray-300 hover:text-vita-deep hover:bg-gray-50 dark:hover:bg-slate-800/50"
-                        }`}
-                        aria-expanded={desktopTeamOpen}
-                      >
-                        <span>{item.label}</span>
-                        <ChevronDown
-                          className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                            desktopTeamOpen ? "rotate-180" : ""
-                          }`}
-                        />
-                      </button>
-
-                      {desktopTeamOpen && (
-                        <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-[#131E17] rounded-2xl shadow-xl border border-gray-100 dark:border-[#1E2E24] p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                          <div className="px-2.5 py-1.5 mb-1 border-b border-gray-100 dark:border-[#1E2E24]">
-                            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                              Mon Équipe & Réseau
-                            </p>
-                          </div>
-                          <div className="space-y-0.5">
-                            {teamSubOptions.map((sub) => {
-                              return (
-                                <Link
-                                  key={sub.id}
-                                  href={sub.href}
-                                  onClick={() => setDesktopTeamOpen(false)}
-                                  className="flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-colors group text-gray-700 dark:text-gray-200 hover:bg-vita-surface dark:hover:bg-slate-800/60"
-                                >
-                                  <span className="text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300">
-                                    {sub.label}
-                                  </span>
-                                  <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-emerald-600 shrink-0 ml-2" />
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className={`text-sm font-semibold transition-colors px-2.5 py-1.5 rounded-lg ${
-                      pathname === item.href
-                        ? "text-vita-deep dark:text-[#86EFAC] font-bold bg-vita-surface/80 dark:bg-emerald-950/40"
-                        : "text-vita-text dark:text-gray-300 hover:text-vita-deep hover:bg-gray-50 dark:hover:bg-slate-800/50"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          )}
-
-          {/* ========================================================================= */}
-          {/* 4. ACTIONS DROITE : Langue, Mode Sombre/Clair, Avatar Profil              */}
-          {/* ========================================================================= */}
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0 relative">
-            {/* 1. SÉLECTEUR DE LANGUE (FR / EN) */}
+          <div className="flex items-center justify-end shrink-0 w-14 sm:w-20 gap-0.5 sm:gap-1.5 relative">
+            {/* Sélecteur de langue (FR / EN) */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => {
                   setLangDropdownOpen(!langDropdownOpen);
-                  setProfileDropdownOpen(false);
-                  setSidebarOpen(false);
                 }}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-vita-deep hover:bg-vita-surface dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-slate-700"
+                className="flex items-center gap-1 px-1.5 sm:px-2 py-1.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-vita-deep hover:bg-vita-surface dark:hover:bg-slate-800 transition-colors"
                 aria-label="Changer de langue / Change language"
                 title="Langue / Language"
               >
-                <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span className="uppercase">{language}</span>
+                <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="uppercase text-xs">{language}</span>
               </button>
 
               {langDropdownOpen && (
@@ -473,213 +325,20 @@ export function Navbar({ user }: NavbarProps) {
               )}
             </div>
 
-            {/* 2. BOUTON MODE SOMBRE / CLAIR (LUNE / SOLEIL) */}
+            {/* Bouton Mode Sombre / Clair (Lune / Soleil) */}
             <button
               type="button"
               onClick={toggleTheme}
-              className="p-2 rounded-xl text-gray-700 dark:text-gray-200 hover:text-vita-deep hover:bg-vita-surface dark:hover:bg-slate-800 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl text-gray-700 dark:text-gray-200 hover:text-vita-deep hover:bg-vita-surface dark:hover:bg-slate-800 transition-colors cursor-pointer"
               aria-label={theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"}
               title={theme === "dark" ? t("top.light") : t("top.dark")}
             >
               {theme === "dark" ? (
                 <Sun className="w-4 h-4 text-amber-400 animate-in spin-in-90 duration-200" />
               ) : (
-                <Moon className="w-4 h-4 text-gray-700 hover:text-emerald-600 transition-colors" />
+                <Moon className="w-4 h-4 text-gray-700 dark:text-gray-200 hover:text-emerald-600 transition-colors" />
               )}
             </button>
-
-            {/* 3. AVATAR DE PROFIL AVEC MENU DÉROULANT (Remplace les 3 points) */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => {
-                  setProfileDropdownOpen(!profileDropdownOpen);
-                  setLangDropdownOpen(false);
-                  setSidebarOpen(false);
-                }}
-                className="relative rounded-full focus:outline-hidden p-0.5 border border-transparent hover:border-emerald-400 transition-colors block"
-                aria-label="Profil et options"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={avatar}
-                  alt={userDisplayName || "Avatar"}
-                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border border-emerald-500/40 shadow-xs"
-                />
-                {/* Pastille statut en ligne (comme sur la capture Earnlix) */}
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#16A34A] ring-2 ring-white dark:ring-[#131E17]" />
-              </button>
-
-              {/* Menu Pop-up sous l'avatar */}
-              {profileDropdownOpen && (
-                <div className="absolute right-0 top-11 z-50 w-72 sm:w-80 bg-white dark:bg-[#131E17] rounded-2xl shadow-2xl border border-gray-100 dark:border-[#1E2E24] p-3.5 animate-in fade-in zoom-in-95 duration-150">
-                  {/* Profil & Statut */}
-                  <div className="pb-3 mb-3 border-b border-gray-100 dark:border-[#1E2E24]">
-                    <div className="flex items-center gap-3">
-                      <div className="relative shrink-0">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={avatar}
-                          alt={userDisplayName || "Avatar"}
-                          className="w-11 h-11 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow-xs"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">
-                          {userDisplayName || t("prof.myAccount")}
-                        </p>
-                        <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
-                          {user?.email || "membre@vitaearn.com"}
-                        </p>
-                        <div className="mt-1">
-                          {isActivated ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                              {t("nav.accountActive")}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
-                              <AlertCircle className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                              {t("nav.accountInactive")}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Option de changement de photo de profil */}
-                    <div className="mt-2.5">
-                      <label className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gray-50 dark:bg-[#17241C] hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-gray-700 dark:text-gray-300 hover:text-emerald-800 dark:hover:text-emerald-300 text-xs font-semibold border border-gray-200 dark:border-[#1E2E24] cursor-pointer transition-colors">
-                        <Camera className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
-                        <span>{t("prof.changeAvatar")}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleAvatarUpload}
-                        />
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Actions & Raccourcis */}
-                  <div className="space-y-1">
-                    {/* Mon Profil */}
-                    <Link
-                      href="/profil"
-                      onClick={closeDropdowns}
-                      className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span className="text-xs font-semibold">{t("prof.viewProfile")}</span>
-                      </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                    </Link>
-
-                    {/* Centre de Retrait Mobile Money */}
-                    <Link
-                      href="/retrait"
-                      onClick={closeDropdowns}
-                      className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span className="text-xs font-semibold">Demande de Retrait</span>
-                      </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                    </Link>
-
-                    {/* Historique des Retraits */}
-                    <Link
-                      href="/retrait/historique"
-                      onClick={closeDropdowns}
-                      className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <History className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span className="text-xs font-semibold">Historique des Retraits</span>
-                      </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                    </Link>
-
-                    {/* Assistance WhatsApp Directe */}
-                    <a
-                      href="https://wa.me/22890000000?text=Bonjour%20Support%20Vita%20Earn,%20j'ai%20besoin%20d'aide."
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={closeDropdowns}
-                      className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span className="text-xs font-semibold">{t("prof.whatsapp")}</span>
-                      </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
-                    </a>
-
-                    {/* Centre d'Aide & FAQ */}
-                    <button
-                      type="button"
-                      onClick={openFaqModal}
-                      className="w-full flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <HelpCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span className="text-xs font-semibold">{t("prof.faq")}</span>
-                      </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                    </button>
-
-                    {/* Canaux WhatsApp & Telegram */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        closeDropdowns();
-                        setCommunityModalOpen(true);
-                      }}
-                      className="w-full flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <MessageSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span className="text-xs font-semibold">{t("prof.community")}</span>
-                      </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                    </button>
-
-                    {/* Activer mon compte si non activé */}
-                    {!isActivated && (
-                      <Link
-                        href="/activation"
-                        onClick={closeDropdowns}
-                        className="flex items-center justify-between p-2 rounded-xl bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 text-amber-800 dark:text-amber-300 transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
-                          <span className="text-xs font-bold">{t("prof.howToActivate")}</span>
-                        </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-amber-600" />
-                      </Link>
-                    )}
-
-                    {/* Déconnexion */}
-                    <div className="pt-2 mt-2 border-t border-gray-100 dark:border-[#1E2E24]">
-                      <Link
-                        href="/auth/logout"
-                        onClick={closeDropdowns}
-                        className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <LogOut className="w-4 h-4 text-red-500 shrink-0" />
-                          <span className="text-xs font-bold">{t("nav.logout")}</span>
-                        </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-red-400" />
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </header>
@@ -689,7 +348,7 @@ export function Navbar({ user }: NavbarProps) {
       {/* ========================================================================= */}
       {/* 1. Backdrop obscurci */}
       <div
-        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-xs transition-opacity duration-300 md:hidden ${
+        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-xs transition-opacity duration-300 ${
           sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         onClick={closeSidebar}
@@ -698,7 +357,7 @@ export function Navbar({ user }: NavbarProps) {
 
       {/* 2. Volet latéral blanc/sombre coulissant depuis la gauche */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-50 w-72 max-w-[85vw] bg-white dark:bg-[#131E17] shadow-2xl flex flex-col transition-transform duration-300 ease-in-out md:hidden ${
+        className={`fixed top-0 left-0 bottom-0 z-50 w-72 sm:w-80 max-w-[85vw] bg-white dark:bg-[#131E17] shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-label="Navigation principale"
@@ -739,12 +398,23 @@ export function Navbar({ user }: NavbarProps) {
         {isLoggedIn ? (
           <div className="p-4 bg-vita-surface/80 dark:bg-[#0E1812] border-b border-vita-border dark:border-[#1E2E24]">
             <div className="flex items-center gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={avatar}
-                alt={userDisplayName || "Avatar"}
-                className="w-10 h-10 rounded-full object-cover shrink-0 shadow-xs border border-emerald-500/40"
-              />
+              <label className="relative shrink-0 cursor-pointer group" title={t("prof.changeAvatar")}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={avatar}
+                  alt={userDisplayName || "Avatar"}
+                  className="w-10 h-10 rounded-full object-cover shrink-0 shadow-xs border border-emerald-500/40 group-hover:opacity-80 transition-opacity"
+                />
+                <span className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="w-4 h-4 text-white" />
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
+              </label>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold text-vita-deep dark:text-emerald-400 truncate">{userDisplayName}</p>
                 <div className="flex items-center gap-1 mt-0.5">

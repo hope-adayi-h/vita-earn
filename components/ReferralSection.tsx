@@ -56,9 +56,12 @@ export function ReferralSection({
 
   return (
     <div id="equipe" className="w-full">
-      <div className="rounded-3xl sm:rounded-[32px] bg-gradient-to-br from-[#6D28D9] to-[#EC4899] text-white p-5 sm:p-7 shadow-xl space-y-5 transition-all">
-        {/* Petit badge en haut à gauche : icône cadeau + "INVITER" */}
-        <div className="flex items-center justify-start">
+      <div className="rounded-3xl sm:rounded-[32px] bg-gradient-to-br from-[#0F3D0A] via-[#2F7A1A] to-[#84CC16] text-white p-5 sm:p-7 shadow-xl space-y-5 transition-all relative overflow-hidden">
+        {/* Halo discret en arrière-plan */}
+        <div className="absolute -top-12 -right-12 w-48 h-48 bg-[#7C3AED]/15 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Petit badge en haut à gauche : icône cadeau + "INVITER" avec contour blanc arrondi */}
+        <div className="flex items-center justify-start relative z-10">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-white/80 text-[11px] font-black tracking-widest text-white uppercase backdrop-blur-xs select-none">
             <Gift className="w-3.5 h-3.5 text-white" />
             <span>INVITER</span>
@@ -66,7 +69,7 @@ export function ReferralSection({
         </div>
 
         {/* Titre en gros et en gras + Sous-titre */}
-        <div className="space-y-1.5 text-left">
+        <div className="space-y-1.5 text-left relative z-10">
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
             Inviter des amis
           </h2>
@@ -76,9 +79,9 @@ export function ReferralSection({
         </div>
 
         {/* Champ blanc arrondi contenant l'icône de lien, le lien d'invitation et le bouton Copier */}
-        <div className="bg-white rounded-2xl p-1.5 sm:p-2 pl-3.5 sm:pl-4 flex items-center justify-between gap-2 shadow-md">
+        <div className="bg-white rounded-2xl p-1.5 sm:p-2 pl-3.5 sm:pl-4 flex items-center justify-between gap-2 shadow-md relative z-10">
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
-            <Link2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#6D28D9] shrink-0" />
+            <Link2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F7A1A] shrink-0" />
             <span
               className="truncate text-xs sm:text-sm font-semibold text-gray-700 select-all"
               title={referralLink}
@@ -90,16 +93,16 @@ export function ReferralSection({
           <button
             type="button"
             onClick={handleCopy}
-            className="bg-[#4F46E5] hover:bg-[#4338CA] active:scale-95 text-white px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all shrink-0 shadow-sm cursor-pointer"
+            className="bg-[#A3E635] hover:bg-[#bef264] active:scale-95 text-[#14500C] px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black flex items-center gap-1.5 transition-all shrink-0 shadow-sm cursor-pointer"
           >
             {copied ? (
               <>
-                <Check className="w-4 h-4 text-emerald-300" />
+                <Check className="w-4 h-4 text-[#14500C]" />
                 <span>Copié !</span>
               </>
             ) : (
               <>
-                <Copy className="w-4 h-4 text-white" />
+                <Copy className="w-4 h-4 text-[#14500C]" />
                 <span>Copier</span>
               </>
             )}
@@ -107,7 +110,7 @@ export function ReferralSection({
         </div>
 
         {/* Titre centré "PARTAGER VIA" + Les 3 boutons blancs arrondis côte à côte */}
-        <div className="pt-1 space-y-3">
+        <div className="pt-1 space-y-3 relative z-10">
           <p className="text-center text-xs font-black tracking-widest text-white/95 uppercase select-none">
             PARTAGER VIA
           </p>
