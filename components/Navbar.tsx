@@ -44,6 +44,8 @@ import {
 import { PlatformLogo } from "./PlatformLogo";
 import { HelpModal } from "@/components/HelpModal";
 import { CommunityModal } from "@/components/CommunityModal";
+import { FaqModal } from "@/components/FaqModal";
+import { SupportModal } from "@/components/SupportModal";
 
 interface NavbarProps {
   user?: {
@@ -68,6 +70,8 @@ export function Navbar({ user }: NavbarProps) {
   const [teamMenuOpen, setTeamMenuOpen] = useState(false);
   const [desktopTeamOpen, setDesktopTeamOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
+  const [faqModalOpen, setFaqModalOpen] = useState(false);
+  const [supportModalOpen, setSupportModalOpen] = useState(false);
   const [communityModalOpen, setCommunityModalOpen] = useState(false);
 
   // Sous-options du Centre de Retrait
@@ -194,7 +198,7 @@ export function Navbar({ user }: NavbarProps) {
     { label: t("nav.community"), href: "/communaute", icon: MessageSquare, isCommunity: true },
     { label: t("nav.withdrawal"), href: "/retrait", icon: Wallet },
     { label: t("nav.team"), href: "/equipe", icon: Users },
-    { label: t("nav.welcomeBonus"), href: "/#welcome-bonus", icon: Gift },
+    { label: t("nav.welcomeBonus"), href: "/recompense-demarrage", icon: Gift },
     { label: t("nav.wheel"), href: "/roue", icon: Disc },
     { label: t("nav.tasks"), href: "/taches", icon: CalendarCheck },
     { label: t("nav.market"), href: "/marche", icon: ShoppingBag },
@@ -389,31 +393,37 @@ export function Navbar({ user }: NavbarProps) {
                         <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
                       </Link>
 
-                      {/* Centre de Retrait Mobile Money */}
-                      <Link
-                        href="/retrait"
-                        onClick={closeDropdowns}
-                        className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
+                      {/* Foire Aux Questions (FAQ) */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeDropdowns();
+                          setFaqModalOpen(true);
+                        }}
+                        className="w-full flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors cursor-pointer"
                       >
                         <div className="flex items-center gap-2.5">
-                          <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                          <span className="text-xs font-semibold">Demande de Retrait</span>
+                          <HelpCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="text-xs font-semibold">FAQ (Questions - Réponses)</span>
                         </div>
                         <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                      </Link>
+                      </button>
 
-                      {/* Historique des Retraits */}
-                      <Link
-                        href="/retrait/historique"
-                        onClick={closeDropdowns}
-                        className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
+                      {/* Support Client (Email & Telegram) */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeDropdowns();
+                          setSupportModalOpen(true);
+                        }}
+                        className="w-full flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors cursor-pointer"
                       >
                         <div className="flex items-center gap-2.5">
-                          <History className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                          <span className="text-xs font-semibold">Historique des Retraits</span>
+                          <Headphones className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="text-xs font-semibold">Support Client</span>
                         </div>
                         <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-                      </Link>
+                      </button>
 
                       {/* Activer mon compte si non activé */}
                       {!isActivated && (
@@ -773,6 +783,17 @@ export function Navbar({ user }: NavbarProps) {
 
       {/* Modale d'Assistance & FAQ */}
       <HelpModal isOpen={helpModalOpen} onClose={() => setHelpModalOpen(false)} />
+
+      {/* Modale FAQ complète de A à Z */}
+      <FaqModal isOpen={faqModalOpen} onClose={() => setFaqModalOpen(false)} />
+
+      {/* Modale Support Client (Email & Telegram) */}
+      <SupportModal
+        isOpen={supportModalOpen}
+        onClose={() => setSupportModalOpen(false)}
+        userEmail={user?.email}
+        userName={userDisplayName}
+      />
 
       {/* Modale Centre Communautaire (WhatsApp & Telegram) */}
       <CommunityModal

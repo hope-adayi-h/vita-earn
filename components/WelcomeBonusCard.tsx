@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Gift, CheckCircle, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
 import { claimWelcomeBonusAction } from "@/lib/actions/tasks";
 import { formatFCFA } from "@/lib/utils";
@@ -140,6 +141,14 @@ export function WelcomeBonusCard({
             {feedback}
           </div>
         )}
+        {/* Lien vers la page dédiée de Récompense de Démarrage */}
+        <Link
+          href="/recompense-demarrage"
+          className="w-full mt-2 py-1.5 px-2.5 rounded-xl bg-white/70 hover:bg-white text-[#1F2937] text-[10px] font-bold text-center flex items-center justify-center gap-1 transition-colors border border-[#9333EA]/20 shadow-2xs"
+        >
+          <span>Voir le système complet & lignes descendantes</span>
+          <ArrowRight className="w-3 h-3 text-[#9333EA]" />
+        </Link>
       </div>
     </div>
   );

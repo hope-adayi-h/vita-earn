@@ -4,6 +4,8 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatFCFA } from "@/lib/utils";
+import { getSupportSettingsAction } from "@/lib/actions/support";
+import { AdminSupportSettingsCard } from "@/components/admin/AdminSupportSettingsCard";
 import {
   Users,
   ShieldCheck,
@@ -142,6 +144,8 @@ export default async function AdminDashboardPage() {
       // Conservation des statistiques par défaut
     }
   }
+
+  const supportSettings = await getSupportSettingsAction();
 
   return (
     <div className="max-w-4xl mx-auto py-4 sm:py-8 space-y-6">
@@ -308,6 +312,9 @@ export default async function AdminDashboardPage() {
           </span>
         </div>
       </div>
+
+      {/* Configuration du Support Client (Email & Telegram) */}
+      <AdminSupportSettingsCard initialSettings={supportSettings} />
 
       {/* Raccourci vers la gestion des retraits */}
       <div className="bg-gradient-to-r from-vita-deep to-vita-medium rounded-3xl p-6 text-white shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
