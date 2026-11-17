@@ -64,14 +64,13 @@ export default async function ProfilPage() {
     sessionUser?.name ||
     (user?.email ? user.email.split("@")[0] : "camsho");
 
-  // Initiales (2 lettres pour l'avatar rond)
-  const initials = username
-    .trim()
-    .split(/\s+/)
-    .map((n: string) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase() || "CA";
+  // Initiales (2 lettres pour l'avatar rond : ex. "camsho" -> "CA", "John Doe" -> "JD")
+  const words = username.trim().split(/\s+/).filter(Boolean);
+  const initials = (
+    words.length > 1
+      ? (words[0][0] + words[1][0])
+      : username.trim().slice(0, 2)
+  ).toUpperCase() || "CA";
 
   const country = profile?.country || "TOGO";
 
@@ -184,10 +183,10 @@ export default async function ProfilPage() {
           </div>
 
           {/* Informations utilisateur sous la bannière */}
-          <div className="px-5 sm:px-7 pb-6 pt-0">
+          <div className="px-5 sm:px-7 pb-6 pt-0 relative z-10">
             <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3">
               {/* Avatar rond avec initiales (fond #D9F99D, texte #14500C) */}
-              <div className="flex items-end gap-3.5 -mt-10 sm:-mt-12">
+              <div className="flex items-end gap-3.5 -mt-10 sm:-mt-12 relative z-10">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#D9F99D] text-[#14500C] font-black text-2xl sm:text-3xl flex items-center justify-center border-4 border-white dark:border-[#131E17] shadow-md shrink-0 select-none">
                   {initials}
                 </div>
