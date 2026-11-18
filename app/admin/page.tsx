@@ -318,9 +318,14 @@ export default async function AdminDashboardPage() {
 
       {/* 2. GRAND HERO BANNER BLEU CIEL (Conforme à la maquette de la capture d'écran) */}
       <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-r from-[#00A3FF] via-[#0084FF] to-[#0066FF] p-5 sm:p-6 shadow-md text-white">
-        {/* Étoiles décoratives en haut à droite */}
-        <div className="absolute top-4 right-4 text-white/50 pointer-events-none">
-          <Sparkles className="w-8 h-8 opacity-75" />
+        {/* Étoiles décoratives en haut à droite (Conformes à la capture d'écran) */}
+        <div className="absolute top-4 right-5 text-white/70 pointer-events-none flex flex-col items-end gap-1.5">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="opacity-85">
+            <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z" />
+          </svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="opacity-60 mr-1">
+            <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z" />
+          </svg>
         </div>
 
         {/* Profil Administrateur */}
@@ -333,20 +338,24 @@ export default async function AdminDashboardPage() {
               xmlns="http://www.w3.org/2000/svg"
               className="w-full h-full"
             >
-              <circle cx="32" cy="32" r="32" fill="#E2E8F0" />
-              <circle cx="32" cy="24" r="11" fill="#F87171" />
-              <path
-                d="M16 54C16 43 23 38 32 38C41 38 48 43 48 54"
-                fill="#1E3A8A"
-              />
-              <path
-                d="M28 38L32 46L36 38H28Z"
-                fill="#FFFFFF"
-              />
-              <path
-                d="M31 42L32 50L33 42H31Z"
-                fill="#DC2626"
-              />
+              <circle cx="32" cy="32" r="32" fill="#EBF2FA" />
+              <circle cx="32" cy="22" r="12" fill="#3D2314" />
+              <circle cx="20" cy="25" r="3.5" fill="#F4BA94" />
+              <circle cx="44" cy="25" r="3.5" fill="#F4BA94" />
+              <circle cx="32" cy="25" r="10" fill="#FCD5B5" />
+              <path d="M21 21C21 15 26 12 32 12C38 12 43 15 43 21C41 19 37 17 32 18C27 19 23 18 21 21Z" fill="#3D2314" />
+              <path d="M26 21H29" stroke="#3D2314" strokeWidth="1.2" strokeLinecap="round" />
+              <path d="M35 21H38" stroke="#3D2314" strokeWidth="1.2" strokeLinecap="round" />
+              <circle cx="27.5" cy="23.5" r="1.2" fill="#1E293B" />
+              <circle cx="36.5" cy="23.5" r="1.2" fill="#1E293B" />
+              <path d="M29.5 28C30.5 29.5 33.5 29.5 34.5 28" stroke="#B45309" strokeWidth="1.2" strokeLinecap="round" />
+              <rect x="29" y="33" width="6" height="5" fill="#F4BA94" />
+              <path d="M12 56C12 43 20 37 32 37C44 37 52 43 52 56V64H12V56Z" fill="#1E3A8A" />
+              <path d="M26 37L32 46L38 37H26Z" fill="#FFFFFF" />
+              <path d="M30.5 40L32 49L33.5 40H30.5Z" fill="#0084FF" />
+              <circle cx="32" cy="40" r="1.8" fill="#0066CC" />
+              <path d="M18 56L27 40L30 56H18Z" fill="#172554" />
+              <path d="M46 56L37 40L34 56H46Z" fill="#172554" />
             </svg>
           </div>
 
