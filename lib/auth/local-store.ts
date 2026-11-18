@@ -53,26 +53,15 @@ function ensureDirectoryAndFile(): string {
       } catch {}
     }
 
-    // Utilisateurs par défaut
+    // Utilisateur Super Administrateur Principal par défaut
     const initialUsers: StoredUser[] = [
       {
-        id: "demo_koffi",
-        username: "Koffi",
-        email: "koffi@vitaearn.com",
-        phone: "+228 90 12 34 56",
+        id: "usr_espoir_master",
+        username: "Espoir",
+        email: "adayiespoir60@gmail.com",
+        phone: "+228 90 00 00 00",
         country: "Togo",
-        password: "koffi",
-        role: "user",
-        isActivated: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "demo_admin",
-        username: "Administrateur",
-        email: "admin@vitaearn.com",
-        phone: "+228 91 00 00 00",
-        country: "Togo",
-        password: "admin",
+        password: "Espoir@Vita2026!",
         role: "admin",
         isActivated: true,
         createdAt: new Date().toISOString(),

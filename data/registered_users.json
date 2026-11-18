@@ -1,46 +1,14 @@
 [
   {
-    "id": "demo_koffi",
-    "username": "Koffi",
-    "email": "koffi@vitaearn.com",
-    "phone": "+228 90 12 34 56",
-    "country": "Togo",
-    "password": "koffi",
-    "role": "user",
-    "isActivated": true,
-    "createdAt": "2026-11-15T00:00:00.000Z"
-  },
-  {
-    "id": "demo_admin",
-    "username": "Administrateur",
-    "email": "admin@vitaearn.com",
-    "phone": "+228 91 00 00 00",
-    "country": "Togo",
-    "password": "admin",
-    "role": "admin",
-    "isActivated": true,
-    "createdAt": "2026-11-15T00:00:00.000Z"
-  },
-  {
-    "id": "demo_affi",
-    "username": "Affi",
-    "email": "affi@test.com",
-    "phone": "+228 90 99 88 77",
-    "country": "Togo",
-    "password": "password123",
-    "role": "user",
-    "isActivated": true,
-    "createdAt": "2026-11-15T00:00:00.000Z"
-  },
-  {
-    "id": "demo_espoir",
+    "id": "usr_espoir_master",
     "username": "Espoir",
-    "email": "espoir@vitaearn.com",
+    "email": "adayiespoir60@gmail.com",
     "phone": "+228 90 00 00 00",
     "country": "Togo",
-    "password": "password123",
-    "role": "user",
+    "password": "Espoir@Vita2026!",
+    "role": "admin",
     "isActivated": true,
-    "createdAt": "2026-11-15T00:00:00.000Z"
+    "referralCode": "VE-ESPOIR",
+    "createdAt": "2026-11-18T00:00:00.000Z"
   }
 ]

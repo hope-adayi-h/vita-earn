@@ -108,6 +108,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  // RÈGLE P0 : Sas de déverrouillage Administrateur obligatoire (Face ID / Code Secret)
+  if (path.startsWith("/admin") && path !== "/admin/lock") {
+    const adminUnlockCookie = request.cookies.get("vita_admin_unlocked")?.value;
+    if (!adminUnlockCookie) {
+      const lockUrl = new URL("/admin/lock", request.url);
+      return NextResponse.redirect(lockUrl);
+    }
+  }
+
   // 3. Si l'utilisateur n'est PAS connecté et tente d'accéder à une page protégée
   // (Tableau de bord /, Portefeuille, Vendre, Profil, Tâches, Admin, etc.)
   if (!isAuthenticated && !isAuthPath) {

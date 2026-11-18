@@ -284,33 +284,21 @@ export async function signInAction(
     }
   }
 
-  // 3. Compte test Administrateur dédié
+  // 3. Compte Super Administrateur Principal (Espoir)
   if (
-    cleanId === "admin" ||
-    cleanId === "admin@vitaearn.com"
+    cleanId === "adayiespoir60@gmail.com" ||
+    cleanId === "espoir" ||
+    cleanId === "admin"
   ) {
     matchedAccount = {
-      id: "demo_admin",
-      username: "Administrateur",
-      email: "admin@vitaearn.com",
+      id: "usr_espoir_master",
+      username: "Espoir",
+      email: "adayiespoir60@gmail.com",
       role: "admin",
       isActivated: true,
-      password: matchedAccount?.password || "admin",
-    };
-  }
-
-  // 4. Compte test Koffi dédié
-  if (
-    cleanId === "koffi" ||
-    cleanId === "koffi@vitaearn.com"
-  ) {
-    matchedAccount = {
-      id: "demo_koffi",
-      username: "Koffi",
-      email: "koffi@vitaearn.com",
-      role: "user",
-      isActivated: true,
-      password: matchedAccount?.password || "koffi",
+      phone: "+228 90 00 00 00",
+      country: "Togo",
+      password: matchedAccount?.password || "Espoir@Vita2026!",
     };
   }
 

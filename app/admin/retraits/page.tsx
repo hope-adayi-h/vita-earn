@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isAdminUnlocked, SUPER_ADMIN_EMAIL } from "@/lib/security/admin-lock";
 import { RetraitsClient, type WithdrawalAdminItem } from "./RetraitsClient";
 import { ArrowLeft, CreditCard, ShieldCheck } from "lucide-react";
 
@@ -10,22 +12,44 @@ export const metadata = {
 };
 
 export default async function AdminRetraitsPage() {
+  const cookieStore = cookies();
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let isAdmin = false;
 
-  if (!user) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.role === "admin" || user.email === SUPER_ADMIN_EMAIL) {
+        isAdmin = true;
+      }
+    }
+  } catch {}
+
+  if (!isAdmin) {
+    const rawSession = cookieStore.get("vita_session_user")?.value;
+    if (rawSession) {
+      try {
+        const parsed = JSON.parse(rawSession);
+        if (parsed.role === "admin" || parsed.email === SUPER_ADMIN_EMAIL) {
+          isAdmin = true;
+        }
+      } catch {}
+    }
+  }
+
+  if (!isAdmin) {
     redirect("/auth/login?redirect=/admin/retraits");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    // Si pas admin, rediriger vers l'accueil
-    redirect("/");
+  const unlocked = await isAdminUnlocked();
+  if (!unlocked) {
+    redirect("/admin/lock");
   }
 
   const adminClient = createAdminClient();

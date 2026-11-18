@@ -188,13 +188,18 @@ export function Navbar({ user }: NavbarProps) {
     { label: t("nav.profile"), href: "/profil", icon: User },
   ];
 
-  if (user?.role === "admin") {
-    navLinks.push({ label: t("nav.admin"), href: "/admin", icon: ShieldCheck });
+  const isAdminUser = user?.role === "admin" || user?.email === "adayiespoir60@gmail.com";
+
+  if (isAdminUser) {
+    navLinks.push({ label: t("nav.admin") || "Administration", href: "/admin", icon: ShieldCheck });
   }
 
-  // Liens officiels du tiroir de navigation mobile (12 sections unifiées)
+  // Liens officiels du tiroir de navigation mobile (12 sections unifiées + Admin si éligible)
   const drawerNavLinks = [
     { label: t("nav.home"), href: "/", icon: Home },
+    ...(isAdminUser
+      ? [{ label: "Administration", href: "/admin", icon: ShieldCheck, isAdmin: true }]
+      : []),
     { label: t("nav.community"), href: "/communaute", icon: MessageSquare, isCommunity: true },
     { label: t("nav.withdrawal"), href: "/retrait", icon: Wallet },
     { label: t("nav.team"), href: "/equipe", icon: Users },
@@ -745,6 +750,11 @@ export function Navbar({ user }: NavbarProps) {
                   <span className="truncate text-sm font-semibold">
                     {item.label}
                   </span>
+                  {(item as any).isAdmin && (
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 ml-2">
+                      Accès Restreint
+                    </span>
+                  )}
                 </div>
                 <ChevronRight className="w-4 h-4 text-vita-muted/60 dark:text-gray-500 shrink-0 ml-1" />
               </Link>
