@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { lockAdminSessionAction } from "@/app/admin/actions";
 import {
@@ -21,7 +20,8 @@ import {
   Lock,
   ArrowLeft,
   ChevronRight,
-  ExternalLink,
+  Globe,
+  Radio,
 } from "lucide-react";
 
 interface AdminNavbarProps {
@@ -72,7 +72,7 @@ export function AdminNavbar({
     },
     {
       label: "Modération des Produits",
-      sublabel: "Marketplace & catalogues vendeurs",
+      sublabel: "Marketplace & vendeurs",
       href: "/admin/produits",
       icon: ShoppingBag,
       badge: pendingProductsCount > 0 ? pendingProductsCount : null,
@@ -117,74 +117,79 @@ export function AdminNavbar({
 
   return (
     <>
-      {/* Barre de navigation supérieure de l'administration */}
-      <div className="bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] rounded-3xl p-3 sm:p-4 shadow-xs">
+      {/* Barre supérieure du Command Center Administrateur */}
+      <header className="sticky top-0 z-40 bg-[#0B1324]/95 backdrop-blur-md border border-[#1A2942] rounded-3xl p-3 sm:p-4 shadow-xl shadow-black/40">
         <div className="flex items-center justify-between gap-2 sm:gap-4">
-          {/* Bouton Menu 3 traits (☰) + Nom du module */}
+          {/* Bouton Menu 3 traits (☰) + Nom du Command Center */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="p-2 sm:p-2.5 rounded-2xl bg-gray-50 dark:bg-[#1A2820] hover:bg-emerald-50 dark:hover:bg-[#203328] text-gray-800 dark:text-gray-100 hover:text-emerald-700 transition-all border border-gray-200 dark:border-[#1E2E24] cursor-pointer shrink-0 shadow-xs active:scale-95"
+              className="p-2 sm:p-2.5 rounded-2xl bg-[#142036] hover:bg-[#1C2C4B] text-indigo-300 hover:text-white transition-all border border-[#233555] cursor-pointer shrink-0 shadow-md active:scale-95"
               aria-label="Ouvrir le menu d'administration"
-              title="Menu d'administration"
+              title="Menu du panneau d'administration"
             >
-              <Menu className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-800 dark:text-emerald-400" />
+              <Menu className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-400" />
             </button>
 
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-[#14500C] to-[#2F7A1A] flex items-center justify-center text-white shrink-0 shadow-sm shadow-emerald-950/20">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-indigo-700 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shrink-0 shadow-md shadow-indigo-950/50">
                 <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 sm:gap-2">
-                  <span className="text-xs sm:text-sm font-black text-gray-900 dark:text-white tracking-tight truncate">
-                    Console Admin
+                  <span className="text-xs sm:text-sm font-black text-white tracking-wide uppercase truncate">
+                    Command Center
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shrink-0">
                     {isSuperAdmin ? "Super Admin" : "Délégué"}
                   </span>
                 </div>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate hidden xs:block">
-                  {userEmail} • Session sécurisée
-                </p>
+                <div className="flex items-center gap-2 text-[11px] text-slate-400 truncate">
+                  <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    En direct
+                  </span>
+                  <span className="text-slate-600">•</span>
+                  <span className="truncate hidden xs:inline">{userEmail}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Actions rapides à droite */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Raccourci vers l'espace membre */}
+          {/* Actions rapides à droite : RETOUR SUR LE SITE + VERROUILLER */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* BOUTON ULTRA-VISIBLE : RETOUR SUR LE SITE */}
             <Link
               href="/"
-              className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#1A2820] hover:bg-gray-100 dark:hover:bg-[#23362a] text-gray-700 dark:text-gray-300 text-xs font-bold border border-gray-200 dark:border-[#1E2E24] transition-colors"
-              title="Basculer vers l'espace membre"
+              className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-lg shadow-emerald-950/40 transition-all border border-emerald-400/40 cursor-pointer active:scale-95 group"
+              title="Retourner sur le site public pour voir vos comptes et activités"
             >
-              <ExternalLink className="w-3.5 h-3.5 text-gray-500" />
-              <span>Espace Membre</span>
+              <Globe className="w-3.5 h-3.5 text-emerald-100 group-hover:rotate-12 transition-transform" />
+              <span className="font-black tracking-tight">Retour sur le site</span>
             </Link>
 
-            {/* Bouton Verrouiller */}
+            {/* Bouton Verrouiller l'accès */}
             <button
               type="button"
               onClick={handleLock}
               disabled={isPending}
-              className="px-3 sm:px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/50 text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs disabled:opacity-50 cursor-pointer active:scale-95"
+              className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-2xl bg-red-950/40 hover:bg-red-900/50 text-red-300 border border-red-800/40 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer active:scale-95"
               title="Verrouiller instantanément le panneau d'administration"
             >
-              <Lock className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
-              <span className="hidden sm:inline">{isPending ? "Verrouillage..." : "Verrouiller"}</span>
+              <Lock className="w-3.5 h-3.5 text-red-400" />
+              <span className="hidden md:inline">{isPending ? "Verrouillage..." : "Verrouiller"}</span>
             </button>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* ========================================================================= */}
-      {/* TIROIR LATÉRAL GAUCHE DE L'ADMINISTRATION (3 TRAITS ☰)                     */}
+      {/* TIROIR LATÉRAL GAUCHE DU COMMAND CENTER (3 TRAITS ☰)                      */}
       {/* ========================================================================= */}
       {/* 1. Backdrop */}
       <div
-        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-xs transition-opacity duration-300 ${
+        className={`fixed inset-0 z-50 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${
           drawerOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setDrawerOpen(false)}
@@ -193,30 +198,30 @@ export function AdminNavbar({
 
       {/* 2. Volet latéral coulissant */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-50 w-72 sm:w-84 max-w-[85vw] bg-white dark:bg-[#131E17] shadow-2xl flex flex-col transition-transform duration-300 ease-in-out border-r border-gray-100 dark:border-[#1E2E24] ${
+        className={`fixed top-0 left-0 bottom-0 z-50 w-72 sm:w-84 max-w-[85vw] bg-[#0A111F] text-slate-100 shadow-2xl shadow-black flex flex-col transition-transform duration-300 ease-in-out border-r border-[#1B2942] ${
           drawerOpen ? "translate-x-0" : "-translate-x-full"
         }`}
-        aria-label="Navigation administration"
+        aria-label="Navigation Command Center"
       >
         {/* En-tête du tiroir avec Logo & Titre */}
-        <div className="p-4 border-b border-gray-100 dark:border-[#1E2E24] flex items-center justify-between bg-gray-50/50 dark:bg-[#0E1812]/50">
+        <div className="p-4 border-b border-[#1A2840] flex items-center justify-between bg-[#080E1B]">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#14500C] to-[#2F7A1A] flex items-center justify-center text-white shrink-0 shadow-sm shadow-emerald-950/20">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-700 to-cyan-500 flex items-center justify-center text-white shrink-0 shadow-md">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
-                Vita Earn
+              <div className="text-[10px] font-black uppercase tracking-wider text-cyan-400">
+                Portail Exécutif
               </div>
-              <div className="text-sm font-black text-gray-900 dark:text-white">
-                Administration
+              <div className="text-sm font-black text-white">
+                Command Center
               </div>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setDrawerOpen(false)}
-            className="p-1.5 rounded-xl text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-[#16233B] transition-colors cursor-pointer"
             aria-label="Fermer le menu"
           >
             <X className="w-5 h-5" />
@@ -224,25 +229,23 @@ export function AdminNavbar({
         </div>
 
         {/* Profil administrateur actif */}
-        <div className="p-3.5 bg-emerald-50/50 dark:bg-[#0E1812] border-b border-gray-100 dark:border-[#1E2E24]">
+        <div className="p-3.5 bg-[#0C1527] border-b border-[#1A2840]">
           <div className="flex items-center gap-2.5">
             <div className="relative shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-emerald-700 text-white font-black text-sm flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white font-black text-sm flex items-center justify-center">
                 E
               </div>
               <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#16A34A] border-2 border-white dark:border-[#131E17]"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border-2 border-[#0C1527]"></span>
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
-                  {userEmail}
-                </p>
-              </div>
-              <span className="inline-block mt-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
-                {isSuperAdmin ? "Super Administrateur" : "Administrateur Délégué"}
+              <p className="text-xs font-bold text-white truncate">
+                {userEmail}
+              </p>
+              <span className="inline-block mt-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-300 bg-indigo-950/60 border border-indigo-700/40 px-2 py-0.5 rounded-full">
+                {isSuperAdmin ? "Super Administrateur" : "Délégué"}
               </span>
             </div>
           </div>
@@ -250,7 +253,7 @@ export function AdminNavbar({
 
         {/* Liste des 9 Modules de la console */}
         <div className="p-3 overflow-y-auto flex-1 space-y-1">
-          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase px-3 pt-1 pb-1">
+          <p className="text-[10px] font-black text-slate-400 uppercase px-3 pt-1 pb-1 tracking-wider">
             Modules d&apos;Administration
           </p>
 
@@ -268,8 +271,8 @@ export function AdminNavbar({
                 onClick={() => setDrawerOpen(false)}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-bold transition-all group ${
                   isActive
-                    ? "bg-emerald-600 text-white shadow-sm shadow-emerald-900/20"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-[#1A2820] hover:text-emerald-800 dark:hover:text-emerald-300"
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-950/60 border border-indigo-400/30"
+                    : "text-slate-300 hover:bg-[#131F35] hover:text-white border border-transparent hover:border-[#1E2E4B]"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -277,7 +280,7 @@ export function AdminNavbar({
                     className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 ${
                       isActive
                         ? "bg-white/20 text-white"
-                        : "bg-gray-100 dark:bg-[#1E2E24] text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-100/50"
+                        : "bg-[#142138] text-indigo-400 group-hover:bg-[#1A2C4A] group-hover:text-indigo-300"
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -286,7 +289,7 @@ export function AdminNavbar({
                     <div className="truncate font-black">{item.label}</div>
                     <div
                       className={`text-[10px] font-medium truncate ${
-                        isActive ? "text-emerald-100" : "text-gray-400 dark:text-gray-500"
+                        isActive ? "text-indigo-200" : "text-slate-400"
                       }`}
                     >
                       {item.sublabel}
@@ -306,7 +309,7 @@ export function AdminNavbar({
                   )}
                   <ChevronRight
                     className={`w-3.5 h-3.5 ${
-                      isActive ? "text-white" : "text-gray-300 group-hover:text-emerald-600"
+                      isActive ? "text-white" : "text-slate-600 group-hover:text-slate-400"
                     }`}
                   />
                 </div>
@@ -315,24 +318,28 @@ export function AdminNavbar({
           })}
         </div>
 
-        {/* Pied du tiroir : Retour membre & Verrouillage */}
-        <div className="p-3 border-t border-gray-100 dark:border-[#1E2E24] bg-gray-50/70 dark:bg-[#0E1812] space-y-1.5">
+        {/* Pied du tiroir : BOUTON RETOUR SUR LE SITE & VERROUILLAGE */}
+        <div className="p-3 border-t border-[#1A2840] bg-[#080E1B] space-y-2">
+          {/* BOUTON ÉTENDU RETOUR SUR LE SITE */}
           <Link
             href="/"
             onClick={() => setDrawerOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#1A2820] text-xs font-bold transition-colors"
+            className="flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-md transition-all border border-emerald-400/30"
           >
-            <ArrowLeft className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Retour à l&apos;Espace Membre</span>
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4" />
+              <span>Retour sur le site</span>
+            </div>
+            <span className="text-[10px] opacity-80">Mes comptes →</span>
           </Link>
 
           <button
             type="button"
             onClick={handleLock}
             disabled={isPending}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-xs font-bold transition-colors cursor-pointer border border-red-200 dark:border-red-900/40"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/50 text-red-300 text-xs font-bold transition-colors cursor-pointer border border-red-800/40"
           >
-            <Lock className="w-3.5 h-3.5 text-red-600 shrink-0" />
+            <Lock className="w-3.5 h-3.5 text-red-400 shrink-0" />
             <span>{isPending ? "Verrouillage..." : "Verrouiller le Sas Admin"}</span>
           </button>
         </div>

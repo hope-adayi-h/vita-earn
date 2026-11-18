@@ -23,34 +23,22 @@ import {
   ShieldCheck,
   CreditCard,
   DollarSign,
-  Layers,
   ArrowRight,
-  TrendingUp,
-  Clock,
   History,
-  Lock,
   ShoppingBag,
   GitBranch,
   Settings,
   ShieldAlert,
   CalendarCheck,
   CheckCircle2,
-  AlertCircle,
   Hourglass,
-  ArrowUpRight,
-  ArrowDownRight,
-  Wallet,
-  Building,
-  Activity,
-  Globe2,
-  Sparkles,
-  PieChart,
-  BarChart3,
-  RefreshCw,
+  Globe,
+  Radio,
+  Zap,
 } from "lucide-react";
 
 export const metadata = {
-  title: "Administration & Analytics — Vita Earn",
+  title: "Command Center — Administration Vita Earn",
 };
 
 export default async function AdminDashboardPage() {
@@ -190,7 +178,7 @@ export default async function AdminDashboardPage() {
           else methodStats.tmoney += amt;
         });
 
-        // Activités récentes basées sur les retraits
+        // Activités récentes
         recentActivities = dbWithdrawals.slice(0, 6).map((w) => ({
           id: w.id,
           type: "withdrawal",
@@ -221,7 +209,6 @@ export default async function AdminDashboardPage() {
           else if (c.level === 3) level3Commissions += amt;
         });
       } else {
-        // Estimation statutaire basée sur les abonnements activés
         level1Commissions = paidSubscriptionsCount * 2000;
         level2Commissions = paidSubscriptionsCount * 1000;
         level3Commissions = paidSubscriptionsCount * 500;
@@ -249,11 +236,11 @@ export default async function AdminDashboardPage() {
         }));
       }
     } catch {
-      // Tolérance et bascule sur le store local
+      // Tolérance vers le store local
     }
   }
 
-  // Si pas de retraits trouvés dans Supabase, utiliser le store persistant local
+  // Repli vers le store local pour les retraits si base vide
   if (totalWithdrawnCompleted === 0 && pendingWithdrawalsAmount === 0) {
     const storedStats = getStoredWithdrawalStats();
     totalWithdrawnCompleted = storedStats.totalWithdrawnCompleted;
@@ -278,7 +265,7 @@ export default async function AdminDashboardPage() {
     }
   }
 
-  // Lecture des utilisateurs locaux si totalUsers vaut 1
+  // Lecture locale des utilisateurs si totalUsers <= 1
   if (totalUsers <= 1) {
     const localUsers = getAllUsers();
     if (localUsers.length > 1) {
@@ -306,15 +293,15 @@ export default async function AdminDashboardPage() {
   // Pourcentages des opérateurs
   const totalOperatorVolume =
     methodStats.tmoney + methodStats.flooz + methodStats.wave + methodStats.mtn || 1;
-  const tmoneyPct = Math.round((methodStats.tmoney / totalOperatorVolume) * 100) || 62;
-  const floozPct = Math.round((methodStats.flooz / totalOperatorVolume) * 100) || 33;
+  const tmoneyPct = Math.round((methodStats.tmoney / totalOperatorVolume) * 100) || 70;
+  const floozPct = Math.round((methodStats.flooz / totalOperatorVolume) * 100) || 30;
   const otherPct = Math.max(0, 100 - tmoneyPct - floozPct);
 
   const supportSettings = await getSupportSettingsAction();
 
   return (
-    <div className="max-w-5xl mx-auto py-3 sm:py-6 space-y-6">
-      {/* 1. Header de navigation avec le menu à 3 traits (☰) */}
+    <div className="space-y-6">
+      {/* 1. Header exclusif du Command Center avec 3 traits (☰) et Bouton RETOUR SUR LE SITE */}
       <AdminNavbar
         userEmail={userEmail}
         isSuperAdmin={isSuperAdmin}
@@ -322,56 +309,58 @@ export default async function AdminDashboardPage() {
         pendingProductsCount={pendingProductsCount}
       />
 
-      {/* 2. Titre et Bandeau de Supervision Exécutive */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-[#1B4D0F] to-[#2F7A1A] text-white p-5 sm:p-6 rounded-3xl shadow-md">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/20 text-white backdrop-blur-xs">
-            <Activity className="w-3.5 h-3.5 text-emerald-300" />
-            <span>Supervision Financière en Temps Réel</span>
+      {/* 2. Grand Banner de Supervision Exécutive Dark Command Center */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0C162A] via-[#0F1D38] to-[#0A1224] border border-[#1E2E4E] p-6 sm:p-7 shadow-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+              <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+              <span>Système de Supervision Financière & Flux en Temps Réel</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">
+              Tableau de Bord & Command Center
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Supervision centrale des abonnements encaissés, grand livre immuable, commissions d&apos;affiliation multi-niveaux et exécution des retraits Mobile Money.
+            </p>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight">
-            Tableau de Bord & Analytiques Exécutives
-          </h1>
-          <p className="text-xs sm:text-sm text-emerald-100 max-w-xl">
-            Suivi des inscriptions, encaissements d&apos;abonnements, commissions multi-niveaux et validation des retraits Mobile Money.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
-          <Link
-            href="/admin/retraits"
-            className="px-4 py-2.5 rounded-2xl bg-white text-emerald-900 hover:bg-emerald-50 text-xs font-black transition-all flex items-center gap-2 shadow-sm"
-          >
-            <CreditCard className="w-4 h-4 text-emerald-700" />
-            <span>Gérer les Retraits</span>
-            {pendingWithdrawalsCount > 0 && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-black animate-pulse">
-                {pendingWithdrawalsCount}
-              </span>
-            )}
-          </Link>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Link
+              href="/admin/retraits"
+              className="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-indigo-950/50 border border-indigo-400/30 cursor-pointer active:scale-95"
+            >
+              <CreditCard className="w-4 h-4 text-indigo-200" />
+              <span>Valider les Retraits</span>
+              {pendingWithdrawalsCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-slate-950 font-black animate-pulse">
+                  {pendingWithdrawalsCount}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* 3. Bandeaux d'Alerte d'Action Prioritaire (Retraits et Produits) */}
       {pendingWithdrawalsCount > 0 && (
-        <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-amber-900 dark:text-amber-200">
+        <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[#1C1408] border border-amber-500/40 text-amber-200 shadow-lg shadow-amber-950/20">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 font-black">
               <Hourglass className="w-5 h-5 animate-pulse" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs sm:text-sm font-black">
-                {pendingWithdrawalsCount} demande(s) de retrait Mobile Money en attente
+              <div className="text-xs sm:text-sm font-black text-amber-300">
+                {pendingWithdrawalsCount} demande(s) de retrait Mobile Money en attente d&apos;approbation
               </div>
-              <div className="text-[11px] text-amber-700 dark:text-amber-300 truncate">
-                Montant total en file d&apos;attente : <span className="font-bold">{formatFCFA(pendingWithdrawalsAmount)}</span>
+              <div className="text-[11px] text-amber-400/80 truncate">
+                Montant total en file d&apos;attente : <span className="font-bold text-amber-200">{formatFCFA(pendingWithdrawalsAmount)}</span>
               </div>
             </div>
           </div>
           <Link
             href="/admin/retraits"
-            className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-black shrink-0 transition-colors"
+            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black shrink-0 transition-colors shadow-sm"
           >
             Examiner
           </Link>
@@ -379,125 +368,125 @@ export default async function AdminDashboardPage() {
       )}
 
       {pendingProductsCount > 0 && (
-        <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 text-blue-900 dark:text-blue-200">
+        <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[#0B182B] border border-blue-500/40 text-blue-200 shadow-lg shadow-blue-950/20">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-blue-500 text-white flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-blue-500 text-white flex items-center justify-center shrink-0">
               <ShoppingBag className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs sm:text-sm font-black">
+              <div className="text-xs sm:text-sm font-black text-blue-300">
                 {pendingProductsCount} produit(s) en attente de modération marketplace
               </div>
-              <div className="text-[11px] text-blue-700 dark:text-blue-300 truncate">
-                Vérifiez la conformité avant mise en ligne sur le Marché.
+              <div className="text-[11px] text-blue-300/80 truncate">
+                Validation requise avant publication sur le Marché public.
               </div>
             </div>
           </div>
           <Link
             href="/admin/produits"
-            className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black shrink-0 transition-colors"
+            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black shrink-0 transition-colors shadow-sm"
           >
             Modérer
           </Link>
         </div>
       )}
 
-      {/* 4. LES 4 GRANDS KPIS EXÉCUTIFS (Demande explicite de l'utilisateur) */}
+      {/* 4. LES 4 GRANDS KPIS EXÉCUTIFS (Demande explicite) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* KPI 1 : Total Utilisateurs Inscrits & Actifs */}
-        <div className="bg-white dark:bg-[#131E17] rounded-3xl border border-gray-100 dark:border-[#1E2E24] p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-[#0B1322] rounded-3xl border border-[#1A2840] p-5 shadow-xl flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 font-bold mb-1">
+            <div className="flex items-center justify-between text-xs text-slate-400 font-bold mb-1">
               <span>Utilisateurs Inscrits</span>
-              <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
                 <Users className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">
               {totalUsers.toLocaleString("fr-FR")}
             </div>
-            <p className="text-[11px] text-gray-400 mt-0.5">Total comptes enregistrés</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Comptes enregistrés sur la plateforme</p>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-gray-100 dark:border-[#1E2E24] space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
+          <div className="mt-4 pt-3 border-t border-[#162338] space-y-2">
+            <div className="flex items-center justify-between text-xs font-bold">
+              <span className="text-emerald-400 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 {activatedUsers} activés
               </span>
-              <span className="text-amber-600 dark:text-amber-400 font-bold">
+              <span className="text-amber-400">
                 {nonActivatedUsers} en attente
               </span>
             </div>
             {/* Barre de progression du taux d'activation */}
-            <div className="w-full bg-gray-100 dark:bg-[#1E2E24] h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
               <div
-                className="bg-[#16A34A] h-full rounded-full transition-all duration-500"
+                className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500"
                 style={{ width: `${Math.max(5, Math.min(100, activationRate))}%` }}
               />
             </div>
-            <div className="text-[10px] text-gray-400 text-right font-semibold">
+            <div className="text-[10px] text-slate-400 text-right font-semibold">
               Taux d&apos;activation : {activationRate}%
             </div>
           </div>
         </div>
 
         {/* KPI 2 : Fonds Totaux / Revenus Bruts de la Plateforme */}
-        <div className="bg-white dark:bg-[#131E17] rounded-3xl border border-gray-100 dark:border-[#1E2E24] p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-[#0B1322] rounded-3xl border border-[#1A2840] p-5 shadow-xl flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 font-bold mb-1">
+            <div className="flex items-center justify-between text-xs text-slate-400 font-bold mb-1">
               <span>Revenus Totaux Plateforme</span>
-              <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
                 <DollarSign className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-700 dark:text-emerald-400 tracking-tight">
+            <div className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">
               {formatFCFA(totalSubscriptionsRevenue)}
             </div>
-            <p className="text-[11px] text-gray-400 mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               {paidSubscriptionsCount} abonnement(s) × 4 500 F
             </p>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-gray-100 dark:border-[#1E2E24] space-y-1">
+          <div className="mt-4 pt-3 border-t border-[#162338] space-y-1">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500 font-medium">Marge statutaire :</span>
-              <span className="text-emerald-700 dark:text-emerald-400 font-black">
+              <span className="text-slate-400 font-medium">Marge statutaire :</span>
+              <span className="text-emerald-400 font-black">
                 {formatFCFA(platformNetMargin)}
               </span>
             </div>
-            <div className="flex items-center justify-between text-[11px] text-gray-400">
+            <div className="flex items-center justify-between text-[11px] text-slate-500">
               <span>1 000 F / abonné</span>
-              <span className="text-emerald-600 font-bold">22.2% statutaire</span>
+              <span className="text-indigo-400 font-bold">22.2% statutaire</span>
             </div>
           </div>
         </div>
 
         {/* KPI 3 : Total des Retraits Validés & Effectués */}
-        <div className="bg-white dark:bg-[#131E17] rounded-3xl border border-gray-100 dark:border-[#1E2E24] p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-[#0B1322] rounded-3xl border border-[#1A2840] p-5 shadow-xl flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 font-bold mb-1">
+            <div className="flex items-center justify-between text-xs text-slate-400 font-bold mb-1">
               <span>Retraits Effectués & Validés</span>
-              <div className="w-7 h-7 rounded-lg bg-green-50 dark:bg-green-950/50 text-green-700 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-teal-500/15 text-teal-400 border border-teal-500/30 flex items-center justify-center">
                 <CheckCircle2 className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+            <div className="text-2xl sm:text-3xl font-black text-teal-300 tracking-tight">
               {formatFCFA(totalWithdrawnCompleted)}
             </div>
-            <p className="text-[11px] text-gray-400 mt-0.5">
-              Payés via T-Money & Flooz
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Réglés via T-Money & Flooz
             </p>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-gray-100 dark:border-[#1E2E24] space-y-1">
+          <div className="mt-4 pt-3 border-t border-[#162338] space-y-1">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500 font-medium">Volume réglé :</span>
-              <span className="text-green-700 dark:text-green-400 font-black">
+              <span className="text-slate-400 font-medium">Volume réglé :</span>
+              <span className="text-teal-300 font-black">
                 {completedWithdrawalsCount} virement(s)
               </span>
             </div>
-            <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+            <div className="text-[10px] text-teal-400 font-semibold flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" />
               Actualisation automatique à chaque validation
             </div>
@@ -505,26 +494,26 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* KPI 4 : Retraits en Attente de Traitement */}
-        <div className="bg-white dark:bg-[#131E17] rounded-3xl border border-gray-100 dark:border-[#1E2E24] p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-[#0B1322] rounded-3xl border border-[#2B1F11] p-5 shadow-xl flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 font-bold mb-1">
+            <div className="flex items-center justify-between text-xs text-amber-400/80 font-bold mb-1">
               <span>Retraits en Attente</span>
-              <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center">
                 <Hourglass className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
+            <div className="text-2xl sm:text-3xl font-black text-amber-400 tracking-tight">
               {formatFCFA(pendingWithdrawalsAmount)}
             </div>
-            <p className="text-[11px] text-gray-400 mt-0.5">
+            <p className="text-[11px] text-amber-500/80 mt-0.5">
               {pendingWithdrawalsCount} demande(s) en file d&apos;attente
             </p>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-gray-100 dark:border-[#1E2E24] space-y-1">
+          <div className="mt-4 pt-3 border-t border-[#231A10] space-y-1">
             <Link
               href="/admin/retraits"
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black transition-colors shadow-xs"
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition-colors shadow-sm cursor-pointer"
             >
               <span>Accéder aux validations</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -534,100 +523,100 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* 5. DÉTAIL FINANCIER & TRÉSORERIE DISPONIBLE */}
-      <div className="bg-white dark:bg-[#131E17] rounded-3xl border border-gray-100 dark:border-[#1E2E24] p-5 sm:p-6 shadow-xs space-y-5">
+      <div className="bg-[#0B1322] rounded-3xl border border-[#1A2840] p-5 sm:p-6 shadow-xl space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
+              <h2 className="text-base sm:text-lg font-black text-white">
                 Structure Financière & Trésorerie Nette
               </h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
                 Abonnement 4 500 F
               </span>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-slate-400 mt-0.5">
               Décomposition immuable des flux financiers selon le grand livre de la plateforme.
             </p>
           </div>
 
-          <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20 px-4 py-2.5 rounded-2xl shrink-0">
-            <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 block">
+          <div className="bg-[#0E1A2F] border border-indigo-500/30 px-4 py-2.5 rounded-2xl shrink-0">
+            <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
               Trésorerie Nette Disponible :
             </span>
-            <span className="text-xl font-black text-emerald-700 dark:text-emerald-300">
+            <span className="text-xl font-black text-emerald-400">
               {formatFCFA(platformNetTreasury)}
             </span>
           </div>
         </div>
 
         {/* Barre de répartition visuelle des 4 500 FCFA */}
-        <div className="space-y-2">
-          <div className="w-full h-3 rounded-full overflow-hidden flex bg-gray-100 dark:bg-[#1E2E24]">
+        <div className="space-y-2.5">
+          <div className="w-full h-3 rounded-full overflow-hidden flex bg-[#131F33]">
             <div
-              className="bg-emerald-600 h-full"
+              className="bg-emerald-500 h-full"
               style={{ width: "44.4%" }}
               title="Niveau 1 : 2 000 FCFA (44.4%)"
             />
             <div
-              className="bg-emerald-400 h-full"
+              className="bg-teal-400 h-full"
               style={{ width: "22.2%" }}
               title="Niveau 2 : 1 000 FCFA (22.2%)"
             />
             <div
-              className="bg-emerald-300 h-full"
+              className="bg-cyan-400 h-full"
               style={{ width: "11.1%" }}
               title="Niveau 3 : 500 FCFA (11.1%)"
             />
             <div
-              className="bg-amber-500 h-full"
+              className="bg-indigo-500 h-full"
               style={{ width: "22.2%" }}
               title="Marge Plateforme : 1 000 FCFA (22.2%)"
             />
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-            <div className="p-3 rounded-2xl bg-gray-50 dark:bg-[#17241C] border border-gray-100 dark:border-[#1E2E24]">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+            <div className="p-3 rounded-2xl bg-[#0E1729] border border-[#1A2840]">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                 <span>Niveau 1 (Direct)</span>
               </div>
-              <div className="text-sm font-black text-gray-900 dark:text-white mt-1">
+              <div className="text-sm font-black text-white mt-1">
                 {formatFCFA(level1Commissions)}
               </div>
-              <div className="text-[10px] text-gray-400">2 000 F / affiliation</div>
+              <div className="text-[10px] text-slate-400">2 000 F / affiliation</div>
             </div>
 
-            <div className="p-3 rounded-2xl bg-gray-50 dark:bg-[#17241C] border border-gray-100 dark:border-[#1E2E24]">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
+            <div className="p-3 rounded-2xl bg-[#0E1729] border border-[#1A2840]">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-teal-300">
+                <span className="w-2 h-2 rounded-full bg-teal-400 shrink-0" />
                 <span>Niveau 2 (Secondaire)</span>
               </div>
-              <div className="text-sm font-black text-gray-900 dark:text-white mt-1">
+              <div className="text-sm font-black text-white mt-1">
                 {formatFCFA(level2Commissions)}
               </div>
-              <div className="text-[10px] text-gray-400">1 000 F / affiliation</div>
+              <div className="text-[10px] text-slate-400">1 000 F / affiliation</div>
             </div>
 
-            <div className="p-3 rounded-2xl bg-gray-50 dark:bg-[#17241C] border border-gray-100 dark:border-[#1E2E24]">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 shrink-0" />
+            <div className="p-3 rounded-2xl bg-[#0E1729] border border-[#1A2840]">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-300">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 shrink-0" />
                 <span>Niveau 3 (Tertiaire)</span>
               </div>
-              <div className="text-sm font-black text-gray-900 dark:text-white mt-1">
+              <div className="text-sm font-black text-white mt-1">
                 {formatFCFA(level3Commissions)}
               </div>
-              <div className="text-[10px] text-gray-400">500 F / affiliation</div>
+              <div className="text-[10px] text-slate-400">500 F / affiliation</div>
             </div>
 
-            <div className="p-3 rounded-2xl bg-gray-50 dark:bg-[#17241C] border border-gray-100 dark:border-[#1E2E24]">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+            <div className="p-3 rounded-2xl bg-[#0E1729] border border-[#1A2840]">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-300">
+                <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
                 <span>Marge Plateforme</span>
               </div>
-              <div className="text-sm font-black text-amber-700 dark:text-amber-300 mt-1">
+              <div className="text-sm font-black text-indigo-300 mt-1">
                 {formatFCFA(platformNetMargin)}
               </div>
-              <div className="text-[10px] text-gray-400">1 000 F / abonnement</div>
+              <div className="text-[10px] text-slate-400">1 000 F / abonnement</div>
             </div>
           </div>
         </div>
@@ -636,105 +625,105 @@ export default async function AdminDashboardPage() {
       {/* 6. ANALYTIQUES STATISTIQUES (Pays UEMOA & Opérateurs Mobile Money) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Répartition Géographique UEMOA */}
-        <div className="bg-white dark:bg-[#131E17] rounded-3xl border border-gray-100 dark:border-[#1E2E24] p-5 shadow-xs space-y-4">
+        <div className="bg-[#0B1322] rounded-3xl border border-[#1A2840] p-5 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Globe2 className="w-5 h-5 text-emerald-600" />
-              <h3 className="text-sm font-black text-gray-900 dark:text-white">
+              <Globe className="w-5 h-5 text-indigo-400" />
+              <h3 className="text-sm font-black text-white">
                 Répartition Géographique UEMOA
               </h3>
             </div>
-            <span className="text-[10px] font-bold text-gray-400 uppercase">Afrique de l&apos;Ouest</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Afrique de l&apos;Ouest</span>
           </div>
 
           <div className="space-y-3">
             <div>
               <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-gray-800 dark:text-gray-200">Togo (Lomé, Kara, Sokodé)</span>
-                <span className="text-emerald-700 dark:text-emerald-400">68%</span>
+                <span className="text-slate-200">Togo (Lomé, Kara, Sokodé)</span>
+                <span className="text-emerald-400">68%</span>
               </div>
-              <div className="w-full bg-gray-100 dark:bg-[#1E2E24] h-2 rounded-full overflow-hidden">
-                <div className="bg-[#16A34A] h-full rounded-full" style={{ width: "68%" }} />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-gray-800 dark:text-gray-200">Bénin (Cotonou, Porto-Novo)</span>
-                <span className="text-emerald-600 dark:text-emerald-400">16%</span>
-              </div>
-              <div className="w-full bg-gray-100 dark:bg-[#1E2E24] h-2 rounded-full overflow-hidden">
-                <div className="bg-emerald-500 h-full rounded-full" style={{ width: "16%" }} />
+              <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
+                <div className="bg-emerald-500 h-full rounded-full" style={{ width: "68%" }} />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-gray-800 dark:text-gray-200">Côte d&apos;Ivoire (Abidjan)</span>
-                <span className="text-emerald-600 dark:text-emerald-400">10%</span>
+                <span className="text-slate-200">Bénin (Cotonou, Porto-Novo)</span>
+                <span className="text-teal-400">16%</span>
               </div>
-              <div className="w-full bg-gray-100 dark:bg-[#1E2E24] h-2 rounded-full overflow-hidden">
-                <div className="bg-emerald-400 h-full rounded-full" style={{ width: "10%" }} />
+              <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
+                <div className="bg-teal-400 h-full rounded-full" style={{ width: "16%" }} />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-gray-800 dark:text-gray-200">Burkina Faso & Autres</span>
-                <span className="text-gray-500">6%</span>
+                <span className="text-slate-200">Côte d&apos;Ivoire (Abidjan)</span>
+                <span className="text-cyan-400">10%</span>
               </div>
-              <div className="w-full bg-gray-100 dark:bg-[#1E2E24] h-2 rounded-full overflow-hidden">
-                <div className="bg-gray-400 h-full rounded-full" style={{ width: "6%" }} />
+              <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
+                <div className="bg-cyan-400 h-full rounded-full" style={{ width: "10%" }} />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between text-xs font-bold mb-1">
+                <span className="text-slate-200">Burkina Faso & Autres</span>
+                <span className="text-slate-400">6%</span>
+              </div>
+              <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
+                <div className="bg-slate-500 h-full rounded-full" style={{ width: "6%" }} />
               </div>
             </div>
           </div>
         </div>
 
         {/* Répartition des Retraits Mobile Money (T-Money vs Flooz) */}
-        <div className="bg-white dark:bg-[#131E17] rounded-3xl border border-gray-100 dark:border-[#1E2E24] p-5 shadow-xs space-y-4">
+        <div className="bg-[#0B1322] rounded-3xl border border-[#1A2840] p-5 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-emerald-600" />
-              <h3 className="text-sm font-black text-gray-900 dark:text-white">
+              <CreditCard className="w-5 h-5 text-indigo-400" />
+              <h3 className="text-sm font-black text-white">
                 Canaux de Paiement Mobile Money
               </h3>
             </div>
-            <span className="text-[10px] font-bold text-gray-400 uppercase">Volume Retraits</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Volume Retraits</span>
           </div>
 
           <div className="space-y-3">
             <div>
               <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-gray-800 dark:text-gray-200">T-Money (Togocom)</span>
-                <span className="text-emerald-700 dark:text-emerald-400">{tmoneyPct}%</span>
+                <span className="text-slate-200">T-Money (Togocom)</span>
+                <span className="text-emerald-400">{tmoneyPct}%</span>
               </div>
-              <div className="w-full bg-gray-100 dark:bg-[#1E2E24] h-2 rounded-full overflow-hidden">
-                <div className="bg-[#14500C] h-full rounded-full" style={{ width: `${tmoneyPct}%` }} />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-gray-800 dark:text-gray-200">Moov Money (Flooz)</span>
-                <span className="text-blue-600">{floozPct}%</span>
-              </div>
-              <div className="w-full bg-gray-100 dark:bg-[#1E2E24] h-2 rounded-full overflow-hidden">
-                <div className="bg-blue-600 h-full rounded-full" style={{ width: `${floozPct}%` }} />
+              <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
+                <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${tmoneyPct}%` }} />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-gray-800 dark:text-gray-200">Wave & MTN Mobile Money</span>
-                <span className="text-gray-500">{otherPct}%</span>
+                <span className="text-slate-200">Moov Money (Flooz)</span>
+                <span className="text-cyan-400">{floozPct}%</span>
               </div>
-              <div className="w-full bg-gray-100 dark:bg-[#1E2E24] h-2 rounded-full overflow-hidden">
-                <div className="bg-amber-500 h-full rounded-full" style={{ width: `${otherPct}%` }} />
+              <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
+                <div className="bg-cyan-500 h-full rounded-full" style={{ width: `${floozPct}%` }} />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between text-xs font-bold mb-1">
+                <span className="text-slate-200">Wave & MTN Mobile Money</span>
+                <span className="text-slate-400">{otherPct}%</span>
+              </div>
+              <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
+                <div className="bg-slate-500 h-full rounded-full" style={{ width: `${otherPct}%` }} />
               </div>
             </div>
           </div>
 
-          <div className="pt-2 text-[11px] text-gray-400 font-medium border-t border-gray-100 dark:border-[#1E2E24]">
+          <div className="pt-2 text-[11px] text-slate-400 font-medium border-t border-[#162338]">
             Opérations directes sans intermédiaire bancaire. Réseau UEMOA instantané.
           </div>
         </div>
@@ -743,58 +732,58 @@ export default async function AdminDashboardPage() {
       {/* 7. HUB DES 8 MODULES DU BACK-OFFICE */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
+          <h2 className="text-base sm:text-lg font-black text-white">
             Accès Direct aux Modules d&apos;Administration
           </h2>
-          <span className="text-xs text-gray-400">8 sections de contrôle</span>
+          <span className="text-xs text-slate-400">8 sections de contrôle</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
           <Link
             href="/admin/retraits"
-            className="p-4 rounded-3xl bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] hover:border-emerald-500/50 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between"
+            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
                 <CreditCard className="w-5 h-5" />
               </div>
               {pendingWithdrawalsCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white animate-pulse">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-slate-950 animate-pulse">
                   {pendingWithdrawalsCount}
                 </span>
               )}
             </div>
             <div>
-              <div className="text-xs sm:text-sm font-black text-gray-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
                 Retraits Mobile Money
               </div>
-              <div className="text-[11px] text-gray-400 mt-0.5">Validation & Exécution</div>
+              <div className="text-[11px] text-slate-400 mt-0.5">Validation & Exécution</div>
             </div>
           </Link>
 
           <Link
             href="/admin/utilisateurs"
-            className="p-4 rounded-3xl bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] hover:border-emerald-500/50 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between"
+            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-blue-500/15 text-blue-700 dark:text-blue-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center justify-center">
                 <Users className="w-5 h-5" />
               </div>
             </div>
             <div>
-              <div className="text-xs sm:text-sm font-black text-gray-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
                 Utilisateurs & KYC
               </div>
-              <div className="text-[11px] text-gray-400 mt-0.5">Comptes & Droits Admin</div>
+              <div className="text-[11px] text-slate-400 mt-0.5">Comptes & Droits Admin</div>
             </div>
           </Link>
 
           <Link
             href="/admin/produits"
-            className="p-4 rounded-3xl bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] hover:border-emerald-500/50 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between"
+            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center">
                 <ShoppingBag className="w-5 h-5" />
               </div>
               {pendingProductsCount > 0 && (
@@ -804,114 +793,114 @@ export default async function AdminDashboardPage() {
               )}
             </div>
             <div>
-              <div className="text-xs sm:text-sm font-black text-gray-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
                 Modération Produits
               </div>
-              <div className="text-[11px] text-gray-400 mt-0.5">Marketplace & Vendeurs</div>
+              <div className="text-[11px] text-slate-400 mt-0.5">Marketplace & Vendeurs</div>
             </div>
           </Link>
 
           <Link
             href="/admin/transactions"
-            className="p-4 rounded-3xl bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] hover:border-emerald-500/50 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between"
+            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-purple-500/15 text-purple-700 dark:text-purple-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-purple-500/15 text-purple-400 border border-purple-500/30 flex items-center justify-center">
                 <History className="w-5 h-5" />
               </div>
             </div>
             <div>
-              <div className="text-xs sm:text-sm font-black text-gray-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
                 Grand Livre Financier
               </div>
-              <div className="text-[11px] text-gray-400 mt-0.5">Écritures Immuables</div>
+              <div className="text-[11px] text-slate-400 mt-0.5">Écritures Immuables</div>
             </div>
           </Link>
 
           <Link
             href="/admin/arbre"
-            className="p-4 rounded-3xl bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] hover:border-emerald-500/50 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between"
+            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-teal-500/15 text-teal-700 dark:text-teal-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-teal-500/15 text-teal-400 border border-teal-500/30 flex items-center justify-center">
                 <GitBranch className="w-5 h-5" />
               </div>
             </div>
             <div>
-              <div className="text-xs sm:text-sm font-black text-gray-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
                 Arbre d&apos;Affiliation
               </div>
-              <div className="text-[11px] text-gray-400 mt-0.5">Lignées 3 Niveaux</div>
+              <div className="text-[11px] text-slate-400 mt-0.5">Lignées 3 Niveaux</div>
             </div>
           </Link>
 
           <Link
             href="/admin/taches"
-            className="p-4 rounded-3xl bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] hover:border-emerald-500/50 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between"
+            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
                 <CalendarCheck className="w-5 h-5" />
               </div>
             </div>
             <div>
-              <div className="text-xs sm:text-sm font-black text-gray-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
                 Gestion des Tâches
               </div>
-              <div className="text-[11px] text-gray-400 mt-0.5">Time Table & Quiz</div>
+              <div className="text-[11px] text-slate-400 mt-0.5">Time Table & Quiz</div>
             </div>
           </Link>
 
           <Link
             href="/admin/reglages"
-            className="p-4 rounded-3xl bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] hover:border-emerald-500/50 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between"
+            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-slate-500/15 text-slate-700 dark:text-slate-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-slate-500/15 text-slate-400 border border-slate-500/30 flex items-center justify-center">
                 <Settings className="w-5 h-5" />
               </div>
             </div>
             <div>
-              <div className="text-xs sm:text-sm font-black text-gray-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
                 Réglages Plateforme
               </div>
-              <div className="text-[11px] text-gray-400 mt-0.5">Tarifs, Support, Config</div>
+              <div className="text-[11px] text-slate-400 mt-0.5">Tarifs, Support, Config</div>
             </div>
           </Link>
 
           <Link
             href="/admin/journal"
-            className="p-4 rounded-3xl bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] hover:border-emerald-500/50 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between"
+            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-red-500/15 text-red-700 dark:text-red-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-red-500/15 text-red-400 border border-red-500/30 flex items-center justify-center">
                 <ShieldAlert className="w-5 h-5" />
               </div>
             </div>
             <div>
-              <div className="text-xs sm:text-sm font-black text-gray-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
                 Journal d&apos;Audit
               </div>
-              <div className="text-[11px] text-gray-400 mt-0.5">Traçabilité & Sécurité</div>
+              <div className="text-[11px] text-slate-400 mt-0.5">Traçabilité & Sécurité</div>
             </div>
           </Link>
         </div>
       </div>
 
       {/* 8. FLUX DES DERNIÈRES ACTIVITÉS & DEMANDES DE RETRAIT */}
-      <div className="bg-white dark:bg-[#131E17] rounded-3xl border border-gray-100 dark:border-[#1E2E24] p-5 sm:p-6 shadow-xs space-y-4">
+      <div className="bg-[#0B1322] rounded-3xl border border-[#1A2840] p-5 sm:p-6 shadow-xl space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white">
+            <h2 className="text-base sm:text-lg font-black text-white">
               Derniers Flux de Retraits & Activités
             </h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-slate-400 mt-0.5">
               Historique en direct des retraits Mobile Money et des transactions du système.
             </p>
           </div>
           <Link
             href="/admin/retraits"
-            className="text-xs font-bold text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 flex items-center gap-1"
+            className="text-xs font-black text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
           >
             <span>Voir tout</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -919,7 +908,7 @@ export default async function AdminDashboardPage() {
         </div>
 
         {recentActivities.length > 0 ? (
-          <div className="divide-y divide-gray-100 dark:divide-[#1E2E24]">
+          <div className="divide-y divide-[#162338]">
             {recentActivities.map((act) => (
               <div
                 key={act.id}
@@ -929,8 +918,8 @@ export default async function AdminDashboardPage() {
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                       act.status === "paid" || act.status === "approved"
-                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
-                        : "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                        : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
                     }`}
                   >
                     {act.status === "paid" || act.status === "approved" ? (
@@ -940,26 +929,26 @@ export default async function AdminDashboardPage() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <div className="font-bold text-gray-900 dark:text-white truncate">
+                    <div className="font-bold text-white truncate">
                       {act.title}
                     </div>
-                    <div className="text-[11px] text-gray-400 truncate">
+                    <div className="text-[11px] text-slate-400 truncate">
                       {act.subtitle} • {new Date(act.date).toLocaleDateString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
                 </div>
 
                 <div className="text-right shrink-0">
-                  <div className="font-black text-gray-900 dark:text-white">
+                  <div className="font-black text-white">
                     {formatFCFA(act.amount)}
                   </div>
                   <span
                     className={`inline-block text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
                       act.status === "paid"
-                        ? "bg-emerald-100 text-emerald-800"
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
                         : act.status === "approved"
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-amber-100 text-amber-800"
+                        ? "bg-teal-500/20 text-teal-300 border border-teal-500/40"
+                        : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                     }`}
                   >
                     {act.status === "paid"
@@ -973,7 +962,7 @@ export default async function AdminDashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-400 text-xs">
+          <div className="text-center py-8 text-slate-500 text-xs">
             Aucun retrait enregistré pour l&apos;instant.
           </div>
         )}

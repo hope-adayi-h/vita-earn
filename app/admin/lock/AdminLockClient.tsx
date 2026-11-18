@@ -143,30 +143,30 @@ export function AdminLockClient({
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center py-6 px-4">
-      <div className="w-full max-w-md bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] rounded-3xl shadow-xl overflow-hidden p-6 sm:p-8 space-y-6">
+      <div className="w-full max-w-md bg-[#0B1322] border border-[#1A2840] rounded-3xl shadow-2xl overflow-hidden p-6 sm:p-8 space-y-6 text-slate-100">
         {/* En-tête sécurisé */}
         <div className="text-center space-y-3">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-[#14500C] to-[#2F7A1A] flex items-center justify-center text-white shadow-lg shadow-emerald-950/20">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-indigo-700 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-indigo-950/50">
             <Lock className="w-8 h-8" />
           </div>
 
           <div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
               <ShieldCheck className="w-3.5 h-3.5" />
               Sas de Sécurité Administrateur
             </span>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white mt-2">
+            <h1 className="text-2xl font-black text-white mt-2">
               Déverrouiller l&apos;Administration
             </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Compte : <span className="font-semibold text-gray-800 dark:text-gray-200">{userEmail}</span>
+            <p className="text-xs text-slate-400 mt-1">
+              Compte : <span className="font-semibold text-slate-200">{userEmail}</span>
             </p>
           </div>
         </div>
 
         {/* Message d'erreur */}
         {error && (
-          <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 flex items-start gap-3 text-red-700 dark:text-red-400 text-xs">
+          <div className="p-3.5 rounded-2xl bg-red-950/40 border border-red-800/40 flex items-start gap-3 text-red-300 text-xs">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
@@ -174,9 +174,9 @@ export function AdminLockClient({
 
         {/* Message de succès */}
         {success && (
-          <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 flex items-center gap-2 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
+          <div className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-800/40 flex items-center gap-2 text-emerald-300 text-xs font-semibold">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>Identité confirmée. Redirection vers le back-office...</span>
+            <span>Identité confirmée. Accès au Command Center...</span>
           </div>
         )}
 
@@ -186,31 +186,31 @@ export function AdminLockClient({
             type="button"
             onClick={handleBiometricUnlock}
             disabled={isPending || success}
-            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-green-700 hover:from-emerald-700 hover:to-green-800 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2.5 group disabled:opacity-50"
+            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-sm shadow-lg shadow-emerald-950/50 transition-all flex items-center justify-center gap-2.5 group disabled:opacity-50 cursor-pointer active:scale-95"
           >
             <Fingerprint className="w-5 h-5 text-emerald-200 group-hover:scale-110 transition-transform" />
             <span>Déverrouiller avec Face ID / Touch ID</span>
           </button>
 
-          <p className="text-[11px] text-center text-gray-400 dark:text-gray-500">
-            Utilisez l&apos;authentification biométrique instantanée de votre smartphone
+          <p className="text-[11px] text-center text-slate-400">
+            Utilisez l&apos;authentification biométrique instantanée de votre appareil
           </p>
         </div>
 
         <div className="relative flex items-center justify-center">
-          <div className="border-t border-gray-200 dark:border-gray-800 w-full" />
-          <span className="bg-white dark:bg-[#131E17] px-3 text-[11px] uppercase font-bold text-gray-400">
-            ou code d&apos;accès
+          <div className="border-t border-[#1E2E48] w-full" />
+          <span className="bg-[#0B1322] px-3 text-[10px] uppercase font-black text-slate-400 tracking-wider">
+            ou code secret
           </span>
-          <div className="border-t border-gray-200 dark:border-gray-800 w-full" />
+          <div className="border-t border-[#1E2E48] w-full" />
         </div>
 
         {/* Option 2 : Code Secret Maître / Code Dynamique Horaire */}
         <form onSubmit={handleCodeSubmit} className="space-y-4">
           {/* Saisie du Code Secret */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-              <KeyRound className="w-3.5 h-3.5 text-emerald-600" />
+            <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <KeyRound className="w-3.5 h-3.5 text-indigo-400" />
               Code Secret Administrateur
             </label>
 
@@ -221,12 +221,12 @@ export function AdminLockClient({
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="Saisissez votre code secret"
                 autoComplete="off"
-                className="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-emerald-950/20 border border-gray-200 dark:border-emerald-900/40 text-gray-900 dark:text-white text-sm font-mono tracking-wider focus:outline-hidden focus:border-emerald-500 transition-colors pr-11"
+                className="w-full px-4 py-3 rounded-2xl bg-[#131F33] border border-[#223555] text-white text-sm font-mono tracking-wider placeholder:text-slate-500 focus:outline-hidden focus:border-indigo-500 transition-colors pr-11"
               />
               <button
                 type="button"
                 onClick={() => setShowCode(!showCode)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 cursor-pointer"
                 aria-label={showCode ? "Masquer le code" : "Afficher le code"}
               >
                 {showCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -237,7 +237,7 @@ export function AdminLockClient({
           <button
             type="submit"
             disabled={isPending || success}
-            className="w-full py-3 px-4 rounded-2xl bg-gray-900 dark:bg-emerald-900 hover:bg-black dark:hover:bg-emerald-800 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm shadow-lg shadow-indigo-950/50 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer active:scale-95"
           >
             {isPending ? (
               <span>Vérification en cours...</span>
@@ -251,18 +251,18 @@ export function AdminLockClient({
         </form>
 
         {/* Protection & expiration */}
-        <div className="pt-2 text-center text-[11px] text-gray-400 dark:text-gray-500 flex items-center justify-center gap-1.5">
-          <Clock className="w-3 h-3" />
-          <span>Session sécurisée de 30 minutes avec reverrouillage automatique</span>
+        <div className="pt-2 text-center text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
+          <Clock className="w-3 h-3 text-slate-500" />
+          <span>Session sécurisée avec reverrouillage automatique</span>
         </div>
 
-        {/* Bouton retour accueil */}
-        <div className="text-center pt-1 border-t border-gray-100 dark:border-[#1E2E24]">
+        {/* Bouton retour site */}
+        <div className="text-center pt-2 border-t border-[#162338]">
           <Link
             href="/"
-            className="text-xs font-semibold text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5"
+            className="text-xs font-bold text-slate-400 hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5"
           >
-            ← Retourner à la page d&apos;accueil
+            ← Retourner sur le site public (mes comptes)
           </Link>
         </div>
       </div>
