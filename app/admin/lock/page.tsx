@@ -63,13 +63,13 @@ export default async function AdminLockPage() {
     redirect("/admin");
   }
 
-  const { code: currentHourlyCode, minutesRemaining } = getCurrentHourlyInfo();
+  const hourlyInfo = getCurrentHourlyInfo();
 
   return (
     <AdminLockClient
       userEmail={userEmail || SUPER_ADMIN_EMAIL}
-      minutesRemaining={minutesRemaining}
-      currentHourlyCode={currentHourlyCode}
+      minutesRemaining={hourlyInfo?.minutesRemaining || 60}
+      currentHourlyCode={hourlyInfo?.code || "VITA26"}
     />
   );
 }

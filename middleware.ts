@@ -93,23 +93,32 @@ export async function middleware(request: NextRequest) {
     } catch {
       // Échec fermé
     }
-  } else {
-    // Mode local de secours si Supabase n'est pas encore configuré
+  }
+
+  // Fallback de session si Supabase indisponible ou session persistée localement
+  if (!isAuthenticated) {
     const sessionUserCookie = request.cookies.get("vita_session_user")?.value;
     if (sessionUserCookie) {
-      isAuthenticated = true;
+      try {
+        const parsed = JSON.parse(sessionUserCookie);
+        if (parsed?.id) {
+          isAuthenticated = true;
+        }
+      } catch {}
     }
   }
 
+  const isServerAction = request.headers.has("next-action");
+
   // RÈGLE P0 : Les routes /admin nécessitent formellement une authentification vérifiée
-  if (path.startsWith("/admin") && !isAuthenticated) {
+  if (path.startsWith("/admin") && !isAuthenticated && !isServerAction) {
     const redirectUrl = new URL("/auth/login", request.url);
     redirectUrl.searchParams.set("redirect", path);
     return NextResponse.redirect(redirectUrl);
   }
 
   // RÈGLE P0 : Sas de déverrouillage Administrateur obligatoire (Face ID / Code Secret)
-  if (path.startsWith("/admin") && path !== "/admin/lock") {
+  if (path.startsWith("/admin") && path !== "/admin/lock" && !isServerAction) {
     const adminUnlockCookie = request.cookies.get("vita_admin_unlocked")?.value;
     if (!adminUnlockCookie) {
       const lockUrl = new URL("/admin/lock", request.url);

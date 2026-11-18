@@ -64,15 +64,18 @@ export function AdminLockClient({
 
     setError(null);
     startTransition(async () => {
-      const res = await unlockAdminWithCodeAction(code);
-      if (res.error) {
-        setError(res.error);
-      } else {
-        setSuccess(true);
-        setTimeout(() => {
-          router.push("/admin");
-          router.refresh();
-        }, 300);
+      try {
+        const res = await unlockAdminWithCodeAction(code);
+        if (res?.error) {
+          setError(res.error);
+        } else {
+          setSuccess(true);
+          setTimeout(() => {
+            window.location.href = "/admin";
+          }, 300);
+        }
+      } catch (err: unknown) {
+        setError("Erreur de connexion. Veuillez réessayer.");
       }
     });
   };
@@ -82,7 +85,7 @@ export function AdminLockClient({
     setError(null);
 
     // Si WebAuthn natif disponible, on sollicite l'authentificateur de plateforme
-    if (typeof window !== "undefined" && window.navigator.credentials) {
+    if (typeof window !== "undefined" && window.navigator?.credentials) {
       try {
         const challenge = new Uint8Array(32);
         window.crypto.getRandomValues(challenge);
@@ -121,15 +124,18 @@ export function AdminLockClient({
     }
 
     startTransition(async () => {
-      const res = await unlockAdminWithBiometricsAction();
-      if (res.error) {
-        setError(res.error);
-      } else {
-        setSuccess(true);
-        setTimeout(() => {
-          router.push("/admin");
-          router.refresh();
-        }, 300);
+      try {
+        const res = await unlockAdminWithBiometricsAction();
+        if (res?.error) {
+          setError(res.error);
+        } else {
+          setSuccess(true);
+          setTimeout(() => {
+            window.location.href = "/admin";
+          }, 300);
+        }
+      } catch (err: unknown) {
+        setError("Erreur biométrique. Veuillez utiliser votre code secret.");
       }
     });
   };

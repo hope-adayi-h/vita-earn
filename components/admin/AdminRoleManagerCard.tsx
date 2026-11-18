@@ -130,11 +130,11 @@ export function AdminRoleManagerCard({
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-6 h-6 rounded-full bg-emerald-600/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-[10px]">
-                    {adm.name.charAt(0).toUpperCase()}
+                    {(adm.name || adm.email || "A").charAt(0).toUpperCase()}
                   </div>
                   <div className="truncate">
                     <span className="font-bold text-gray-800 dark:text-gray-100">
-                      {adm.name}
+                      {adm.name || adm.email || "Administrateur"}
                     </span>
                     <span className="text-gray-400 dark:text-gray-500 text-[11px] ml-2">
                       ({adm.email})
