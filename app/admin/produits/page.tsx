@@ -2,13 +2,14 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminUnlocked, checkAdminSession } from "@/lib/security/admin-lock";
 import { ProduitsClient, type ProductAdminItem } from "./ProduitsClient";
+import { AdminNavbar } from "@/components/admin/AdminNavbar";
 
 export const metadata = {
   title: "Modération des Produits — Administration Vita Earn",
 };
 
 export default async function AdminProduitsPage() {
-  const { isAdmin } = await checkAdminSession();
+  const { isAdmin, isSuperAdmin, userEmail } = await checkAdminSession();
 
   if (!isAdmin) {
     redirect("/auth/login?redirect=/admin/produits");
@@ -57,8 +58,15 @@ export default async function AdminProduitsPage() {
     } catch {}
   }
 
+  const pendingProductsCount = productsList.filter((p) => p.status === "pending").length;
+
   return (
-    <div className="max-w-5xl mx-auto py-4 sm:py-8">
+    <div className="max-w-5xl mx-auto py-3 sm:py-6 space-y-6">
+      <AdminNavbar
+        userEmail={userEmail}
+        isSuperAdmin={isSuperAdmin}
+        pendingProductsCount={pendingProductsCount}
+      />
       <ProduitsClient initialProducts={productsList} />
     </div>
   );

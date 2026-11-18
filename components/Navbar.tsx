@@ -40,6 +40,12 @@ import {
   Video,
   PlaySquare,
   MousePointerClick,
+  LayoutDashboard,
+  CreditCard,
+  GitBranch,
+  Settings,
+  ShieldAlert,
+  Lock,
 } from "lucide-react";
 import { PlatformLogo } from "./PlatformLogo";
 import { HelpModal } from "@/components/HelpModal";
@@ -69,10 +75,25 @@ export function Navbar({ user }: NavbarProps) {
   const [desktopWithdrawalOpen, setDesktopWithdrawalOpen] = useState(false);
   const [teamMenuOpen, setTeamMenuOpen] = useState(false);
   const [desktopTeamOpen, setDesktopTeamOpen] = useState(false);
+  const [adminMenuOpen, setAdminMenuOpen] = useState(pathname.startsWith("/admin"));
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [faqModalOpen, setFaqModalOpen] = useState(false);
   const [supportModalOpen, setSupportModalOpen] = useState(false);
   const [communityModalOpen, setCommunityModalOpen] = useState(false);
+
+  // Sous-options d'Administration
+  const adminSubOptions = [
+    { label: "Tableau de bord & Stats", href: "/admin", icon: LayoutDashboard },
+    { label: "Validation des Retraits", href: "/admin/retraits", icon: CreditCard },
+    { label: "Utilisateurs & KYC", href: "/admin/utilisateurs", icon: Users },
+    { label: "Modération Produits", href: "/admin/produits", icon: ShoppingBag },
+    { label: "Grand Livre Financier", href: "/admin/transactions", icon: History },
+    { label: "Arbre d'Affiliation", href: "/admin/arbre", icon: GitBranch },
+    { label: "Gestion des Tâches", href: "/admin/taches", icon: CalendarCheck },
+    { label: "Réglages Plateforme", href: "/admin/reglages", icon: Settings },
+    { label: "Journal d'Audit", href: "/admin/journal", icon: ShieldAlert },
+    { label: "Verrouiller le Sas", href: "/admin/lock", icon: Lock },
+  ];
 
   // Sous-options du Centre de Retrait
   const withdrawalSubOptions = [
@@ -717,6 +738,80 @@ export function Navbar({ user }: NavbarProps) {
                             <span className="truncate text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300 transition-colors">
                               {sub.label}
                             </span>
+                            <ChevronRight className="w-3 h-3 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 shrink-0 ml-2" />
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            if (item.href === "/admin") {
+              const isSectionActive = pathname.startsWith("/admin");
+              return (
+                <div key={item.label} className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => setAdminMenuOpen((prev) => !prev)}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                      isSectionActive || adminMenuOpen
+                        ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 font-bold border border-emerald-500/20"
+                        : "text-vita-text dark:text-gray-200 hover:bg-vita-surface/60 dark:hover:bg-slate-800/50"
+                    }`}
+                    aria-expanded={adminMenuOpen}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Icon
+                        className={`w-4 h-4 shrink-0 ${
+                          isSectionActive || adminMenuOpen
+                            ? "text-emerald-700 dark:text-emerald-400"
+                            : "text-emerald-600 dark:text-emerald-500"
+                        }`}
+                      />
+                      <span className="truncate text-sm font-semibold">
+                        Administration
+                      </span>
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
+                        Admin
+                      </span>
+                    </div>
+                    <ChevronDown
+                      className={`w-4 h-4 text-vita-muted/60 dark:text-gray-400 shrink-0 ml-1 transition-transform duration-200 ${
+                        adminMenuOpen ? "rotate-180 text-emerald-600 dark:text-emerald-400" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {/* Options déroulantes de l'Administration */}
+                  {adminMenuOpen && (
+                    <div className="mt-1 ml-4 pl-3 py-1 space-y-1 border-l-2 border-emerald-500/30 dark:border-emerald-500/20">
+                      {adminSubOptions.map((sub) => {
+                        const SubIcon = sub.icon;
+                        const isSubActive =
+                          sub.href === "/admin"
+                            ? pathname === "/admin"
+                            : pathname === sub.href;
+                        return (
+                          <Link
+                            key={sub.href}
+                            href={sub.href}
+                            onClick={() => {
+                              closeSidebar();
+                            }}
+                            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors group ${
+                              isSubActive
+                                ? "bg-emerald-100/70 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200 font-bold"
+                                : "text-gray-700 dark:text-gray-300 hover:bg-vita-surface dark:hover:bg-slate-800/60"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <SubIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span className="truncate text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300 transition-colors">
+                                {sub.label}
+                              </span>
+                            </div>
                             <ChevronRight className="w-3 h-3 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 shrink-0 ml-2" />
                           </Link>
                         );

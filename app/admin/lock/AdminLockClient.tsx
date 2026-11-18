@@ -207,28 +207,19 @@ export function AdminLockClient({
 
         {/* Option 2 : Code Secret Maître / Code Dynamique Horaire */}
         <form onSubmit={handleCodeSubmit} className="space-y-4">
+          {/* Saisie du Code Secret */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                <KeyRound className="w-3.5 h-3.5 text-emerald-600" />
-                Code Secret Maître ou Code Horaire
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowHourlyHint((v) => !v)}
-                className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1"
-              >
-                <Clock className="w-3 h-3" />
-                {showHourlyHint ? "Masquer code horaire" : "Afficher code horaire"}
-              </button>
-            </div>
+            <label className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+              <KeyRound className="w-3.5 h-3.5 text-emerald-600" />
+              Code Secret Administrateur
+            </label>
 
             <div className="relative">
               <input
                 type={showCode ? "text" : "password"}
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="Ex: VITA-ESPOIR-2026 ou 6 chiffres"
+                placeholder="Saisissez votre code secret"
                 autoComplete="off"
                 className="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-emerald-950/20 border border-gray-200 dark:border-emerald-900/40 text-gray-900 dark:text-white text-sm font-mono tracking-wider focus:outline-hidden focus:border-emerald-500 transition-colors pr-11"
               />
@@ -236,26 +227,12 @@ export function AdminLockClient({
                 type="button"
                 onClick={() => setShowCode(!showCode)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                aria-label={showCode ? "Masquer le code" : "Afficher le code"}
               >
                 {showCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
-
-          {/* Bandeau d'aide au code horaire dynamique */}
-          {showHourlyHint && (
-            <div className="p-3 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-500/20 text-xs space-y-1">
-              <div className="flex items-center justify-between font-bold text-emerald-800 dark:text-emerald-300">
-                <span>Code dynamique de cette heure :</span>
-                <span className="font-mono text-base tracking-widest text-emerald-600 dark:text-emerald-400 bg-white dark:bg-emerald-900/50 px-2 py-0.5 rounded-lg border border-emerald-500/20">
-                  {currentHourlyCode}
-                </span>
-              </div>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                Ce code change automatiquement à la 59e minute ({minutesRemaining} min restantes). Vous pouvez aussi utiliser votre Code Secret Maître permanent.
-              </p>
-            </div>
-          )}
 
           <button
             type="submit"

@@ -2,13 +2,14 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminUnlocked, checkAdminSession, SUPER_ADMIN_EMAIL } from "@/lib/security/admin-lock";
 import { JournalClient, type AuditLogItem } from "./JournalClient";
+import { AdminNavbar } from "@/components/admin/AdminNavbar";
 
 export const metadata = {
   title: "Journal d'Audit — Administration Vita Earn",
 };
 
 export default async function AdminJournalPage() {
-  const { isAdmin } = await checkAdminSession();
+  const { isAdmin, isSuperAdmin, userEmail } = await checkAdminSession();
 
   if (!isAdmin) {
     redirect("/auth/login?redirect=/admin/journal");
@@ -72,7 +73,11 @@ export default async function AdminJournalPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto py-4 sm:py-8">
+    <div className="max-w-5xl mx-auto py-3 sm:py-6 space-y-6">
+      <AdminNavbar
+        userEmail={userEmail}
+        isSuperAdmin={isSuperAdmin}
+      />
       <JournalClient logs={logs} />
     </div>
   );

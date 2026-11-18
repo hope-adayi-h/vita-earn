@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminUnlocked, checkAdminSession } from "@/lib/security/admin-lock";
 import { AdminTaskToggleList, AdminTaskItem } from "@/components/admin/AdminTaskToggleList";
+import { AdminNavbar } from "@/components/admin/AdminNavbar";
 import { Clock, ArrowLeft, ShieldCheck, CheckCircle } from "lucide-react";
 
 export const metadata = {
@@ -10,6 +11,17 @@ export const metadata = {
 };
 
 export default async function AdminTasksPage() {
+  const { isAdmin, isSuperAdmin, userEmail } = await checkAdminSession();
+
+  if (!isAdmin) {
+    redirect("/auth/login?redirect=/admin/taches");
+  }
+
+  const unlocked = await isAdminUnlocked();
+  if (!unlocked) {
+    redirect("/admin/lock");
+  }
+
   const defaultTasks: AdminTaskItem[] = [
     {
       id: "trivia",
@@ -60,17 +72,6 @@ export default async function AdminTasksPage() {
 
   let tasks: AdminTaskItem[] = defaultTasks;
 
-  const { isAdmin } = await checkAdminSession();
-
-  if (!isAdmin) {
-    redirect("/auth/login?redirect=/admin/taches");
-  }
-
-  const unlocked = await isAdminUnlocked();
-  if (!unlocked) {
-    redirect("/admin/lock");
-  }
-
   const isConfigured =
     Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
     !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
@@ -109,7 +110,12 @@ export default async function AdminTasksPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-4 sm:py-8 space-y-6">
+    <div className="max-w-4xl mx-auto py-3 sm:py-6 space-y-6">
+      <AdminNavbar
+        userEmail={userEmail}
+        isSuperAdmin={isSuperAdmin}
+      />
+
       {/* Barre retour & En-tête */}
       <div className="flex items-center justify-between">
         <Link

@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminUnlocked, checkAdminSession } from "@/lib/security/admin-lock";
 import { getAllUsers } from "@/lib/auth/local-store";
 import { UtilisateursClient, type UserItem } from "./UtilisateursClient";
+import { AdminNavbar } from "@/components/admin/AdminNavbar";
 
 export const metadata = {
   title: "Gestion des Utilisateurs — Administration Vita Earn",
@@ -68,7 +69,11 @@ export default async function AdminUtilisateursPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto py-4 sm:py-8">
+    <div className="max-w-5xl mx-auto py-3 sm:py-6 space-y-6">
+      <AdminNavbar
+        userEmail={userEmail}
+        isSuperAdmin={isSuperAdmin}
+      />
       <UtilisateursClient
         initialUsers={formattedUsers}
         isSuperAdmin={isSuperAdmin}

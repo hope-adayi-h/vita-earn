@@ -3,13 +3,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminUnlocked, checkAdminSession } from "@/lib/security/admin-lock";
 import { getAllUsers } from "@/lib/auth/local-store";
 import { ArbreClient, type TreeUserNode } from "./ArbreClient";
+import { AdminNavbar } from "@/components/admin/AdminNavbar";
 
 export const metadata = {
   title: "Arbre d'Affiliation — Administration Vita Earn",
 };
 
 export default async function AdminArbrePage() {
-  const { isAdmin } = await checkAdminSession();
+  const { isAdmin, isSuperAdmin, userEmail } = await checkAdminSession();
 
   if (!isAdmin) {
     redirect("/auth/login?redirect=/admin/arbre");
@@ -108,7 +109,11 @@ export default async function AdminArbrePage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto py-4 sm:py-8">
+    <div className="max-w-5xl mx-auto py-3 sm:py-6 space-y-6">
+      <AdminNavbar
+        userEmail={userEmail}
+        isSuperAdmin={isSuperAdmin}
+      />
       <ArbreClient initialNodes={treeNodes} />
     </div>
   );

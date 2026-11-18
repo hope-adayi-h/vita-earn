@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminUnlocked, checkAdminSession } from "@/lib/security/admin-lock";
 import { formatFCFA } from "@/lib/utils";
+import { AdminNavbar } from "@/components/admin/AdminNavbar";
 import {
   ArrowLeft,
   Search,
@@ -23,7 +24,7 @@ interface PageProps {
 }
 
 export default async function AdminTransactionsPage({ searchParams }: PageProps) {
-  const { isAdmin } = await checkAdminSession();
+  const { isAdmin, isSuperAdmin, userEmail } = await checkAdminSession();
 
   if (!isAdmin) {
     redirect("/auth/login?redirect=/admin/transactions");
@@ -74,7 +75,12 @@ export default async function AdminTransactionsPage({ searchParams }: PageProps)
   const { data: ledgerEntries } = await ledgerQuery;
 
   return (
-    <div className="max-w-4xl mx-auto py-4 sm:py-8 space-y-6">
+    <div className="max-w-4xl mx-auto py-3 sm:py-6 space-y-6">
+      <AdminNavbar
+        userEmail={userEmail}
+        isSuperAdmin={isSuperAdmin}
+      />
+
       {/* En-tête */}
       <div className="flex items-center gap-3">
         <Link

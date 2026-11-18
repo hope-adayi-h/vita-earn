@@ -3,13 +3,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminUnlocked, checkAdminSession } from "@/lib/security/admin-lock";
 import { getSupportSettingsAction } from "@/lib/actions/support";
 import { ReglagesClient } from "./ReglagesClient";
+import { AdminNavbar } from "@/components/admin/AdminNavbar";
 
 export const metadata = {
   title: "Réglages Plateforme — Administration Vita Earn",
 };
 
 export default async function AdminReglagesPage() {
-  const { isAdmin } = await checkAdminSession();
+  const { isAdmin, isSuperAdmin, userEmail } = await checkAdminSession();
 
   if (!isAdmin) {
     redirect("/auth/login?redirect=/admin/reglages");
@@ -60,7 +61,11 @@ export default async function AdminReglagesPage() {
   const support = await getSupportSettingsAction();
 
   return (
-    <div className="max-w-4xl mx-auto py-4 sm:py-8">
+    <div className="max-w-4xl mx-auto py-3 sm:py-6 space-y-6">
+      <AdminNavbar
+        userEmail={userEmail}
+        isSuperAdmin={isSuperAdmin}
+      />
       <ReglagesClient
         initialSettings={{
           activationFee,
