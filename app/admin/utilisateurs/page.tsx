@@ -9,7 +9,11 @@ export const metadata = {
   title: "Gestion des Utilisateurs — Administration Vita Earn",
 };
 
-export default async function AdminUtilisateursPage() {
+export default async function AdminUtilisateursPage({
+  searchParams,
+}: {
+  searchParams?: { filter?: string };
+}) {
   const { isAdmin, isSuperAdmin, userEmail } = await checkAdminSession();
 
   if (!isAdmin) {
@@ -78,6 +82,13 @@ export default async function AdminUtilisateursPage() {
         initialUsers={formattedUsers}
         isSuperAdmin={isSuperAdmin}
         currentUserEmail={userEmail}
+        initialFilter={
+          searchParams?.filter === "activated" ||
+          searchParams?.filter === "pending" ||
+          searchParams?.filter === "admin"
+            ? searchParams.filter
+            : "all"
+        }
       />
     </div>
   );

@@ -752,74 +752,28 @@ export function Navbar({ user }: NavbarProps) {
             if (item.href === "/admin") {
               const isSectionActive = pathname.startsWith("/admin");
               return (
-                <div key={item.label} className="space-y-1">
-                  <button
-                    type="button"
-                    onClick={() => setAdminMenuOpen((prev) => !prev)}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                      isSectionActive || adminMenuOpen
-                        ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 font-bold border border-emerald-500/20"
-                        : "text-vita-text dark:text-gray-200 hover:bg-vita-surface/60 dark:hover:bg-slate-800/50"
-                    }`}
-                    aria-expanded={adminMenuOpen}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Icon
-                        className={`w-4 h-4 shrink-0 ${
-                          isSectionActive || adminMenuOpen
-                            ? "text-emerald-700 dark:text-emerald-400"
-                            : "text-emerald-600 dark:text-emerald-500"
-                        }`}
-                      />
-                      <span className="truncate text-sm font-semibold">
-                        Administration
-                      </span>
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
-                        Admin
-                      </span>
+                <Link
+                  key={item.label}
+                  href="/admin"
+                  onClick={closeSidebar}
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                    isSectionActive
+                      ? "bg-red-100/90 dark:bg-red-950/60 text-red-900 dark:text-red-200 border-red-300 dark:border-red-800 shadow-xs"
+                      : "bg-red-50/70 hover:bg-red-100/80 dark:bg-red-950/30 dark:hover:bg-red-950/50 text-red-700 dark:text-red-300 border-red-200/80 dark:border-red-900/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 border border-red-200/70 dark:border-red-800/50">
+                      <ShieldCheck className="w-4 h-4 text-red-600 dark:text-red-400" />
                     </div>
-                    <ChevronDown
-                      className={`w-4 h-4 text-vita-muted/60 dark:text-gray-400 shrink-0 ml-1 transition-transform duration-200 ${
-                        adminMenuOpen ? "rotate-180 text-emerald-600 dark:text-emerald-400" : ""
-                      }`}
-                    />
-                  </button>
-
-                  {/* Options déroulantes de l'Administration */}
-                  {adminMenuOpen && (
-                    <div className="mt-1 ml-4 pl-3 py-1 space-y-1 border-l-2 border-emerald-500/30 dark:border-emerald-500/20">
-                      {adminSubOptions.map((sub) => {
-                        const SubIcon = sub.icon;
-                        const isSubActive =
-                          sub.href === "/admin"
-                            ? pathname === "/admin"
-                            : pathname === sub.href;
-                        return (
-                          <Link
-                            key={sub.href}
-                            href={sub.href}
-                            onClick={() => {
-                              closeSidebar();
-                            }}
-                            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors group ${
-                              isSubActive
-                                ? "bg-emerald-100/70 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200 font-bold"
-                                : "text-gray-700 dark:text-gray-300 hover:bg-vita-surface dark:hover:bg-slate-800/60"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <SubIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                              <span className="truncate text-xs font-bold text-gray-800 dark:text-gray-100 group-hover:text-vita-deep dark:group-hover:text-emerald-300 transition-colors">
-                                {sub.label}
-                              </span>
-                            </div>
-                            <ChevronRight className="w-3 h-3 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 shrink-0 ml-2" />
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                    <span className="truncate text-sm font-black text-red-700 dark:text-red-300">
+                      Administration
+                    </span>
+                    <span className="text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-full bg-red-600 text-white shadow-2xs shrink-0">
+                      Admin
+                    </span>
+                  </div>
+                </Link>
               );
             }
 

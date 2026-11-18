@@ -41,6 +41,7 @@ import {
   ArrowUpRight,
   Wallet,
   Bell,
+  UserCheck,
 } from "lucide-react";
 
 export const metadata = {
@@ -513,36 +514,41 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Carte 2 : Historique des retraits */}
+        {/* Carte 2 : Total des utilisateurs inscrits qui ont activé leur compte */}
         <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-full bg-[#0084FF] text-white flex items-center justify-center shrink-0 shadow-xs">
-                <History className="w-5 h-5" />
+                <UserCheck className="w-5 h-5" />
               </div>
               <div className="min-w-0">
                 <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
-                  Historique des retraits
+                  Comptes activés
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5 truncate">
-                  Consultez l&apos;historique des retraits effectués par les utilisateurs
+                  Total des inscrits ayant activé leur compte
                 </p>
               </div>
             </div>
             <Link
-              href="/admin/retraits"
+              href="/admin/utilisateurs?filter=activated"
               className="px-4 py-2 rounded-full bg-[#0084FF] hover:bg-blue-600 text-white text-xs font-bold shrink-0 transition-colors flex items-center gap-1 shadow-xs"
             >
-              <span>Voir l&apos;historique</span>
+              <span>Voir les activés</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            {formatFCFA(totalWithdrawnCompleted)}
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              {activatedUsers} <span className="text-sm font-bold text-slate-500">activé(s)</span>
+            </div>
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              {activationRate}% du total
+            </span>
           </div>
         </div>
 
-        {/* Carte 3 : Utilisateurs inscrits */}
+        {/* Carte 3 : Utilisateurs inscrits (Tous les comptes dont ceux en attente d'activation) */}
         <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -554,7 +560,7 @@ export default async function AdminDashboardPage() {
                   Utilisateurs inscrits
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5 truncate">
-                  {activatedUsers} activé(s) sur {totalUsers} membre(s) inscrit(s)
+                  Tous les comptes enregistrés ({nonActivatedUsers} en attente)
                 </p>
               </div>
             </div>
@@ -562,7 +568,7 @@ export default async function AdminDashboardPage() {
               href="/admin/utilisateurs"
               className="px-4 py-2 rounded-full bg-[#0084FF] hover:bg-blue-600 text-white text-xs font-bold shrink-0 transition-colors flex items-center gap-1 shadow-xs"
             >
-              <span>Voir les membres</span>
+              <span>Voir tous les comptes</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -570,8 +576,8 @@ export default async function AdminDashboardPage() {
             <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               {totalUsers} <span className="text-sm font-bold text-slate-500">membres</span>
             </div>
-            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-              {activationRate}% d&apos;activation
+            <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+              {nonActivatedUsers} non activé(s)
             </span>
           </div>
         </div>
