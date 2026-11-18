@@ -118,39 +118,39 @@ export function AdminNavbar({
   return (
     <>
       {/* Barre supérieure du Command Center Administrateur */}
-      <header className="sticky top-0 z-40 bg-[#0B1324]/95 backdrop-blur-md border border-[#1A2942] rounded-3xl p-3 sm:p-4 shadow-xl shadow-black/40">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-3 sm:p-4 shadow-sm text-slate-900">
         <div className="flex items-center justify-between gap-2 sm:gap-4">
           {/* Bouton Menu 3 traits (☰) + Nom du Command Center */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="p-2 sm:p-2.5 rounded-2xl bg-[#142036] hover:bg-[#1C2C4B] text-indigo-300 hover:text-white transition-all border border-[#233555] cursor-pointer shrink-0 shadow-md active:scale-95"
+              className="p-2 sm:p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all border border-slate-200 cursor-pointer shrink-0 shadow-xs active:scale-95"
               aria-label="Ouvrir le menu d'administration"
               title="Menu du panneau d'administration"
             >
-              <Menu className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-400" />
+              <Menu className="w-5 h-5 sm:w-6 sm:h-6 text-[#0084FF]" />
             </button>
 
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-indigo-700 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shrink-0 shadow-md shadow-indigo-950/50">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-[#0084FF] to-sky-400 flex items-center justify-center text-white shrink-0 shadow-sm">
                 <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 sm:gap-2">
-                  <span className="text-xs sm:text-sm font-black text-white tracking-wide uppercase truncate">
+                  <span className="text-xs sm:text-sm font-black text-slate-900 tracking-wide uppercase truncate">
                     Command Center
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shrink-0">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 text-[#0084FF] border border-blue-200 shrink-0">
                     {isSuperAdmin ? "Super Admin" : "Délégué"}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-[11px] text-slate-400 truncate">
-                  <span className="flex items-center gap-1 text-emerald-400 font-semibold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <div className="flex items-center gap-2 text-[11px] text-slate-500 truncate">
+                  <span className="flex items-center gap-1 text-emerald-600 font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     En direct
                   </span>
-                  <span className="text-slate-600">•</span>
+                  <span className="text-slate-300">•</span>
                   <span className="truncate hidden xs:inline">{userEmail}</span>
                 </div>
               </div>
@@ -162,7 +162,7 @@ export function AdminNavbar({
             {/* BOUTON ULTRA-VISIBLE : RETOUR SUR LE SITE */}
             <Link
               href="/"
-              className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-lg shadow-emerald-950/40 transition-all border border-emerald-400/40 cursor-pointer active:scale-95 group"
+              className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-md transition-all border border-emerald-400/40 cursor-pointer active:scale-95 group"
               title="Retourner sur le site public pour voir vos comptes et activités"
             >
               <Globe className="w-3.5 h-3.5 text-emerald-100 group-hover:rotate-12 transition-transform" />
@@ -174,10 +174,10 @@ export function AdminNavbar({
               type="button"
               onClick={handleLock}
               disabled={isPending}
-              className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-2xl bg-red-950/40 hover:bg-red-900/50 text-red-300 border border-red-800/40 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer active:scale-95"
+              className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-2xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs disabled:opacity-50 cursor-pointer active:scale-95"
               title="Verrouiller instantanément le panneau d'administration"
             >
-              <Lock className="w-3.5 h-3.5 text-red-400" />
+              <Lock className="w-3.5 h-3.5 text-red-500" />
               <span className="hidden md:inline">{isPending ? "Verrouillage..." : "Verrouiller"}</span>
             </button>
           </div>

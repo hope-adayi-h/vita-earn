@@ -35,6 +35,12 @@ import {
   Globe,
   Radio,
   Zap,
+  Sparkles,
+  Check,
+  ArrowDownToLine,
+  ArrowUpRight,
+  Wallet,
+  Bell,
 } from "lucide-react";
 
 export const metadata = {
@@ -300,8 +306,8 @@ export default async function AdminDashboardPage() {
   const supportSettings = await getSupportSettingsAction();
 
   return (
-    <div className="space-y-6">
-      {/* 1. Header exclusif du Command Center avec 3 traits (☰) et Bouton RETOUR SUR LE SITE */}
+    <div className="space-y-5">
+      {/* 1. Header exclusif avec 3 traits (☰) et Bouton RETOUR SUR LE SITE */}
       <AdminNavbar
         userEmail={userEmail}
         isSuperAdmin={isSuperAdmin}
@@ -309,241 +315,507 @@ export default async function AdminDashboardPage() {
         pendingProductsCount={pendingProductsCount}
       />
 
-      {/* 2. Grand Banner de Supervision Exécutive Dark Command Center */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0C162A] via-[#0F1D38] to-[#0A1224] border border-[#1E2E4E] p-6 sm:p-7 shadow-2xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-          <div className="space-y-1.5 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-              <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-              <span>Système de Supervision Financière & Flux en Temps Réel</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">
-              Tableau de Bord & Command Center
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              Supervision centrale des abonnements encaissés, grand livre immuable, commissions d&apos;affiliation multi-niveaux et exécution des retraits Mobile Money.
-            </p>
+      {/* 2. GRAND HERO BANNER BLEU CIEL (Conforme à la maquette de la capture d'écran) */}
+      <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-r from-[#00A3FF] via-[#0084FF] to-[#0066FF] p-5 sm:p-6 shadow-md text-white">
+        {/* Étoiles décoratives en haut à droite */}
+        <div className="absolute top-4 right-4 text-white/50 pointer-events-none">
+          <Sparkles className="w-8 h-8 opacity-75" />
+        </div>
+
+        {/* Profil Administrateur */}
+        <div className="flex items-start gap-3.5 relative z-10">
+          {/* Avatar rond avec bordure blanche */}
+          <div className="w-14 h-14 rounded-full border-2 border-white/90 bg-white/20 shadow-sm overflow-hidden flex items-center justify-center shrink-0">
+            <svg
+              viewBox="0 0 64 64"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-full h-full"
+            >
+              <circle cx="32" cy="32" r="32" fill="#E2E8F0" />
+              <circle cx="32" cy="24" r="11" fill="#F87171" />
+              <path
+                d="M16 54C16 43 23 38 32 38C41 38 48 43 48 54"
+                fill="#1E3A8A"
+              />
+              <path
+                d="M28 38L32 46L36 38H28Z"
+                fill="#FFFFFF"
+              />
+              <path
+                d="M31 42L32 50L33 42H31Z"
+                fill="#DC2626"
+              />
+            </svg>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
-            <Link
-              href="/admin/retraits"
-              className="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-indigo-950/50 border border-indigo-400/30 cursor-pointer active:scale-95"
-            >
-              <CreditCard className="w-4 h-4 text-indigo-200" />
-              <span>Valider les Retraits</span>
-              {pendingWithdrawalsCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-slate-950 font-black animate-pulse">
-                  {pendingWithdrawalsCount}
-                </span>
-              )}
-            </Link>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-medium text-white/90">
+              Bonjour,
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                Administrateur
+              </h1>
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white text-[#0084FF] shadow-xs shrink-0" title="Compte administrateur certifié">
+                <Check className="w-3.5 h-3.5 stroke-[3.5]" />
+              </span>
+            </div>
+            <p className="text-xs text-white/85 mt-1 leading-relaxed max-w-md">
+              Bienvenue dans votre espace administrateur. Gérez efficacement la plateforme VitaEarn.
+            </p>
+          </div>
+        </div>
+
+        {/* Deux Cartes Blanches Intérieures : Dépôts totaux & Retraits totaux */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-5 relative z-10">
+          {/* Carte 1 : Dépôts totaux */}
+          <div className="bg-white rounded-2xl p-3.5 sm:p-4 shadow-sm border border-white/80 text-slate-800">
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-[#0084FF] text-white flex items-center justify-center shrink-0 shadow-xs">
+                <ArrowDownToLine className="w-4 h-4 stroke-[2.5]" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs sm:text-sm font-bold text-slate-900 leading-tight truncate">
+                  Dépôts totaux
+                </div>
+                <div className="text-[10px] sm:text-[11px] text-slate-500 truncate">
+                  Total des dépôts
+                </div>
+              </div>
+            </div>
+            <div className="text-lg sm:text-2xl font-black text-slate-900 mt-2.5 tracking-tight truncate">
+              {formatFCFA(totalSubscriptionsRevenue)}
+            </div>
+          </div>
+
+          {/* Carte 2 : Retraits totaux */}
+          <div className="bg-white rounded-2xl p-3.5 sm:p-4 shadow-sm border border-white/80 text-slate-800">
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-[#0084FF] text-white flex items-center justify-center shrink-0 shadow-xs">
+                <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs sm:text-sm font-bold text-slate-900 leading-tight truncate">
+                  Retraits totaux
+                </div>
+                <div className="text-[10px] sm:text-[11px] text-slate-500 truncate">
+                  Total des retraits
+                </div>
+              </div>
+            </div>
+            <div className="text-lg sm:text-2xl font-black text-slate-900 mt-2.5 tracking-tight truncate">
+              {formatFCFA(totalWithdrawnCompleted)}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 3. Bandeaux d'Alerte d'Action Prioritaire (Retraits et Produits) */}
-      {pendingWithdrawalsCount > 0 && (
-        <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[#1C1408] border border-amber-500/40 text-amber-200 shadow-lg shadow-amber-950/20">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 font-black">
-              <Hourglass className="w-5 h-5 animate-pulse" />
+      {/* 3. SECTION DÉDIÉE AGRANDIE : VALIDER LES RETRAITS (Avec Notification Dynamique en bas) */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center shrink-0 shadow-xs">
+              <CreditCard className="w-6 h-6" />
             </div>
-            <div className="min-w-0">
-              <div className="text-xs sm:text-sm font-black text-amber-300">
-                {pendingWithdrawalsCount} demande(s) de retrait Mobile Money en attente d&apos;approbation
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-black text-slate-900">
+                  Valider les retraits
+                </h2>
+                {pendingWithdrawalsCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white animate-pulse">
+                    {pendingWithdrawalsCount} en attente
+                  </span>
+                )}
               </div>
-              <div className="text-[11px] text-amber-400/80 truncate">
-                Montant total en file d&apos;attente : <span className="font-bold text-amber-200">{formatFCFA(pendingWithdrawalsAmount)}</span>
-              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Approbation rapide et ordonnancement des paiements Mobile Money (T-Money, Flooz, Wave, MTN).
+              </p>
             </div>
           </div>
+
           <Link
             href="/admin/retraits"
-            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black shrink-0 transition-colors shadow-sm"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-[#0084FF] hover:bg-blue-600 text-white text-xs sm:text-sm font-black transition-all shadow-xs active:scale-95 shrink-0"
           >
-            Examiner
+            <span>Accéder aux validations</span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
-      )}
 
+        {/* Notification dynamique en bas de la session Valider les retraits */}
+        {pendingWithdrawalsCount > 0 ? (
+          <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                <Bell className="w-4 h-4 animate-bounce" />
+              </div>
+              <div className="text-xs sm:text-sm">
+                <span className="font-bold">Notification :</span> Il y a{" "}
+                <span className="font-black text-amber-950 underline">
+                  {pendingWithdrawalsCount} demande(s) de retrait en attente
+                </span>{" "}
+                pour un montant total de{" "}
+                <span className="font-black text-amber-950">
+                  {formatFCFA(pendingWithdrawalsAmount)}
+                </span>
+                .
+              </div>
+            </div>
+            <Link
+              href="/admin/retraits"
+              className="text-xs font-black text-amber-800 hover:text-amber-950 underline shrink-0"
+            >
+              Valider maintenant →
+            </Link>
+          </div>
+        ) : (
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-slate-600 flex items-center gap-2.5 text-xs sm:text-sm">
+            <div className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+            <span>
+              Tous les retraits Mobile Money sont à jour. Aucune demande en attente pour le moment.
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* 4. LES 4 GRANDS BLOCS (Conformes à la capture d'écran & demandes explicites) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Carte 1 : Solde total des utilisateurs */}
+        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-[#0084FF] text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Wallet className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                  Solde total des utilisateurs
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5 truncate">
+                  Solde total disponible sur la plateforme
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/admin/transactions"
+              className="px-4 py-2 rounded-full bg-[#0084FF] hover:bg-blue-600 text-white text-xs font-bold shrink-0 transition-colors flex items-center gap-1 shadow-xs"
+            >
+              <span>Voir les soldes</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            {formatFCFA(totalCommissionsDistributed)}
+          </div>
+        </div>
+
+        {/* Carte 2 : Historique des retraits */}
+        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-[#0084FF] text-white flex items-center justify-center shrink-0 shadow-xs">
+                <History className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                  Historique des retraits
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5 truncate">
+                  Consultez l&apos;historique des retraits effectués par les utilisateurs
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/admin/retraits"
+              className="px-4 py-2 rounded-full bg-[#0084FF] hover:bg-blue-600 text-white text-xs font-bold shrink-0 transition-colors flex items-center gap-1 shadow-xs"
+            >
+              <span>Voir l&apos;historique</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            {formatFCFA(totalWithdrawnCompleted)}
+          </div>
+        </div>
+
+        {/* Carte 3 : Utilisateurs inscrits */}
+        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-[#0084FF] text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Users className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                  Utilisateurs inscrits
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5 truncate">
+                  {activatedUsers} activé(s) sur {totalUsers} membre(s) inscrit(s)
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/admin/utilisateurs"
+              className="px-4 py-2 rounded-full bg-[#0084FF] hover:bg-blue-600 text-white text-xs font-bold shrink-0 transition-colors flex items-center gap-1 shadow-xs"
+            >
+              <span>Voir les membres</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              {totalUsers} <span className="text-sm font-bold text-slate-500">membres</span>
+            </div>
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              {activationRate}% d&apos;activation
+            </span>
+          </div>
+        </div>
+
+        {/* Carte 4 : Revenu total de la plateforme */}
+        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-[#0084FF] text-white flex items-center justify-center shrink-0 shadow-xs">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                  Revenu total de la plateforme
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5 truncate">
+                  Total des souscriptions ({paidSubscriptionsCount} abonnement(s) encaissé(s))
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/admin/transactions"
+              className="px-4 py-2 rounded-full bg-[#0084FF] hover:bg-blue-600 text-white text-xs font-bold shrink-0 transition-colors flex items-center gap-1 shadow-xs"
+            >
+              <span>Voir les finances</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tight">
+              {formatFCFA(totalSubscriptionsRevenue)}
+            </div>
+            <span className="text-xs font-bold text-slate-500">
+              Marge statutaire : {formatFCFA(platformNetMargin)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Alerte Produits Marketplace si en attente */}
       {pendingProductsCount > 0 && (
-        <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[#0B182B] border border-blue-500/40 text-blue-200 shadow-lg shadow-blue-950/20">
+        <div className="flex items-center justify-between gap-3 p-4 rounded-3xl bg-blue-50 border border-blue-200 text-blue-900 shadow-xs">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-blue-500 text-white flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-[#0084FF] text-white flex items-center justify-center shrink-0 shadow-xs">
               <ShoppingBag className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs sm:text-sm font-black text-blue-300">
+              <div className="text-xs sm:text-sm font-black text-blue-950">
                 {pendingProductsCount} produit(s) en attente de modération marketplace
               </div>
-              <div className="text-[11px] text-blue-300/80 truncate">
+              <div className="text-[11px] text-blue-700/80 truncate">
                 Validation requise avant publication sur le Marché public.
               </div>
             </div>
           </div>
           <Link
             href="/admin/produits"
-            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black shrink-0 transition-colors shadow-sm"
+            className="px-4 py-2 rounded-full bg-[#0084FF] hover:bg-blue-600 text-white text-xs font-black shrink-0 transition-colors shadow-xs"
           >
             Modérer
           </Link>
         </div>
       )}
 
-      {/* 4. LES 4 GRANDS KPIS EXÉCUTIFS (Demande explicite) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* KPI 1 : Total Utilisateurs Inscrits & Actifs */}
-        <div className="bg-[#0B1322] rounded-3xl border border-[#1A2840] p-5 shadow-xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-xs text-slate-400 font-bold mb-1">
-              <span>Utilisateurs Inscrits</span>
-              <div className="w-7 h-7 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
-                <Users className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              {totalUsers.toLocaleString("fr-FR")}
-            </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">Comptes enregistrés sur la plateforme</p>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-[#162338] space-y-2">
-            <div className="flex items-center justify-between text-xs font-bold">
-              <span className="text-emerald-400 flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                {activatedUsers} activés
-              </span>
-              <span className="text-amber-400">
-                {nonActivatedUsers} en attente
-              </span>
-            </div>
-            {/* Barre de progression du taux d'activation */}
-            <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.max(5, Math.min(100, activationRate))}%` }}
-              />
-            </div>
-            <div className="text-[10px] text-slate-400 text-right font-semibold">
-              Taux d&apos;activation : {activationRate}%
-            </div>
-          </div>
+      {/* 6. HUB DES 8 MODULES DU BACK-OFFICE */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base sm:text-lg font-black text-slate-900">
+            Accès Direct aux Modules d&apos;Administration
+          </h2>
+          <span className="text-xs text-slate-500">8 sections de contrôle</span>
         </div>
 
-        {/* KPI 2 : Fonds Totaux / Revenus Bruts de la Plateforme */}
-        <div className="bg-[#0B1322] rounded-3xl border border-[#1A2840] p-5 shadow-xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-xs text-slate-400 font-bold mb-1">
-              <span>Revenus Totaux Plateforme</span>
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
-                <DollarSign className="w-4 h-4" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+          <Link
+            href="/admin/retraits"
+            className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
+                <CreditCard className="w-5 h-5" />
+              </div>
+              {pendingWithdrawalsCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white animate-pulse">
+                  {pendingWithdrawalsCount}
+                </span>
+              )}
+            </div>
+            <div>
+              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+                Retraits Mobile Money
+              </div>
+              <div className="text-[11px] text-slate-500 mt-0.5">Validation & Exécution</div>
+            </div>
+          </Link>
+
+          <Link
+            href="/admin/utilisateurs"
+            className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
+                <Users className="w-5 h-5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">
-              {formatFCFA(totalSubscriptionsRevenue)}
+            <div>
+              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+                Utilisateurs & KYC
+              </div>
+              <div className="text-[11px] text-slate-500 mt-0.5">Comptes & Droits Admin</div>
             </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              {paidSubscriptionsCount} abonnement(s) × 4 500 F
-            </p>
-          </div>
+          </Link>
 
-          <div className="mt-4 pt-3 border-t border-[#162338] space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400 font-medium">Marge statutaire :</span>
-              <span className="text-emerald-400 font-black">
-                {formatFCFA(platformNetMargin)}
-              </span>
+          <Link
+            href="/admin/produits"
+            className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
+                <ShoppingBag className="w-5 h-5" />
+              </div>
+              {pendingProductsCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#0084FF] text-white">
+                  {pendingProductsCount}
+                </span>
+              )}
             </div>
-            <div className="flex items-center justify-between text-[11px] text-slate-500">
-              <span>1 000 F / abonné</span>
-              <span className="text-indigo-400 font-bold">22.2% statutaire</span>
+            <div>
+              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+                Modération Produits
+              </div>
+              <div className="text-[11px] text-slate-500 mt-0.5">Marketplace & Vendeurs</div>
             </div>
-          </div>
-        </div>
+          </Link>
 
-        {/* KPI 3 : Total des Retraits Validés & Effectués */}
-        <div className="bg-[#0B1322] rounded-3xl border border-[#1A2840] p-5 shadow-xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-xs text-slate-400 font-bold mb-1">
-              <span>Retraits Effectués & Validés</span>
-              <div className="w-7 h-7 rounded-lg bg-teal-500/15 text-teal-400 border border-teal-500/30 flex items-center justify-center">
-                <CheckCircle2 className="w-4 h-4" />
+          <Link
+            href="/admin/transactions"
+            className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
+                <History className="w-5 h-5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-teal-300 tracking-tight">
-              {formatFCFA(totalWithdrawnCompleted)}
+            <div>
+              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+                Grand Livre Financier
+              </div>
+              <div className="text-[11px] text-slate-500 mt-0.5">Écritures Immuables</div>
             </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              Réglés via T-Money & Flooz
-            </p>
-          </div>
+          </Link>
 
-          <div className="mt-4 pt-3 border-t border-[#162338] space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400 font-medium">Volume réglé :</span>
-              <span className="text-teal-300 font-black">
-                {completedWithdrawalsCount} virement(s)
-              </span>
-            </div>
-            <div className="text-[10px] text-teal-400 font-semibold flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" />
-              Actualisation automatique à chaque validation
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 4 : Retraits en Attente de Traitement */}
-        <div className="bg-[#0B1322] rounded-3xl border border-[#2B1F11] p-5 shadow-xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-xs text-amber-400/80 font-bold mb-1">
-              <span>Retraits en Attente</span>
-              <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center">
-                <Hourglass className="w-4 h-4" />
+          <Link
+            href="/admin/arbre"
+            className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
+                <GitBranch className="w-5 h-5" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-amber-400 tracking-tight">
-              {formatFCFA(pendingWithdrawalsAmount)}
+            <div>
+              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+                Arbre d&apos;Affiliation
+              </div>
+              <div className="text-[11px] text-slate-500 mt-0.5">Lignées 3 Niveaux</div>
             </div>
-            <p className="text-[11px] text-amber-500/80 mt-0.5">
-              {pendingWithdrawalsCount} demande(s) en file d&apos;attente
-            </p>
-          </div>
+          </Link>
 
-          <div className="mt-4 pt-3 border-t border-[#231A10] space-y-1">
-            <Link
-              href="/admin/retraits"
-              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition-colors shadow-sm cursor-pointer"
-            >
-              <span>Accéder aux validations</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+          <Link
+            href="/admin/taches"
+            className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
+                <CalendarCheck className="w-5 h-5" />
+              </div>
+            </div>
+            <div>
+              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+                Gestion des Tâches
+              </div>
+              <div className="text-[11px] text-slate-500 mt-0.5">Time Table & Quiz</div>
+            </div>
+          </Link>
+
+          <Link
+            href="/admin/reglages"
+            className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
+                <Settings className="w-5 h-5" />
+              </div>
+            </div>
+            <div>
+              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+                Réglages Plateforme
+              </div>
+              <div className="text-[11px] text-slate-500 mt-0.5">Tarifs, Support, Config</div>
+            </div>
+          </Link>
+
+          <Link
+            href="/admin/journal"
+            className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-red-50 text-red-600 border border-red-100 flex items-center justify-center">
+                <ShieldAlert className="w-5 h-5" />
+              </div>
+            </div>
+            <div>
+              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-red-600 transition-colors">
+                Journal d&apos;Audit
+              </div>
+              <div className="text-[11px] text-slate-500 mt-0.5">Traçabilité & Sécurité</div>
+            </div>
+          </Link>
         </div>
       </div>
 
-      {/* 5. DÉTAIL FINANCIER & TRÉSORERIE DISPONIBLE */}
-      <div className="bg-[#0B1322] rounded-3xl border border-[#1A2840] p-5 sm:p-6 shadow-xl space-y-5">
+      {/* 7. DÉTAIL FINANCIER & TRÉSORERIE DISPONIBLE */}
+      <div className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-6 shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base sm:text-lg font-black text-white">
+              <h2 className="text-base sm:text-lg font-black text-slate-900">
                 Structure Financière & Trésorerie Nette
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 text-[#0084FF] border border-blue-200">
                 Abonnement 4 500 F
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Décomposition immuable des flux financiers selon le grand livre de la plateforme.
             </p>
           </div>
 
-          <div className="bg-[#0E1A2F] border border-indigo-500/30 px-4 py-2.5 rounded-2xl shrink-0">
-            <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
+          <div className="bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-2xl shrink-0">
+            <span className="text-[10px] font-bold text-slate-500 block uppercase tracking-wider">
               Trésorerie Nette Disponible :
             </span>
-            <span className="text-xl font-black text-emerald-400">
+            <span className="text-xl font-black text-emerald-600">
               {formatFCFA(platformNetTreasury)}
             </span>
           </div>
@@ -551,7 +823,7 @@ export default async function AdminDashboardPage() {
 
         {/* Barre de répartition visuelle des 4 500 FCFA */}
         <div className="space-y-2.5">
-          <div className="w-full h-3 rounded-full overflow-hidden flex bg-[#131F33]">
+          <div className="w-full h-3 rounded-full overflow-hidden flex bg-slate-100">
             <div
               className="bg-emerald-500 h-full"
               style={{ width: "44.4%" }}
@@ -568,339 +840,181 @@ export default async function AdminDashboardPage() {
               title="Niveau 3 : 500 FCFA (11.1%)"
             />
             <div
-              className="bg-indigo-500 h-full"
+              className="bg-[#0084FF] h-full"
               style={{ width: "22.2%" }}
               title="Marge Plateforme : 1 000 FCFA (22.2%)"
             />
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-            <div className="p-3 rounded-2xl bg-[#0E1729] border border-[#1A2840]">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                 <span>Niveau 1 (Direct)</span>
               </div>
-              <div className="text-sm font-black text-white mt-1">
+              <div className="text-sm font-black text-slate-900 mt-1">
                 {formatFCFA(level1Commissions)}
               </div>
-              <div className="text-[10px] text-slate-400">2 000 F / affiliation</div>
+              <div className="text-[10px] text-slate-500">2 000 F / affiliation</div>
             </div>
 
-            <div className="p-3 rounded-2xl bg-[#0E1729] border border-[#1A2840]">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-teal-300">
+            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-teal-700">
                 <span className="w-2 h-2 rounded-full bg-teal-400 shrink-0" />
                 <span>Niveau 2 (Secondaire)</span>
               </div>
-              <div className="text-sm font-black text-white mt-1">
+              <div className="text-sm font-black text-slate-900 mt-1">
                 {formatFCFA(level2Commissions)}
               </div>
-              <div className="text-[10px] text-slate-400">1 000 F / affiliation</div>
+              <div className="text-[10px] text-slate-500">1 000 F / affiliation</div>
             </div>
 
-            <div className="p-3 rounded-2xl bg-[#0E1729] border border-[#1A2840]">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-300">
+            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-700">
                 <span className="w-2 h-2 rounded-full bg-cyan-400 shrink-0" />
                 <span>Niveau 3 (Tertiaire)</span>
               </div>
-              <div className="text-sm font-black text-white mt-1">
+              <div className="text-sm font-black text-slate-900 mt-1">
                 {formatFCFA(level3Commissions)}
               </div>
-              <div className="text-[10px] text-slate-400">500 F / affiliation</div>
+              <div className="text-[10px] text-slate-500">500 F / affiliation</div>
             </div>
 
-            <div className="p-3 rounded-2xl bg-[#0E1729] border border-[#1A2840]">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-300">
-                <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
+            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700">
+                <span className="w-2 h-2 rounded-full bg-[#0084FF] shrink-0" />
                 <span>Marge Plateforme</span>
               </div>
-              <div className="text-sm font-black text-indigo-300 mt-1">
+              <div className="text-sm font-black text-blue-700 mt-1">
                 {formatFCFA(platformNetMargin)}
               </div>
-              <div className="text-[10px] text-slate-400">1 000 F / abonnement</div>
+              <div className="text-[10px] text-slate-500">1 000 F / abonnement</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 6. ANALYTIQUES STATISTIQUES (Pays UEMOA & Opérateurs Mobile Money) */}
+      {/* 8. ANALYTIQUES STATISTIQUES (Pays UEMOA & Opérateurs Mobile Money) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Répartition Géographique UEMOA */}
-        <div className="bg-[#0B1322] rounded-3xl border border-[#1A2840] p-5 shadow-xl space-y-4">
+        <div className="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Globe className="w-5 h-5 text-indigo-400" />
-              <h3 className="text-sm font-black text-white">
+              <Globe className="w-5 h-5 text-[#0084FF]" />
+              <h3 className="text-sm font-black text-slate-900">
                 Répartition Géographique UEMOA
               </h3>
             </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Afrique de l&apos;Ouest</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Afrique de l&apos;Ouest</span>
           </div>
 
           <div className="space-y-3">
             <div>
               <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-slate-200">Togo (Lomé, Kara, Sokodé)</span>
-                <span className="text-emerald-400">68%</span>
+                <span className="text-slate-800">Togo (Lomé, Kara, Sokodé)</span>
+                <span className="text-emerald-600">68%</span>
               </div>
-              <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                 <div className="bg-emerald-500 h-full rounded-full" style={{ width: "68%" }} />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-slate-200">Bénin (Cotonou, Porto-Novo)</span>
-                <span className="text-teal-400">16%</span>
+                <span className="text-slate-800">Bénin (Cotonou, Porto-Novo)</span>
+                <span className="text-teal-600">16%</span>
               </div>
-              <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                 <div className="bg-teal-400 h-full rounded-full" style={{ width: "16%" }} />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-slate-200">Côte d&apos;Ivoire (Abidjan)</span>
-                <span className="text-cyan-400">10%</span>
+                <span className="text-slate-800">Côte d&apos;Ivoire (Abidjan)</span>
+                <span className="text-cyan-600">10%</span>
               </div>
-              <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                 <div className="bg-cyan-400 h-full rounded-full" style={{ width: "10%" }} />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-slate-200">Burkina Faso & Autres</span>
-                <span className="text-slate-400">6%</span>
+                <span className="text-slate-800">Burkina Faso & Autres</span>
+                <span className="text-slate-500">6%</span>
               </div>
-              <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
-                <div className="bg-slate-500 h-full rounded-full" style={{ width: "6%" }} />
+              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                <div className="bg-slate-400 h-full rounded-full" style={{ width: "6%" }} />
               </div>
             </div>
           </div>
         </div>
 
         {/* Répartition des Retraits Mobile Money (T-Money vs Flooz) */}
-        <div className="bg-[#0B1322] rounded-3xl border border-[#1A2840] p-5 shadow-xl space-y-4">
+        <div className="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-indigo-400" />
-              <h3 className="text-sm font-black text-white">
+              <CreditCard className="w-5 h-5 text-[#0084FF]" />
+              <h3 className="text-sm font-black text-slate-900">
                 Canaux de Paiement Mobile Money
               </h3>
             </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Volume Retraits</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Volume Retraits</span>
           </div>
 
           <div className="space-y-3">
             <div>
               <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-slate-200">T-Money (Togocom)</span>
-                <span className="text-emerald-400">{tmoneyPct}%</span>
+                <span className="text-slate-800">T-Money (Togocom)</span>
+                <span className="text-emerald-600">{tmoneyPct}%</span>
               </div>
-              <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                 <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${tmoneyPct}%` }} />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-slate-200">Moov Money (Flooz)</span>
-                <span className="text-cyan-400">{floozPct}%</span>
+                <span className="text-slate-800">Moov Money (Flooz)</span>
+                <span className="text-cyan-600">{floozPct}%</span>
               </div>
-              <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                 <div className="bg-cyan-500 h-full rounded-full" style={{ width: `${floozPct}%` }} />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-slate-200">Wave & MTN Mobile Money</span>
-                <span className="text-slate-400">{otherPct}%</span>
+                <span className="text-slate-800">Wave & MTN Mobile Money</span>
+                <span className="text-slate-500">{otherPct}%</span>
               </div>
-              <div className="w-full bg-[#131F33] h-2 rounded-full overflow-hidden">
-                <div className="bg-slate-500 h-full rounded-full" style={{ width: `${otherPct}%` }} />
+              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                <div className="bg-slate-400 h-full rounded-full" style={{ width: `${otherPct}%` }} />
               </div>
             </div>
           </div>
 
-          <div className="pt-2 text-[11px] text-slate-400 font-medium border-t border-[#162338]">
+          <div className="pt-2 text-[11px] text-slate-500 font-medium border-t border-slate-100">
             Opérations directes sans intermédiaire bancaire. Réseau UEMOA instantané.
           </div>
         </div>
       </div>
 
-      {/* 7. HUB DES 8 MODULES DU BACK-OFFICE */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base sm:text-lg font-black text-white">
-            Accès Direct aux Modules d&apos;Administration
-          </h2>
-          <span className="text-xs text-slate-400">8 sections de contrôle</span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-          <Link
-            href="/admin/retraits"
-            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
-                <CreditCard className="w-5 h-5" />
-              </div>
-              {pendingWithdrawalsCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-slate-950 animate-pulse">
-                  {pendingWithdrawalsCount}
-                </span>
-              )}
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
-                Retraits Mobile Money
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Validation & Exécution</div>
-            </div>
-          </Link>
-
-          <Link
-            href="/admin/utilisateurs"
-            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center justify-center">
-                <Users className="w-5 h-5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
-                Utilisateurs & KYC
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Comptes & Droits Admin</div>
-            </div>
-          </Link>
-
-          <Link
-            href="/admin/produits"
-            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5" />
-              </div>
-              {pendingProductsCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-500 text-white">
-                  {pendingProductsCount}
-                </span>
-              )}
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
-                Modération Produits
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Marketplace & Vendeurs</div>
-            </div>
-          </Link>
-
-          <Link
-            href="/admin/transactions"
-            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-purple-500/15 text-purple-400 border border-purple-500/30 flex items-center justify-center">
-                <History className="w-5 h-5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
-                Grand Livre Financier
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Écritures Immuables</div>
-            </div>
-          </Link>
-
-          <Link
-            href="/admin/arbre"
-            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-teal-500/15 text-teal-400 border border-teal-500/30 flex items-center justify-center">
-                <GitBranch className="w-5 h-5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
-                Arbre d&apos;Affiliation
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Lignées 3 Niveaux</div>
-            </div>
-          </Link>
-
-          <Link
-            href="/admin/taches"
-            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
-                <CalendarCheck className="w-5 h-5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
-                Gestion des Tâches
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Time Table & Quiz</div>
-            </div>
-          </Link>
-
-          <Link
-            href="/admin/reglages"
-            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-slate-500/15 text-slate-400 border border-slate-500/30 flex items-center justify-center">
-                <Settings className="w-5 h-5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
-                Réglages Plateforme
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Tarifs, Support, Config</div>
-            </div>
-          </Link>
-
-          <Link
-            href="/admin/journal"
-            className="p-4 rounded-3xl bg-[#0B1322] border border-[#1A2840] hover:border-indigo-500/60 hover:bg-[#101B30] shadow-xl transition-all group flex flex-col justify-between cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-red-500/15 text-red-400 border border-red-500/30 flex items-center justify-center">
-                <ShieldAlert className="w-5 h-5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-white group-hover:text-indigo-300 transition-colors">
-                Journal d&apos;Audit
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Traçabilité & Sécurité</div>
-            </div>
-          </Link>
-        </div>
-      </div>
-
-      {/* 8. FLUX DES DERNIÈRES ACTIVITÉS & DEMANDES DE RETRAIT */}
-      <div className="bg-[#0B1322] rounded-3xl border border-[#1A2840] p-5 sm:p-6 shadow-xl space-y-4">
+      {/* 9. FLUX DES DERNIÈRES ACTIVITÉS & DEMANDES DE RETRAIT */}
+      <div className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base sm:text-lg font-black text-white">
+            <h2 className="text-base sm:text-lg font-black text-slate-900">
               Derniers Flux de Retraits & Activités
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Historique en direct des retraits Mobile Money et des transactions du système.
             </p>
           </div>
           <Link
             href="/admin/retraits"
-            className="text-xs font-black text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
+            className="text-xs font-black text-[#0084FF] hover:text-blue-600 flex items-center gap-1 cursor-pointer"
           >
             <span>Voir tout</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -908,7 +1022,7 @@ export default async function AdminDashboardPage() {
         </div>
 
         {recentActivities.length > 0 ? (
-          <div className="divide-y divide-[#162338]">
+          <div className="divide-y divide-slate-100">
             {recentActivities.map((act) => (
               <div
                 key={act.id}
@@ -918,8 +1032,8 @@ export default async function AdminDashboardPage() {
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                       act.status === "paid" || act.status === "approved"
-                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                        : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                        ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                        : "bg-amber-50 text-amber-600 border border-amber-200"
                     }`}
                   >
                     {act.status === "paid" || act.status === "approved" ? (
@@ -929,26 +1043,26 @@ export default async function AdminDashboardPage() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <div className="font-bold text-white truncate">
+                    <div className="font-bold text-slate-900 truncate">
                       {act.title}
                     </div>
-                    <div className="text-[11px] text-slate-400 truncate">
+                    <div className="text-[11px] text-slate-500 truncate">
                       {act.subtitle} • {new Date(act.date).toLocaleDateString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
                 </div>
 
                 <div className="text-right shrink-0">
-                  <div className="font-black text-white">
+                  <div className="font-black text-slate-900">
                     {formatFCFA(act.amount)}
                   </div>
                   <span
                     className={`inline-block text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
                       act.status === "paid"
-                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                         : act.status === "approved"
-                        ? "bg-teal-500/20 text-teal-300 border border-teal-500/40"
-                        : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                        ? "bg-teal-50 text-teal-700 border border-teal-200"
+                        : "bg-amber-50 text-amber-700 border border-amber-200"
                     }`}
                   >
                     {act.status === "paid"
@@ -962,19 +1076,19 @@ export default async function AdminDashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-slate-500 text-xs">
+          <div className="text-center py-8 text-slate-400 text-xs">
             Aucun retrait enregistré pour l&apos;instant.
           </div>
         )}
       </div>
 
-      {/* 9. Carte Spéciale Super Admin : Gestion des Administrateurs */}
+      {/* 10. Carte Spéciale Super Admin : Gestion des Administrateurs */}
       <AdminRoleManagerCard
         currentAdmins={currentAdmins}
         isSuperAdmin={isSuperAdmin}
       />
 
-      {/* 10. Réglages support rapide */}
+      {/* 11. Réglages support rapide */}
       <AdminSupportSettingsCard initialSettings={supportSettings} />
     </div>
   );
