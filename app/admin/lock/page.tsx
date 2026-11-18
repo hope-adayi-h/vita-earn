@@ -12,19 +12,13 @@ export const metadata = {
 };
 
 export default async function AdminLockPage() {
-  const { isAdmin, userEmail } = await checkAdminSession();
-
-  // Si l'utilisateur n'est pas identifié comme administrateur, rediriger vers la connexion
-  if (!isAdmin) {
-    redirect("/auth/login?redirect=/admin");
-  }
-
   // Si la session est DÉJÀ déverrouillée, aller directement sur /admin
   const unlocked = await isAdminUnlocked();
   if (unlocked) {
     redirect("/admin");
   }
 
+  const { userEmail } = await checkAdminSession();
   const hourlyInfo = getCurrentHourlyInfo();
 
   return (

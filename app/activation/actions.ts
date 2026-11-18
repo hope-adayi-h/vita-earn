@@ -11,6 +11,15 @@ import type { ActivationData } from "./types";
 
 export type { ActivationData };
 
+const isProd = process.env.NODE_ENV === "production";
+const ACTIVATION_COOKIE_OPTIONS = {
+  path: "/",
+  httpOnly: true,
+  secure: isProd,
+  sameSite: "lax" as const,
+  maxAge: 60 * 60 * 24 * 30, // 30 jours
+};
+
 /**
  * Activation immédiate en 1 clic (Mode simplifié & test)
  * Valide le compte et redirige immédiatement vers le tableau de bord avec le nom d'utilisateur
@@ -22,24 +31,20 @@ export async function quickActivateAction(): Promise<void> {
   if (sessionUserCookie) {
     try {
       sessionUser = JSON.parse(sessionUserCookie);
-    } catch {}
+    } catch {
+      try {
+        sessionUser = JSON.parse(decodeURIComponent(sessionUserCookie));
+      } catch {}
+    }
   }
   const testUser = cookieStore.get("vita_test_user")?.value;
   const testEmail = cookieStore.get("vita_test_email")?.value;
 
-  cookieStore.set("vita_account_activated", "true", {
-    path: "/",
-    httpOnly: true,
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  cookieStore.set("vita_account_activated", "true", ACTIVATION_COOKIE_OPTIONS);
 
   if (sessionUser) {
     sessionUser.isActivated = true;
-    cookieStore.set("vita_session_user", JSON.stringify(sessionUser), {
-      path: "/",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    cookieStore.set("vita_session_user", JSON.stringify(sessionUser), ACTIVATION_COOKIE_OPTIONS);
     activateUser(sessionUser.id || sessionUser.username || sessionUser.email);
   } else if (testUser) {
     activateUser(testUser);
@@ -51,11 +56,7 @@ export async function quickActivateAction(): Promise<void> {
       role: "user",
       isActivated: true,
     };
-    cookieStore.set("vita_session_user", JSON.stringify(newSession), {
-      path: "/",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    cookieStore.set("vita_session_user", JSON.stringify(newSession), ACTIVATION_COOKIE_OPTIONS);
   }
 
   try {
@@ -398,11 +399,7 @@ export async function confirmMockPayment(paymentId: string) {
     try {
       const s = JSON.parse(sessionCookie);
       s.isActivated = true;
-      cookieStore.set("vita_session_user", JSON.stringify(s), {
-        path: "/",
-        httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7,
-      });
+      cookieStore.set("vita_session_user", JSON.stringify(s), ACTIVATION_COOKIE_OPTIONS);
     } catch {}
   }
 
@@ -576,11 +573,7 @@ export async function submitActivationPaymentAction(params: {
   // Si pas d'utilisateur Supabase connecté, mise à jour session directe
   if (!user && sessionUser) {
     sessionUser.isActivated = true;
-    cookieStore.set("vita_session_user", JSON.stringify(sessionUser), {
-      path: "/",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    cookieStore.set("vita_session_user", JSON.stringify(sessionUser), ACTIVATION_COOKIE_OPTIONS);
     revalidatePath("/activation");
     revalidatePath("/profil");
     revalidatePath("/");
@@ -666,11 +659,7 @@ export async function submitActivationPaymentAction(params: {
     try {
       const s = JSON.parse(paymentSessionCookie);
       s.isActivated = true;
-      cookieStore.set("vita_session_user", JSON.stringify(s), {
-        path: "/",
-        httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7,
-      });
+      cookieStore.set("vita_session_user", JSON.stringify(s), ACTIVATION_COOKIE_OPTIONS);
     } catch {}
   }
 

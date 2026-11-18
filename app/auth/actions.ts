@@ -17,6 +17,15 @@ import type { ActionResponse } from "./types";
 
 export type { ActionResponse };
 
+const isProd = process.env.NODE_ENV === "production";
+const AUTH_COOKIE_OPTIONS = {
+  path: "/",
+  httpOnly: true,
+  secure: isProd,
+  sameSite: "lax" as const,
+  maxAge: 60 * 60 * 24 * 30, // 30 jours
+};
+
 function getAppUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_APP_URL;
   if (envUrl) return envUrl;
@@ -210,22 +219,17 @@ export async function signUpAction(
       knownAccounts.push(newRec);
     }
     cookieStore.set("vita_accounts", JSON.stringify(knownAccounts), {
-      path: "/",
-      httpOnly: true,
+      ...AUTH_COOKIE_OPTIONS,
       maxAge: 60 * 60 * 24 * 365,
     });
   } catch {}
 
-  cookieStore.set("vita_session_user", JSON.stringify(userSessionData), {
-    path: "/",
-    httpOnly: true,
-    maxAge: 60 * 60 * 24 * 7,
-  });
-  cookieStore.set("vita_test_role", "user", { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 7 });
-  cookieStore.set("vita_test_user", cleanUsername, { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 7 });
-  cookieStore.set("vita_test_email", cleanEmail, { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 7 });
+  cookieStore.set("vita_session_user", JSON.stringify(userSessionData), AUTH_COOKIE_OPTIONS);
+  cookieStore.set("vita_test_role", "user", AUTH_COOKIE_OPTIONS);
+  cookieStore.set("vita_test_user", cleanUsername, AUTH_COOKIE_OPTIONS);
+  cookieStore.set("vita_test_email", cleanEmail, AUTH_COOKIE_OPTIONS);
   if (phone) {
-    cookieStore.set("vita_registered_phone", phone, { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 365 });
+    cookieStore.set("vita_registered_phone", phone, { ...AUTH_COOKIE_OPTIONS, maxAge: 60 * 60 * 24 * 365 });
   }
 
   // Redirection OBLIGATOIRE et immédiate vers la page d'activation
@@ -350,30 +354,13 @@ export async function signInAction(
         isActivated,
       };
 
-      cookieStore.set("vita_session_user", JSON.stringify(userSessionData), {
-        path: "/",
-        httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7,
-      });
-      cookieStore.set("vita_test_role", matchedAccount.role || "user", {
-        path: "/",
-        httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7,
-      });
-      cookieStore.set("vita_test_user", matchedAccount.username, {
-        path: "/",
-        httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7,
-      });
-      cookieStore.set("vita_test_email", matchedAccount.email, {
-        path: "/",
-        httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7,
-      });
+      cookieStore.set("vita_session_user", JSON.stringify(userSessionData), AUTH_COOKIE_OPTIONS);
+      cookieStore.set("vita_test_role", matchedAccount.role || "user", AUTH_COOKIE_OPTIONS);
+      cookieStore.set("vita_test_user", matchedAccount.username, AUTH_COOKIE_OPTIONS);
+      cookieStore.set("vita_test_email", matchedAccount.email, AUTH_COOKIE_OPTIONS);
       if (matchedAccount.phone) {
         cookieStore.set("vita_registered_phone", matchedAccount.phone, {
-          path: "/",
-          httpOnly: true,
+          ...AUTH_COOKIE_OPTIONS,
           maxAge: 60 * 60 * 24 * 365,
         });
       }
@@ -392,21 +379,9 @@ export async function signInAction(
     (password === "Admin2026!" || password === "admin123" || password === "admin");
 
   if (isTestAdmin) {
-    cookieStore.set("vita_test_role", "admin", {
-      path: "/",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7,
-    });
-    cookieStore.set("vita_test_user", "Administrateur", {
-      path: "/",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7,
-    });
-    cookieStore.set("vita_test_email", "admin@vitaearn.com", {
-      path: "/",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    cookieStore.set("vita_test_role", "admin", AUTH_COOKIE_OPTIONS);
+    cookieStore.set("vita_test_user", "Administrateur", AUTH_COOKIE_OPTIONS);
+    cookieStore.set("vita_test_email", "admin@vitaearn.com", AUTH_COOKIE_OPTIONS);
 
     try {
       const supabase = createClient();
@@ -427,21 +402,9 @@ export async function signInAction(
     (password === "User2026!" || password === "koffi123" || password === "koffi");
 
   if (isTestUser) {
-    cookieStore.set("vita_test_role", "user", {
-      path: "/",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7,
-    });
-    cookieStore.set("vita_test_user", "Koffi", {
-      path: "/",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7,
-    });
-    cookieStore.set("vita_test_email", "koffi@vitaearn.com", {
-      path: "/",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    cookieStore.set("vita_test_role", "user", AUTH_COOKIE_OPTIONS);
+    cookieStore.set("vita_test_user", "Koffi", AUTH_COOKIE_OPTIONS);
+    cookieStore.set("vita_test_email", "koffi@vitaearn.com", AUTH_COOKIE_OPTIONS);
 
     try {
       const supabase = createClient();
@@ -527,29 +490,17 @@ export async function signInAction(
         isActivated,
       };
 
-      cookieStore.set("vita_session_user", JSON.stringify(userSessionData), {
-        path: "/",
-        httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7,
-      });
-      cookieStore.set("vita_test_role", profile?.role || "user", {
-        path: "/",
-        httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7,
-      });
-      cookieStore.set("vita_test_user", displayName, {
-        path: "/",
-        httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7,
-      });
-      cookieStore.set("vita_test_email", user.email || "", {
-        path: "/",
-        httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7,
-      });
+      cookieStore.set("vita_session_user", JSON.stringify(userSessionData), AUTH_COOKIE_OPTIONS);
+      cookieStore.set("vita_test_role", profile?.role || "user", AUTH_COOKIE_OPTIONS);
+      cookieStore.set("vita_test_user", displayName, AUTH_COOKIE_OPTIONS);
+      cookieStore.set("vita_test_email", user.email || "", AUTH_COOKIE_OPTIONS);
 
       if (!isActivated) {
         redirect("/activation");
+      }
+
+      if (profile?.role === "admin" || user.email === "adayiespoir60@gmail.com") {
+        redirect("/admin");
       }
 
       redirect("/");
@@ -565,21 +516,9 @@ export async function signInAction(
         existingSession.username?.toLowerCase() === cleanId ||
         existingSession.email?.toLowerCase() === cleanId
       ) {
-        cookieStore.set("vita_test_role", existingSession.role || "user", {
-          path: "/",
-          httpOnly: true,
-          maxAge: 60 * 60 * 24 * 7,
-        });
-        cookieStore.set("vita_test_user", existingSession.username, {
-          path: "/",
-          httpOnly: true,
-          maxAge: 60 * 60 * 24 * 7,
-        });
-        cookieStore.set("vita_test_email", existingSession.email, {
-          path: "/",
-          httpOnly: true,
-          maxAge: 60 * 60 * 24 * 7,
-        });
+        cookieStore.set("vita_test_role", existingSession.role || "user", AUTH_COOKIE_OPTIONS);
+        cookieStore.set("vita_test_user", existingSession.username, AUTH_COOKIE_OPTIONS);
+        cookieStore.set("vita_test_email", existingSession.email, AUTH_COOKIE_OPTIONS);
 
         if (!existingSession.isActivated) {
           redirect("/activation");

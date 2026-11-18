@@ -180,7 +180,7 @@ export async function isAdminUnlocked(): Promise<boolean> {
 
 /**
  * Contrôle unifié de session Administrateur avec résilience complète
- * (Supabase Auth + Session JSON + Cookies de secours + Token HMAC déverrouillé)
+ * (Jeton HMAC déverrouillé + Session JSON + Supabase Auth + Cookies de secours)
  */
 export async function checkAdminSession(): Promise<{
   isAdmin: boolean;
@@ -194,7 +194,18 @@ export async function checkAdminSession(): Promise<{
   let isAdmin = false;
   let isSuperAdmin = false;
 
-  // 1. Session locale JSON (raw et décode URI)
+  // 1. Si le sas admin est déjà déverrouillé par le jeton HMAC valide -> Admin validé immédiatement
+  const isUnlocked = await isAdminUnlocked();
+  if (isUnlocked) {
+    return {
+      isAdmin: true,
+      isSuperAdmin: true,
+      userEmail: SUPER_ADMIN_EMAIL,
+      userId: "usr_espoir_master",
+    };
+  }
+
+  // 2. Session locale JSON (raw et décode URI)
   const rawSession = cookieStore.get("vita_session_user")?.value;
   if (rawSession) {
     let parsed: any = null;
@@ -221,7 +232,7 @@ export async function checkAdminSession(): Promise<{
     }
   }
 
-  // 2. Cookies de secours pour tests et prototypage
+  // 3. Cookies de secours pour tests et prototypage
   if (!isAdmin) {
     const testRole = cookieStore.get("vita_test_role")?.value;
     const testEmail = cookieStore.get("vita_test_email")?.value;
@@ -238,17 +249,6 @@ export async function checkAdminSession(): Promise<{
       userEmail = testEmail || SUPER_ADMIN_EMAIL;
       userId = userId || "usr_espoir_master";
       isSuperAdmin = true;
-    }
-  }
-
-  // 3. Si l'administrateur a déjà validé le sas (jeton HMAC valide)
-  if (!isAdmin) {
-    const isUnlocked = await isAdminUnlocked();
-    if (isUnlocked) {
-      isAdmin = true;
-      isSuperAdmin = true;
-      userEmail = userEmail || SUPER_ADMIN_EMAIL;
-      userId = userId || "usr_espoir_master";
     }
   }
 

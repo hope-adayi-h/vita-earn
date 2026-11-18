@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   ShieldCheck,
   Lock,
@@ -276,6 +277,16 @@ export function AdminLockClient({
         <div className="pt-2 text-center text-[11px] text-gray-400 dark:text-gray-500 flex items-center justify-center gap-1.5">
           <Clock className="w-3 h-3" />
           <span>Session sécurisée de 30 minutes avec reverrouillage automatique</span>
+        </div>
+
+        {/* Bouton retour accueil */}
+        <div className="text-center pt-1 border-t border-gray-100 dark:border-[#1E2E24]">
+          <Link
+            href="/"
+            className="text-xs font-semibold text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5"
+          >
+            ← Retourner à la page d&apos;accueil
+          </Link>
         </div>
       </div>
     </div>

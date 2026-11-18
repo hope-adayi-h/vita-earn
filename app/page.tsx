@@ -53,12 +53,29 @@ export default async function HomePage() {
   if (sessionUserCookie) {
     try {
       sessionUser = JSON.parse(sessionUserCookie);
-    } catch {}
+    } catch {
+      try {
+        sessionUser = JSON.parse(decodeURIComponent(sessionUserCookie));
+      } catch {}
+    }
   }
-  const testRole = cookieStore.get("vita_test_role")?.value || sessionUser?.role;
-  const testUser = cookieStore.get("vita_test_user")?.value || sessionUser?.username;
-  const testEmail = cookieStore.get("vita_test_email")?.value || sessionUser?.email;
-  const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
+
+  const adminUnlocked = cookieStore.get("vita_admin_unlocked")?.value;
+  if (adminUnlocked && !sessionUser) {
+    sessionUser = {
+      id: "usr_espoir_master",
+      username: "Espoir",
+      fullName: "Espoir",
+      email: "adayiespoir60@gmail.com",
+      role: "admin",
+      isActivated: true,
+    };
+  }
+
+  const testRole = cookieStore.get("vita_test_role")?.value || sessionUser?.role || (adminUnlocked ? "admin" : undefined);
+  const testUser = cookieStore.get("vita_test_user")?.value || sessionUser?.username || (adminUnlocked ? "Espoir" : undefined);
+  const testEmail = cookieStore.get("vita_test_email")?.value || sessionUser?.email || (adminUnlocked ? "adayiespoir60@gmail.com" : undefined);
+  const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true" || Boolean(adminUnlocked);
 
   const supabase = createClient();
   let user: any = null;

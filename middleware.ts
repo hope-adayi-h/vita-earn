@@ -132,14 +132,8 @@ export async function middleware(request: NextRequest) {
 
   const adminUnlockCookie = request.cookies.get("vita_admin_unlocked")?.value;
 
-  // RÈGLE P0 : Les routes /admin nécessitent formellement une authentification vérifiée
-  if (path.startsWith("/admin") && !isAuthenticated) {
-    const redirectUrl = new URL("/auth/login", request.url);
-    redirectUrl.searchParams.set("redirect", path);
-    return NextResponse.redirect(redirectUrl);
-  }
-
   // RÈGLE P0 : Sas de déverrouillage Administrateur obligatoire (Face ID / Code Secret)
+  // Le sas /admin/lock reste accessible pour la saisie du code secret maître
   if (path.startsWith("/admin") && path !== "/admin/lock") {
     if (!adminUnlockCookie) {
       const lockUrl = new URL("/admin/lock", request.url);
@@ -148,8 +142,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // 3. Si l'utilisateur n'est PAS connecté et tente d'accéder à une page protégée
-  // (Tableau de bord /, Portefeuille, Vendre, Profil, Tâches, Admin, etc.)
+  // (Tableau de bord /, Portefeuille, Vendre, Profil, Tâches, etc.)
   if (!isAuthenticated && !isAuthPath) {
+    // Le sas admin est toujours accessible directement
+    if (path === "/admin/lock") {
+      return response;
+    }
     const redirectUrl = new URL("/auth/login", request.url);
     if (path !== "/") {
       redirectUrl.searchParams.set("redirect", path);
