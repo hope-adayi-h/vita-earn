@@ -42,6 +42,9 @@ import {
   Wallet,
   Bell,
   UserCheck,
+  GraduationCap,
+  Briefcase,
+  Smartphone,
 } from "lucide-react";
 
 export const metadata = {
@@ -651,16 +654,32 @@ export default async function AdminDashboardPage() {
         </div>
       )}
 
-      {/* 6. HUB DES 8 MODULES DU BACK-OFFICE */}
+      {/* 6. MODULES D'ADMINISTRATION (Sans petits textes, épurés et ordonnés) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-base sm:text-lg font-black text-slate-900">
-            Accès Direct aux Modules d&apos;Administration
+            Modules d&apos;Administration
           </h2>
-          <span className="text-xs text-slate-500">8 sections de contrôle</span>
+          <span className="text-xs text-slate-500">10 sections de contrôle</span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3">
+          {/* 1. Utilisateurs */}
+          <Link
+            href="/admin/utilisateurs"
+            className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
+                <Users className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+              Utilisateurs
+            </div>
+          </Link>
+
+          {/* 2. Retraits */}
           <Link
             href="/admin/retraits"
             className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
@@ -675,31 +694,72 @@ export default async function AdminDashboardPage() {
                 </span>
               )}
             </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
-                Retraits Mobile Money
-              </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Validation & Exécution</div>
+            <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+              Retraits
             </div>
           </Link>
 
+          {/* 3. Dépôt mobile money */}
           <Link
-            href="/admin/utilisateurs"
+            href="/admin/depots"
             className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
           >
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
-                <Users className="w-5 h-5" />
+                <ArrowDownToLine className="w-5 h-5" />
               </div>
             </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
-                Utilisateurs & KYC
-              </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Comptes & Droits Admin</div>
+            <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+              Dépôt mobile money
             </div>
           </Link>
 
+          {/* 4. Paiement automatique */}
+          <Link
+            href="/admin/paiements-auto"
+            className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
+                <Zap className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+              Paiement automatique
+            </div>
+          </Link>
+
+          {/* 5. Gestion des tâches */}
+          <Link
+            href="/admin/taches"
+            className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
+                <CalendarCheck className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+              Gestion des tâches
+            </div>
+          </Link>
+
+          {/* 6. Formation Vita Earn */}
+          <Link
+            href="/admin/formations"
+            className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+              Formation Vita Earn
+            </div>
+          </Link>
+
+          {/* 7. Marketplace */}
           <Link
             href="/admin/produits"
             className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
@@ -714,65 +774,42 @@ export default async function AdminDashboardPage() {
                 </span>
               )}
             </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
-                Modération Produits
-              </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Marketplace & Vendeurs</div>
+            <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+              Marketplace
             </div>
           </Link>
 
+          {/* 8. Emploi */}
           <Link
-            href="/admin/transactions"
+            href="/admin/emploi"
             className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
           >
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
-                <History className="w-5 h-5" />
+                <Briefcase className="w-5 h-5" />
               </div>
             </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
-                Grand Livre Financier
-              </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Écritures Immuables</div>
+            <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+              Emploi
             </div>
           </Link>
 
+          {/* 9. Application Vita L */}
           <Link
-            href="/admin/arbre"
+            href="/admin/applications"
             className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
           >
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
-                <GitBranch className="w-5 h-5" />
+                <Smartphone className="w-5 h-5" />
               </div>
             </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
-                Arbre d&apos;Affiliation
-              </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Lignées 3 Niveaux</div>
+            <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+              Application Vita L
             </div>
           </Link>
 
-          <Link
-            href="/admin/taches"
-            className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0084FF] border border-blue-100 flex items-center justify-center">
-                <CalendarCheck className="w-5 h-5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
-                Gestion des Tâches
-              </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Time Table & Quiz</div>
-            </div>
-          </Link>
-
+          {/* 10. Réglages plateforme */}
           <Link
             href="/admin/reglages"
             className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
@@ -782,28 +819,8 @@ export default async function AdminDashboardPage() {
                 <Settings className="w-5 h-5" />
               </div>
             </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
-                Réglages Plateforme
-              </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Tarifs, Support, Config</div>
-            </div>
-          </Link>
-
-          <Link
-            href="/admin/journal"
-            className="p-4 rounded-3xl bg-white border border-slate-100 hover:border-[#0084FF] shadow-sm transition-all group flex flex-col justify-between cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-red-50 text-red-600 border border-red-100 flex items-center justify-center">
-                <ShieldAlert className="w-5 h-5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-red-600 transition-colors">
-                Journal d&apos;Audit
-              </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Traçabilité & Sécurité</div>
+            <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-[#0084FF] transition-colors">
+              Réglages plateforme
             </div>
           </Link>
         </div>

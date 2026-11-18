@@ -8,20 +8,20 @@ import {
   Menu,
   X,
   LayoutDashboard,
-  CreditCard,
   Users,
-  ShoppingBag,
-  History,
-  GitBranch,
+  CreditCard,
+  ArrowDownToLine,
+  Zap,
   CalendarCheck,
+  GraduationCap,
+  ShoppingBag,
+  Briefcase,
+  Smartphone,
   Settings,
-  ShieldAlert,
   ShieldCheck,
   Lock,
-  ArrowLeft,
   ChevronRight,
   Globe,
-  Radio,
 } from "lucide-react";
 
 interface AdminNavbarProps {
@@ -47,70 +47,74 @@ export function AdminNavbar({
     });
   };
 
+  // Liste ordonnée exacte selon les exigences de l'administrateur (sans aucun petit texte en dessous)
   const navItems = [
     {
-      label: "Tableau de bord & Stats",
-      sublabel: "Vue globale & KPIs",
+      label: "Tableau de bord",
       href: "/admin",
       icon: LayoutDashboard,
       badge: null,
     },
     {
-      label: "Validation des Retraits",
-      sublabel: "Mobile Money (T-Money, Flooz)",
+      label: "Utilisateurs",
+      href: "/admin/utilisateurs",
+      icon: Users,
+      badge: null,
+    },
+    {
+      label: "Retraits",
       href: "/admin/retraits",
       icon: CreditCard,
       badge: pendingWithdrawalsCount > 0 ? pendingWithdrawalsCount : null,
       badgeColor: "bg-amber-500 text-white animate-pulse",
     },
     {
-      label: "Utilisateurs & KYC",
-      sublabel: "Comptes & rôles administrateurs",
-      href: "/admin/utilisateurs",
-      icon: Users,
+      label: "Dépôt mobile money",
+      href: "/admin/depots",
+      icon: ArrowDownToLine,
       badge: null,
     },
     {
-      label: "Modération des Produits",
-      sublabel: "Marketplace & vendeurs",
-      href: "/admin/produits",
-      icon: ShoppingBag,
-      badge: pendingProductsCount > 0 ? pendingProductsCount : null,
-      badgeColor: "bg-blue-500 text-white",
-    },
-    {
-      label: "Grand Livre Financier",
-      sublabel: "Écritures comptables immuables",
-      href: "/admin/transactions",
-      icon: History,
+      label: "Paiement automatique",
+      href: "/admin/paiements-auto",
+      icon: Zap,
       badge: null,
     },
     {
-      label: "Arbre d'Affiliation",
-      sublabel: "Structure 3 niveaux & anti-fraude",
-      href: "/admin/arbre",
-      icon: GitBranch,
-      badge: null,
-    },
-    {
-      label: "Gestion des Tâches",
-      sublabel: "Time Table & quiz rémunérés",
+      label: "Gestion des tâches",
       href: "/admin/taches",
       icon: CalendarCheck,
       badge: null,
     },
     {
-      label: "Réglages Plateforme",
-      sublabel: "Tarifs, commissions & support",
-      href: "/admin/reglages",
-      icon: Settings,
+      label: "Formation Vita Earn",
+      href: "/admin/formations",
+      icon: GraduationCap,
       badge: null,
     },
     {
-      label: "Journal d'Audit & Sécurité",
-      sublabel: "Traçabilité des actions sensibles",
-      href: "/admin/journal",
-      icon: ShieldAlert,
+      label: "Marketplace",
+      href: "/admin/produits",
+      icon: ShoppingBag,
+      badge: pendingProductsCount > 0 ? pendingProductsCount : null,
+      badgeColor: "bg-[#0084FF] text-white",
+    },
+    {
+      label: "Emploi",
+      href: "/admin/emploi",
+      icon: Briefcase,
+      badge: null,
+    },
+    {
+      label: "Application Vita L",
+      href: "/admin/applications",
+      icon: Smartphone,
+      badge: null,
+    },
+    {
+      label: "Réglages plateforme",
+      href: "/admin/reglages",
+      icon: Settings,
       badge: null,
     },
   ];
@@ -159,7 +163,7 @@ export function AdminNavbar({
 
           {/* Actions rapides à droite : RETOUR SUR LE SITE + VERROUILLER */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* BOUTON ULTRA-VISIBLE : RETOUR SUR LE SITE */}
+            {/* Bouton retour sur le site */}
             <Link
               href="/"
               className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-md transition-all border border-emerald-400/40 cursor-pointer active:scale-95 group"
@@ -185,35 +189,35 @@ export function AdminNavbar({
       </header>
 
       {/* ========================================================================= */}
-      {/* TIROIR LATÉRAL GAUCHE DU COMMAND CENTER (3 TRAITS ☰)                      */}
+      {/* TIROIR LATÉRAL GAUCHE DU COMMAND CENTER (FOND BLANC, LOGOS BLEUS, TEXTES NOIRS) */}
       {/* ========================================================================= */}
       {/* 1. Backdrop */}
       <div
-        className={`fixed inset-0 z-50 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-xs transition-opacity duration-300 ${
           drawerOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setDrawerOpen(false)}
         aria-hidden="true"
       />
 
-      {/* 2. Volet latéral coulissant */}
+      {/* 2. Volet latéral coulissant (Fond BLANC, Textes NOIRS, Logos BLEUS) */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-50 w-72 sm:w-84 max-w-[85vw] bg-[#0A111F] text-slate-100 shadow-2xl shadow-black flex flex-col transition-transform duration-300 ease-in-out border-r border-[#1B2942] ${
+        className={`fixed top-0 left-0 bottom-0 z-50 w-72 sm:w-84 max-w-[85vw] bg-white text-slate-900 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out border-r border-slate-200 ${
           drawerOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-label="Navigation Command Center"
       >
-        {/* En-tête du tiroir avec Logo & Titre */}
-        <div className="p-4 border-b border-[#1A2840] flex items-center justify-between bg-[#080E1B]">
+        {/* En-tête du tiroir avec Logo & Titre (Fond blanc) */}
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-700 to-cyan-500 flex items-center justify-center text-white shrink-0 shadow-md">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#0084FF] shrink-0 shadow-xs">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-[10px] font-black uppercase tracking-wider text-cyan-400">
+              <div className="text-[10px] font-black uppercase tracking-wider text-[#0084FF]">
                 Portail Exécutif
               </div>
-              <div className="text-sm font-black text-white">
+              <div className="text-sm font-black text-slate-900">
                 Command Center
               </div>
             </div>
@@ -221,40 +225,40 @@ export function AdminNavbar({
           <button
             type="button"
             onClick={() => setDrawerOpen(false)}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-[#16233B] transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
             aria-label="Fermer le menu"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Profil administrateur actif */}
-        <div className="p-3.5 bg-[#0C1527] border-b border-[#1A2840]">
+        {/* Profil administrateur actif (Fond clair) */}
+        <div className="p-3.5 bg-slate-50 border-b border-slate-200/80">
           <div className="flex items-center gap-2.5">
             <div className="relative shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white font-black text-sm flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-[#0084FF] text-white font-black text-sm flex items-center justify-center shadow-xs">
                 E
               </div>
               <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border-2 border-[#0C1527]"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border-2 border-white"></span>
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-white truncate">
+              <p className="text-xs font-bold text-slate-900 truncate">
                 {userEmail}
               </p>
-              <span className="inline-block mt-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-300 bg-indigo-950/60 border border-indigo-700/40 px-2 py-0.5 rounded-full">
+              <span className="inline-block mt-0.5 text-[10px] font-black uppercase tracking-wider text-[#0084FF] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
                 {isSuperAdmin ? "Super Administrateur" : "Délégué"}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Liste des 9 Modules de la console */}
-        <div className="p-3 overflow-y-auto flex-1 space-y-1">
+        {/* Liste des sections de menu : FOND BLANC, ÉCRITURES NOIRES, LOGOS BLEUS, AUCUN PETIT TEXTE */}
+        <div className="p-3 overflow-y-auto flex-1 space-y-1 bg-white">
           <p className="text-[10px] font-black text-slate-400 uppercase px-3 pt-1 pb-1 tracking-wider">
-            Modules d&apos;Administration
+            Menu Administrateur
           </p>
 
           {navItems.map((item) => {
@@ -271,30 +275,23 @@ export function AdminNavbar({
                 onClick={() => setDrawerOpen(false)}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-bold transition-all group ${
                   isActive
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-950/60 border border-indigo-400/30"
-                    : "text-slate-300 hover:bg-[#131F35] hover:text-white border border-transparent hover:border-[#1E2E4B]"
+                    ? "bg-blue-50 text-[#0084FF] border border-blue-200/80 shadow-xs"
+                    : "text-slate-900 hover:bg-slate-50 hover:text-black border border-transparent hover:border-slate-100"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 ${
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
                       isActive
-                        ? "bg-white/20 text-white"
-                        : "bg-[#142138] text-indigo-400 group-hover:bg-[#1A2C4A] group-hover:text-indigo-300"
+                        ? "bg-[#0084FF] text-white border-[#0084FF]"
+                        : "bg-blue-50/70 text-[#0084FF] border-blue-100 group-hover:bg-[#0084FF] group-hover:text-white group-hover:border-[#0084FF] transition-colors"
                     }`}
                   >
                     <Icon className="w-4 h-4" />
                   </div>
-                  <div className="min-w-0 text-left">
-                    <div className="truncate font-black">{item.label}</div>
-                    <div
-                      className={`text-[10px] font-medium truncate ${
-                        isActive ? "text-indigo-200" : "text-slate-400"
-                      }`}
-                    >
-                      {item.sublabel}
-                    </div>
-                  </div>
+                  <span className={`truncate font-black text-xs ${isActive ? "text-[#0084FF]" : "text-slate-900"}`}>
+                    {item.label}
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0 ml-2">
@@ -309,7 +306,7 @@ export function AdminNavbar({
                   )}
                   <ChevronRight
                     className={`w-3.5 h-3.5 ${
-                      isActive ? "text-white" : "text-slate-600 group-hover:text-slate-400"
+                      isActive ? "text-[#0084FF]" : "text-slate-300 group-hover:text-slate-500"
                     }`}
                   />
                 </div>
@@ -318,28 +315,28 @@ export function AdminNavbar({
           })}
         </div>
 
-        {/* Pied du tiroir : BOUTON RETOUR SUR LE SITE & VERROUILLAGE */}
-        <div className="p-3 border-t border-[#1A2840] bg-[#080E1B] space-y-2">
-          {/* BOUTON ÉTENDU RETOUR SUR LE SITE */}
+        {/* Pied du tiroir : FOND BLANC / GRIS TRÈS CLAIR, RETOUR SUR LE SITE & VERROUILLAGE */}
+        <div className="p-3 border-t border-slate-200/80 bg-slate-50 space-y-2">
+          {/* Bouton étendu retour sur le site */}
           <Link
             href="/"
             onClick={() => setDrawerOpen(false)}
-            className="flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-md transition-all border border-emerald-400/30"
+            className="flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-sm transition-all border border-emerald-400/30"
           >
             <div className="flex items-center gap-2">
               <Globe className="w-4 h-4" />
               <span>Retour sur le site</span>
             </div>
-            <span className="text-[10px] opacity-80">Mes comptes →</span>
+            <span className="text-[10px] opacity-90">Mes comptes →</span>
           </Link>
 
           <button
             type="button"
             onClick={handleLock}
             disabled={isPending}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/50 text-red-300 text-xs font-bold transition-colors cursor-pointer border border-red-800/40"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold transition-colors cursor-pointer border border-red-200"
           >
-            <Lock className="w-3.5 h-3.5 text-red-400 shrink-0" />
+            <Lock className="w-3.5 h-3.5 text-red-500 shrink-0" />
             <span>{isPending ? "Verrouillage..." : "Verrouiller le Sas Admin"}</span>
           </button>
         </div>
