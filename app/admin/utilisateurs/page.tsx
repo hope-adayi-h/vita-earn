@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isAdminUnlocked, SUPER_ADMIN_EMAIL } from "@/lib/security/admin-lock";
+import { isAdminUnlocked, checkAdminSession } from "@/lib/security/admin-lock";
 import { getAllUsers } from "@/lib/auth/local-store";
 import { UtilisateursClient, type UserItem } from "./UtilisateursClient";
 
@@ -11,46 +9,7 @@ export const metadata = {
 };
 
 export default async function AdminUtilisateursPage() {
-  const cookieStore = cookies();
-  const supabase = createClient();
-
-  let userEmail = "";
-  let isAdmin = false;
-  let isSuperAdmin = false;
-
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      userEmail = user.email || "";
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.role === "admin" || user.email === SUPER_ADMIN_EMAIL) {
-        isAdmin = true;
-        isSuperAdmin = user.email === SUPER_ADMIN_EMAIL;
-      }
-    }
-  } catch {}
-
-  if (!isAdmin) {
-    const rawSession = cookieStore.get("vita_session_user")?.value;
-    if (rawSession) {
-      try {
-        const parsed = JSON.parse(rawSession);
-        if (parsed.role === "admin" || parsed.email === SUPER_ADMIN_EMAIL) {
-          isAdmin = true;
-          userEmail = parsed.email || SUPER_ADMIN_EMAIL;
-          isSuperAdmin = parsed.email === SUPER_ADMIN_EMAIL;
-        }
-      } catch {}
-    }
-  }
+  const { isAdmin, isSuperAdmin, userEmail } = await checkAdminSession();
 
   if (!isAdmin) {
     redirect("/auth/login?redirect=/admin/utilisateurs");

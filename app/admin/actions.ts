@@ -13,58 +13,27 @@ import {
   resetAdminAttempts,
   getCurrentHourlyInfo,
   SUPER_ADMIN_EMAIL,
+  checkAdminSession,
 } from "@/lib/security/admin-lock";
 import { getAllUsers, saveUser } from "@/lib/auth/local-store";
 
 const SESSION_COOKIE_NAME = "vita_admin_unlocked";
 
 /**
- * Vérifie l'identité de l'administrateur
+ * Vérifie l'identité de l'administrateur avec tolérance et résilience
  */
 export async function verifyAdminUser() {
-  const cookieStore = cookies();
-  const supabase = createClient();
+  const { isAdmin, isSuperAdmin, userEmail, userId } = await checkAdminSession();
 
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.role === "admin" || user.email === SUPER_ADMIN_EMAIL) {
-        return {
-          user: { id: user.id, email: user.email || SUPER_ADMIN_EMAIL },
-          isAdmin: true,
-          isSuperAdmin: user.email === SUPER_ADMIN_EMAIL,
-        };
-      }
-    }
-  } catch {
-    // Si Supabase indisponible, vérifier la session locale
-  }
-
-  // Fallback session locale
-  const rawSession = cookieStore.get("vita_session_user")?.value;
-  if (rawSession) {
-    try {
-      const parsed = JSON.parse(rawSession);
-      if (parsed.role === "admin" || parsed.email === SUPER_ADMIN_EMAIL) {
-        return {
-          user: {
-            id: parsed.id || "usr_espoir_master",
-            email: parsed.email || SUPER_ADMIN_EMAIL,
-          },
-          isAdmin: true,
-          isSuperAdmin: parsed.email === SUPER_ADMIN_EMAIL,
-        };
-      }
-    } catch {}
+  if (isAdmin) {
+    return {
+      user: {
+        id: userId || "usr_espoir_master",
+        email: userEmail || SUPER_ADMIN_EMAIL,
+      },
+      isAdmin: true,
+      isSuperAdmin,
+    };
   }
 
   throw new Error("Accès formellement refusé : privilèges administrateur requis.");

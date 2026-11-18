@@ -33,7 +33,7 @@ export default async function RecompenseDemarragePage() {
       date: "14 Nov, 2026 14:20",
       timeAgo: "Il y a 3 jours",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -45,7 +45,7 @@ export default async function RecompenseDemarragePage() {
       date: "12 Nov, 2026 11:15",
       timeAgo: "Il y a 5 jours",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -57,7 +57,7 @@ export default async function RecompenseDemarragePage() {
       date: "10 Nov, 2026 09:40",
       timeAgo: "Il y a 1 semaine",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -69,7 +69,7 @@ export default async function RecompenseDemarragePage() {
       date: "09 Nov, 2026 16:30",
       timeAgo: "Il y a 1 semaine",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -81,7 +81,7 @@ export default async function RecompenseDemarragePage() {
       date: "08 Nov, 2026 18:22",
       timeAgo: "Il y a 1 semaine",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -93,7 +93,7 @@ export default async function RecompenseDemarragePage() {
       date: "07 Nov, 2026 10:05",
       timeAgo: "Il y a 1 semaine",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -105,7 +105,7 @@ export default async function RecompenseDemarragePage() {
       date: "05 Nov, 2026 01:17",
       timeAgo: "Il y a 1 semaine",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -117,7 +117,7 @@ export default async function RecompenseDemarragePage() {
       date: "04 Nov, 2026 03:15",
       timeAgo: "Il y a 2 semaines",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -129,7 +129,7 @@ export default async function RecompenseDemarragePage() {
       date: "03 Nov, 2026 02:10",
       timeAgo: "Il y a 2 semaines",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -141,7 +141,7 @@ export default async function RecompenseDemarragePage() {
       date: "01 Nov, 2026 01:39",
       timeAgo: "Il y a 2 semaines",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -153,7 +153,7 @@ export default async function RecompenseDemarragePage() {
       date: "28 Oct, 2026 10:54",
       timeAgo: "Il y a 3 semaines",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -165,7 +165,7 @@ export default async function RecompenseDemarragePage() {
       date: "25 Oct, 2026 08:30",
       timeAgo: "Il y a 3 semaines",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -177,7 +177,7 @@ export default async function RecompenseDemarragePage() {
       date: "22 Oct, 2026 06:15",
       timeAgo: "Il y a 3 semaines",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -189,7 +189,7 @@ export default async function RecompenseDemarragePage() {
       date: "20 Oct, 2026 09:20",
       timeAgo: "Il y a 4 semaines",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -201,7 +201,7 @@ export default async function RecompenseDemarragePage() {
       date: "18 Oct, 2026 09:54",
       timeAgo: "Il y a 1 mois",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -213,7 +213,7 @@ export default async function RecompenseDemarragePage() {
       date: "15 Oct, 2026 04:40",
       timeAgo: "Il y a 1 mois",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -225,7 +225,7 @@ export default async function RecompenseDemarragePage() {
       date: "12 Oct, 2026 10:53",
       timeAgo: "Il y a 1 mois",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -237,7 +237,7 @@ export default async function RecompenseDemarragePage() {
       date: "10 Oct, 2026 12:47",
       timeAgo: "Il y a 1 mois",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -249,7 +249,7 @@ export default async function RecompenseDemarragePage() {
       date: "08 Oct, 2026 07:18",
       timeAgo: "Il y a 1 mois",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
     {
@@ -261,7 +261,7 @@ export default async function RecompenseDemarragePage() {
       date: "05 Oct, 2026 15:02",
       timeAgo: "Il y a 1 mois",
       amountPaid: 4500,
-      commissionEarned: 2000,
+      commissionEarned: 2200,
       isActivated: true,
     },
   ];
@@ -314,7 +314,7 @@ export default async function RecompenseDemarragePage() {
             date: new Date(r.created_at).toLocaleDateString("fr-FR"),
             timeAgo: "Récemment",
             amountPaid: 4500,
-            commissionEarned: 2000,
+            commissionEarned: 2200,
             isActivated: prof?.is_activated ?? true,
           };
         });

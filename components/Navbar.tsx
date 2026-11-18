@@ -153,8 +153,8 @@ export function Navbar({ user }: NavbarProps) {
   const isActivationPage = pathname.startsWith("/activation");
   const isAuthPage = pathname.startsWith("/auth");
 
-  // Masquer intégralement le header sur les pages d'authentification
-  if (isAuthPage) {
+  // RÈGLE : Masquer intégralement le header sur les pages d'auth, d'activation/paiement, ou tant que le compte n'est pas activé
+  if (isAuthPage || isActivationPage || !user?.isActivated) {
     return null;
   }
 

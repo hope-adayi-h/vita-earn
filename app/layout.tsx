@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
-import { BottomNav } from "@/components/BottomNav";
 import { Footer } from "@/components/Footer";
 import { AppProvider } from "@/context/AppContext";
 import { createClient } from "@/lib/supabase/server";
@@ -39,7 +38,11 @@ export default async function RootLayout({
   if (sessionUserCookie) {
     try {
       sessionUser = JSON.parse(sessionUserCookie);
-    } catch {}
+    } catch {
+      try {
+        sessionUser = JSON.parse(decodeURIComponent(sessionUserCookie));
+      } catch {}
+    }
   }
 
   const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
@@ -132,14 +135,13 @@ export default async function RootLayout({
 
   return (
     <html lang="fr" className={inter.variable}>
-      <body className="min-h-screen flex flex-col bg-vita-surface text-vita-text antialiased pb-20 md:pb-0">
+      <body className="min-h-screen flex flex-col bg-vita-surface text-vita-text antialiased">
         <AppProvider>
           <Navbar user={currentUser} />
           <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-6 sm:py-8">
             {children}
           </main>
           <Footer />
-          <BottomNav />
         </AppProvider>
       </body>
     </html>

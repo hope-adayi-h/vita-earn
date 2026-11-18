@@ -8,6 +8,7 @@ import {
   Users,
   CheckCircle2,
   Sparkles,
+  ArrowUp,
 } from "lucide-react";
 import { claimWelcomeBonusAction } from "@/lib/actions/tasks";
 import { formatFCFA } from "@/lib/utils";
@@ -225,53 +226,80 @@ export function RecompenseDemarrageClient({
           </span>
         </div>
 
-        {/* En-têtes de colonnes (DATE / HEURE, NOM D'UTILISATEUR, REVENU) */}
-        <div className="grid grid-cols-12 px-4 sm:px-6 py-2.5 bg-gray-50/80 dark:bg-[#0E1812] border-b border-gray-100 dark:border-[#1E2E24] text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-          <div className="col-span-4 sm:col-span-4">DATE / HEURE</div>
-          <div className="col-span-5 sm:col-span-5">NOM D&apos;UTILISATEUR</div>
-          <div className="col-span-3 sm:col-span-3 text-right">REVENU</div>
-        </div>
-
-        {/* Lignes du tableau (sans numéros de téléphone ni drapeaux) */}
-        <div className="divide-y divide-gray-100 dark:divide-[#1E2E24]">
-          {members.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 text-xs">
-              Aucun filleul de niveau 1 enregistré pour le moment.
+        {/* Tableau défilable horizontalement sur mobile (4 colonnes exactes : DATE, TÉLÉPHONE, NOM D'UTILISATEUR, REVENU) */}
+        <div className="overflow-x-auto">
+          <div className="min-w-[580px]">
+            {/* En-têtes de colonnes */}
+            <div className="grid grid-cols-12 px-4 sm:px-6 py-3 bg-gray-50/80 dark:bg-[#0E1812] border-b border-gray-100 dark:border-[#1E2E24] text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              <div className="col-span-3">DATE</div>
+              <div className="col-span-3">TÉLÉPHONE</div>
+              <div className="col-span-3">NOM D&apos;UTILISATEUR</div>
+              <div className="col-span-3 text-right">REVENU</div>
             </div>
-          ) : (
-            members.map((member) => (
-              <div
-                key={member.id}
-                className="grid grid-cols-12 items-center px-4 sm:px-6 py-3.5 hover:bg-gray-50/70 dark:hover:bg-[#17241C] transition-colors"
-              >
-                {/* Colonne 1 : DATE / HEURE */}
-                <div className="col-span-4 sm:col-span-4 min-w-0 pr-2">
-                  <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">
-                    {member.date}
-                  </p>
-                  <p className="text-[10px] text-gray-400 truncate">
-                    {member.timeAgo}
-                  </p>
-                </div>
 
-                {/* Colonne 2 : NOM D'UTILISATEUR */}
-                <div className="col-span-5 sm:col-span-5 min-w-0 pr-2">
-                  <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white truncate block">
-                    @{member.username}
-                  </span>
+            {/* Lignes du tableau */}
+            <div className="divide-y divide-gray-100 dark:divide-[#1E2E24]">
+              {members.length === 0 ? (
+                <div className="p-8 text-center text-gray-400 text-xs">
+                  Aucun filleul de niveau 1 enregistré pour le moment.
                 </div>
+              ) : (
+                members.map((member) => (
+                  <div
+                    key={member.id}
+                    className="grid grid-cols-12 items-center px-4 sm:px-6 py-3.5 hover:bg-gray-50/70 dark:hover:bg-[#17241C] transition-colors text-xs"
+                  >
+                    {/* Colonne 1 : DATE */}
+                    <div className="col-span-3 pr-2">
+                      <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                        {member.date}
+                      </p>
+                      <p className="text-[10px] text-gray-400 truncate">
+                        {member.timeAgo}
+                      </p>
+                    </div>
 
-                {/* Colonne 3 : REVENU */}
-                <div className="col-span-3 sm:col-span-3 text-right">
-                  <span className="text-xs sm:text-sm font-black text-gray-900 dark:text-white">
-                    XOF {member.commissionEarned.toLocaleString("fr-FR")}
-                  </span>
-                </div>
-              </div>
-            ))
-          )}
+                    {/* Colonne 2 : TÉLÉPHONE */}
+                    <div className="col-span-3 pr-2">
+                      <span className="font-medium text-gray-600 dark:text-gray-300 truncate block">
+                        {member.phone || "Non renseigné"}
+                      </span>
+                    </div>
+
+                    {/* Colonne 3 : NOM D'UTILISATEUR */}
+                    <div className="col-span-3 pr-2">
+                      <span className="font-bold text-gray-900 dark:text-white truncate block">
+                        @{member.username}
+                      </span>
+                    </div>
+
+                    {/* Colonne 4 : REVENU */}
+                    <div className="col-span-3 text-right">
+                      <span className="font-black text-gray-900 dark:text-white">
+                        XOF {member.commissionEarned.toLocaleString("fr-FR")}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* 4. BOUTON FLOTTANT RETOUR EN HAUT (STYLE EXACT DE LA CAPTURE D'ÉCRAN) */}
+      <button
+        type="button"
+        onClick={() => {
+          if (typeof window !== "undefined") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        }}
+        className="fixed bottom-6 right-6 w-11 h-11 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95 z-30 cursor-pointer"
+        aria-label="Retour en haut"
+      >
+        <ArrowUp className="w-5 h-5 stroke-[2.5]" />
+      </button>
     </div>
   );
 }

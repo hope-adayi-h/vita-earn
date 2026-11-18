@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isAdminUnlocked, SUPER_ADMIN_EMAIL } from "@/lib/security/admin-lock";
+import { isAdminUnlocked, checkAdminSession } from "@/lib/security/admin-lock";
 import { formatFCFA } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -25,36 +23,7 @@ interface PageProps {
 }
 
 export default async function AdminTransactionsPage({ searchParams }: PageProps) {
-  const cookieStore = cookies();
-  const supabase = createClient();
-  let isAdmin = false;
-
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.role === "admin" || user.email === SUPER_ADMIN_EMAIL) {
-        isAdmin = true;
-      }
-    }
-  } catch {}
-
-  if (!isAdmin) {
-    const rawSession = cookieStore.get("vita_session_user")?.value;
-    if (rawSession) {
-      try {
-        const parsed = JSON.parse(rawSession);
-        if (parsed.role === "admin" || parsed.email === SUPER_ADMIN_EMAIL) {
-          isAdmin = true;
-        }
-      } catch {}
-    }
-  }
+  const { isAdmin } = await checkAdminSession();
 
   if (!isAdmin) {
     redirect("/auth/login?redirect=/admin/transactions");

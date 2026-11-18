@@ -8,7 +8,11 @@ import { getSupportSettingsAction } from "@/lib/actions/support";
 import { AdminSupportSettingsCard } from "@/components/admin/AdminSupportSettingsCard";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminRoleManagerCard } from "@/components/admin/AdminRoleManagerCard";
-import { isAdminUnlocked, SUPER_ADMIN_EMAIL } from "@/lib/security/admin-lock";
+import {
+  isAdminUnlocked,
+  SUPER_ADMIN_EMAIL,
+  checkAdminSession,
+} from "@/lib/security/admin-lock";
 import { getAllUsers } from "@/lib/auth/local-store";
 import {
   Users,
@@ -37,44 +41,7 @@ export default async function AdminDashboardPage() {
   const cookieStore = cookies();
   const supabase = createClient();
 
-  let userEmail = "";
-  let isAdmin = false;
-  let isSuperAdmin = false;
-
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      userEmail = user.email || "";
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.role === "admin" || user.email === SUPER_ADMIN_EMAIL) {
-        isAdmin = true;
-        isSuperAdmin = user.email === SUPER_ADMIN_EMAIL;
-      }
-    }
-  } catch {}
-
-  // Fallback local session
-  if (!isAdmin) {
-    const rawSession = cookieStore.get("vita_session_user")?.value;
-    if (rawSession) {
-      try {
-        const parsed = JSON.parse(rawSession);
-        if (parsed.role === "admin" || parsed.email === SUPER_ADMIN_EMAIL) {
-          isAdmin = true;
-          userEmail = parsed.email || SUPER_ADMIN_EMAIL;
-          isSuperAdmin = parsed.email === SUPER_ADMIN_EMAIL;
-        }
-      } catch {}
-    }
-  }
+  const { isAdmin, isSuperAdmin, userEmail } = await checkAdminSession();
 
   // RÈGLE P0 : Contrôle d'accès strict
   if (!isAdmin) {
