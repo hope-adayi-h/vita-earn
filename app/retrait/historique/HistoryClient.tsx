@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatFCFA } from "@/lib/utils";
 import type { WithdrawalRecord } from "../actions";
-import { simulateValidateWithdrawalAction } from "../actions";
 import {
   ArrowLeft,
   Clock,
@@ -49,7 +48,6 @@ export function HistoryClient({ initialHistory, totalWithdrawn }: HistoryClientP
   const [isPendingTransition, startTransition] = useTransition();
   const [filter, setFilter] = useState<"all" | "completed" | "processing">("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [validatingId, setValidatingId] = useState<string | null>(null);
   const [localHistory, setLocalHistory] = useState<WithdrawalRecord[]>(initialHistory);
 
   const filtered = localHistory.filter((item) => {
@@ -65,27 +63,6 @@ export function HistoryClient({ initialHistory, totalWithdrawn }: HistoryClientP
     }
     return true;
   });
-
-  const handleSimulateValidate = async (id: string) => {
-    setValidatingId(id);
-    try {
-      const res = await simulateValidateWithdrawalAction(id);
-      if (res.success) {
-        setLocalHistory((prev) =>
-          prev.map((item) =>
-            item.id === id || item.reference === id
-              ? { ...item, status: "completed", processedAt: new Date().toISOString() }
-              : item
-          )
-        );
-        startTransition(() => {
-          router.refresh();
-        });
-      }
-    } finally {
-      setValidatingId(null);
-    }
-  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 pb-12">
@@ -359,20 +336,6 @@ export function HistoryClient({ initialHistory, totalWithdrawn }: HistoryClientP
                     <p className="text-[11px] text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
                       Votre demande de retrait de <strong>{formatFCFA(item.amount)}</strong> a été enregistrée à <strong>{formatDateTime(item.createdAt)}</strong>. Frais fixes : <strong>{formatFCFA(fee)}</strong>. Vous allez recevoir la somme nette de <strong>{formatFCFA(netAmount)}</strong> directement sur votre numéro <strong>{item.phoneNumber}</strong> ({item.paymentMethod}) dans un délai de <strong>10 minutes à 24 heures</strong>.
                     </p>
-
-                    {/* Bouton de simulation de validation pour tests */}
-                    <div className="pt-1 flex items-center justify-end">
-                      <button
-                        type="button"
-                        onClick={() => handleSimulateValidate(item.id)}
-                        disabled={validatingId === item.id}
-                        className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 hover:text-emerald-900 dark:text-emerald-400 bg-emerald-100/70 hover:bg-emerald-200/80 dark:bg-emerald-900/40 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
-                        title="Simuler instantanément la réception du virement pour tester la notification"
-                      >
-                        <Zap className="w-3 h-3 text-emerald-600" />
-                        <span>{validatingId === item.id ? "Validation en cours..." : "Simuler la réception validée (Test)"}</span>
-                      </button>
-                    </div>
                   </div>
                 )}
               </div>

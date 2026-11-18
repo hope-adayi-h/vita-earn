@@ -5,6 +5,7 @@ import { headers, cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { saveUser, findUserByIdentifier } from "@/lib/auth/local-store";
+import { checkLoginRateLimit, checkRegisterRateLimit } from "@/lib/security/rate-limit";
 import {
   registerSchema,
   loginSchema,
@@ -60,6 +61,15 @@ export async function signUpAction(
   const cookieStore = cookies();
   const cleanUsername = username.trim();
   const cleanEmail = email.toLowerCase().trim();
+
+  // RÈGLE DE SÉCURITÉ P2 : Protection contre les inscriptions massives automatisées
+  const regLimit = checkRegisterRateLimit(cleanEmail);
+  if (!regLimit.allowed) {
+    return {
+      error: `Trop de tentatives d'inscription. Veuillez patienter ${regLimit.resetInSeconds} secondes avant de réessayer.`,
+    };
+  }
+
   const appUrl = getAppUrl();
 
   let registeredUserId = "";
@@ -113,11 +123,13 @@ export async function signUpAction(
 
           if (upline && upline !== "No One" && upline !== "Aucun") {
             const cleanUpline = upline.trim();
+            // RÈGLE P2 : Recherche stricte par referral_code unique, ou nom d'utilisateur exact
             const { data: referrer } = await adminClient
               .from("profiles")
               .select("id")
-              .or(`referral_code.eq.${cleanUpline.toUpperCase()},full_name.ilike.${cleanUpline}`)
+              .or(`referral_code.eq.${cleanUpline.toUpperCase()},full_name.eq.${cleanUpline}`)
               .neq("id", data.user.id)
+              .limit(1)
               .maybeSingle();
 
             if (referrer?.id) {
@@ -179,13 +191,13 @@ export async function signUpAction(
     if (rawKnown) knownAccounts = JSON.parse(rawKnown);
     if (!Array.isArray(knownAccounts)) knownAccounts = [];
 
+    // RÈGLE P1 : Le mot de passe ne doit JAMAIS être stocké en clair dans les cookies
     const newRec = {
       id: finalUserId,
       username: cleanUsername,
       email: cleanEmail,
       phone: phone,
       country: country,
-      password: password,
       role: "user",
       isActivated: false,
     };
@@ -240,6 +252,14 @@ export async function signInAction(
   const { identifier, password } = parsed.data;
   const cookieStore = cookies();
   const cleanId = identifier.toLowerCase().trim();
+
+  // RÈGLE DE SÉCURITÉ P2 : Protection contre la force brute (5 tentatives max par 5 minutes)
+  const loginLimit = checkLoginRateLimit(cleanId);
+  if (!loginLimit.allowed) {
+    return {
+      error: `Trop de tentatives de connexion échouées. Par sécurité, veuillez patienter ${loginLimit.resetInSeconds} secondes.`,
+    };
+  }
 
   // 1. Lire le coffre de comptes persistant dans le navigateur
   let knownAccounts: any[] = [];
@@ -306,7 +326,6 @@ export async function signInAction(
       email: isEmail ? cleanId : `${cleanId.toLowerCase()}@vitaearn.com`,
       phone: "+228 90 00 00 00",
       country: "Togo",
-      password: password,
       role: "user",
       isActivated: false,
     };

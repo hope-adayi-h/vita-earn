@@ -24,43 +24,28 @@ export const metadata = {
 };
 
 export default async function AdminDashboardPage() {
-  const cookieStore = cookies();
-  const testRole = cookieStore.get("vita_test_role")?.value;
-  let isAdmin = testRole === "admin";
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
+  if (!user) {
+    redirect("/auth/login?redirect=/admin");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  // RÈGLE P0 : Vérification stricte en base de données du rôle admin (aucun bypass cookie)
+  if (profile?.role !== "admin") {
+    redirect("/");
+  }
+
+  const isAdmin = true;
   const isConfigured =
     Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
     !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
-
-  if (isConfigured && !isAdmin) {
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        redirect("/auth/login?redirect=/admin");
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.role === "admin") {
-        isAdmin = true;
-      }
-    } catch {
-      // Ignoré
-    }
-  }
-
-  // Si l'utilisateur n'est pas admin, redirection vers le login
-  if (!isAdmin && isConfigured) {
-    redirect("/");
-  } else if (!isAdmin && !isConfigured) {
-    redirect("/auth/login?redirect=/admin");
-  }
 
   let totalUsers = 142;
   let activatedUsers = 98;

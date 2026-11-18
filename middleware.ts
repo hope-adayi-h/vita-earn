@@ -28,20 +28,9 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/auth/reset-password") ||
     path.startsWith("/auth/callback");
 
-  // 2. Vérification de la session utilisateur
+  // 2. Vérification de la session utilisateur sécurisée (source de vérité Supabase JWT)
   let isAuthenticated = false;
 
-  // Vérification cookie de session directe (test / session active / coffre persistant)
-  const sessionUserCookie = request.cookies.get("vita_session_user")?.value;
-  const testRoleCookie = request.cookies.get("vita_test_role")?.value;
-  const testUserCookie = request.cookies.get("vita_test_user")?.value;
-  const activatedCookie = request.cookies.get("vita_account_activated")?.value;
-
-  if (sessionUserCookie || testRoleCookie || testUserCookie || activatedCookie) {
-    isAuthenticated = true;
-  }
-
-  // Vérification Supabase si configuré
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -102,8 +91,21 @@ export async function middleware(request: NextRequest) {
         isAuthenticated = true;
       }
     } catch {
-      // Poursuivre avec le résultat des cookies
+      // Échec fermé
     }
+  } else {
+    // Mode local de secours si Supabase n'est pas encore configuré
+    const sessionUserCookie = request.cookies.get("vita_session_user")?.value;
+    if (sessionUserCookie) {
+      isAuthenticated = true;
+    }
+  }
+
+  // RÈGLE P0 : Les routes /admin nécessitent formellement une authentification vérifiée
+  if (path.startsWith("/admin") && !isAuthenticated) {
+    const redirectUrl = new URL("/auth/login", request.url);
+    redirectUrl.searchParams.set("redirect", path);
+    return NextResponse.redirect(redirectUrl);
   }
 
   // 3. Si l'utilisateur n'est PAS connecté et tente d'accéder à une page protégée

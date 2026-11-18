@@ -5,6 +5,27 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(req: Request) {
+  // RÈGLE DE SÉCURITÉ P0 : Point de terminaison démo FORMELLEMENT DÉSACTIVÉ en production.
+  // Empêche toute activation gratuite sans paiement réel de 4 500 FCFA.
+  if (process.env.NODE_ENV === "production" || process.env.CONTEXT === "production") {
+    return NextResponse.json(
+      {
+        error: "Accès refusé. Cette route de test est strictement désactivée en environnement de production.",
+      },
+      { status: 403 }
+    );
+  }
+
+  // En local/dev uniquement, exiger un token secret pour les tests automatisés
+  const authHeader = req.headers.get("x-e2e-secret-key");
+  const expectedSecret = process.env.E2E_TEST_SECRET;
+  if (expectedSecret && authHeader !== expectedSecret) {
+    return NextResponse.json(
+      { error: "Token de test non autorisé." },
+      { status: 401 }
+    );
+  }
+
   const cookieStore = cookies();
   const sessionUserCookie = cookieStore.get("vita_session_user")?.value;
   let sessionUser: any = null;
@@ -182,7 +203,7 @@ export async function POST(req: Request) {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
   };
 
   response.cookies.set("vita_account_activated", "true", cookieOptions);

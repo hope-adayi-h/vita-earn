@@ -61,39 +61,30 @@ export default async function AdminTasksPage() {
 
   let tasks: AdminTaskItem[] = defaultTasks;
 
-  const cookieStore = cookies();
-  const testRole = cookieStore.get("vita_test_role")?.value;
-  let isAdmin = testRole === "admin";
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login?redirect=/admin/taches");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin") {
+    redirect("/");
+  }
+
+  const isConfigured =
+    Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
 
   try {
-    const isConfigured =
-      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
-      !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
-
-    if (isConfigured && !isAdmin) {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        redirect("/auth/login?redirect=/admin/taches");
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.role === "admin") {
-        isAdmin = true;
-      } else {
-        redirect("/");
-      }
-    } else if (!isAdmin && !isConfigured) {
-      redirect("/auth/login?redirect=/admin/taches");
-    }
 
     if (isConfigured) {
       const adminClient = createAdminClient();

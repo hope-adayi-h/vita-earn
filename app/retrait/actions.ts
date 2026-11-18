@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkWithdrawalRateLimit } from "@/lib/security/rate-limit";
 
 export interface WithdrawalRecord {
   id: string;
@@ -305,7 +306,59 @@ export async function submitWithdrawalAction(formData: FormData): Promise<{
 
   const accountName = (formData.get("accountName") as string)?.trim() || sessionUser?.fullName || sessionUser?.username || "Titulaire du compte";
 
-  // Sauvegarde dans l'historique des retraits
+  // RÈGLE ABSOLUE P0 : Exécution atomique par la fonction SQL request_withdrawal (service_role)
+  // Vérifie le solde en temps réel dans le grand livre, verrouille le montant et enregistre le débit immédiat.
+  const isConfigured =
+    Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+
+  if (isConfigured) {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error: authErr,
+    } = await supabase.auth.getUser();
+
+    if (authErr || !user) {
+      return { error: "Session expirée. Veuillez vous reconnecter." };
+    }
+
+    // RÈGLE P2 : Limiter les demandes de retrait par utilisateur (anti-spam / anti-race condition)
+    const wLimit = checkWithdrawalRateLimit(user.id);
+    if (!wLimit.allowed) {
+      return {
+        error: `Veuillez patienter ${wLimit.resetInSeconds} secondes avant de soumettre une nouvelle demande de retrait.`,
+      };
+    }
+
+    const adminClient = createAdminClient();
+    const cleanMethod = operator.toLowerCase().includes("flooz")
+      ? "flooz"
+      : operator.toLowerCase().includes("wave")
+      ? "wave"
+      : operator.toLowerCase().includes("mtn")
+      ? "mtn_momo"
+      : "tmoney";
+
+    const { error: rpcErr } = await adminClient.rpc("request_withdrawal", {
+      p_user_id: user.id,
+      p_amount: amount,
+      p_payment_method: cleanMethod,
+      p_phone_number: phone,
+      p_account_name: accountName,
+    });
+
+    if (rpcErr) {
+      return {
+        error:
+          rpcErr.message?.includes("Solde insuffisant")
+            ? "Solde insuffisant pour effectuer ce retrait."
+            : rpcErr.message || "Erreur lors de la validation du retrait.",
+      };
+    }
+  }
+
+  // Sauvegarde dans l'historique des retraits (session/cookie de confort utilisateur)
   let existingRecords: WithdrawalRecord[] = [];
   try {
     const raw = cookieStore.get("vita_withdrawals")?.value;
@@ -369,12 +422,30 @@ export async function submitWithdrawalAction(formData: FormData): Promise<{
 }
 
 /**
- * Valide un retrait (simulation ou déclenchement admin) pour notification instantanée
+ * Valide un retrait (réservé strictement aux administrateurs pour approbation)
  */
 export async function simulateValidateWithdrawalAction(withdrawalId: string): Promise<{
   success: boolean;
   message?: string;
 }> {
+  // RÈGLE DE SÉCURITÉ P0 : Seuls les administrateurs vérifiés en base peuvent valider des retraits
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, message: "Authentification requise." };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin") {
+    return { success: false, message: "Action réservée aux administrateurs." };
+  }
+
   const cookieStore = cookies();
   try {
     const raw = cookieStore.get("vita_withdrawals")?.value;

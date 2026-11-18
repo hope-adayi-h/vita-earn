@@ -82,16 +82,10 @@ export default function LoginPage() {
 
           {/* Mot de passe */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
+            <div className="mb-1.5">
               <label className="block text-xs font-bold text-vita-text uppercase tracking-wider">
                 Mot de passe
               </label>
-              <Link
-                href="/auth/forgot-password"
-                className="text-xs font-semibold text-vita-medium hover:text-vita-deep hover:underline transition-colors"
-              >
-                Mot de passe oublié ?
-              </Link>
             </div>
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-vita-muted" />

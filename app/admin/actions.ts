@@ -18,9 +18,12 @@ async function verifyAdminUser() {
     .eq("id", user.id)
     .single();
 
-  // En dev local, on autorise si pas encore de rôle défini, mais en prod strictly 'admin'
-  const isAdmin = profile?.role === "admin";
-  return { user, isAdmin };
+  // RÈGLE P0 : Seuls les comptes avec role === 'admin' vérifié en base peuvent exécuter des actions admin
+  if (profile?.role !== "admin") {
+    throw new Error("Accès formellement refusé : privilèges administrateur requis.");
+  }
+
+  return { user, isAdmin: true };
 }
 
 export async function reviewWithdrawalAction(params: {
@@ -29,7 +32,11 @@ export async function reviewWithdrawalAction(params: {
   notes?: string;
 }): Promise<{ success?: boolean; error?: string; message?: string }> {
   try {
-    const { user } = await verifyAdminUser();
+    const { user, isAdmin } = await verifyAdminUser();
+    if (!isAdmin) {
+      return { error: "Accès formellement refusé : privilèges administrateur requis." };
+    }
+
     const adminClient = createAdminClient();
 
     const { data: result, error } = await adminClient.rpc("review_withdrawal", {
