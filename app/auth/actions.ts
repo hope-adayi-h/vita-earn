@@ -331,6 +331,12 @@ export async function signInAction(
   }
 
   if (matchedAccount) {
+    if (matchedAccount.isBanned || matchedAccount.status === "banned") {
+      return {
+        error: "Votre compte a été supprimé par l'administrateur. Veuillez contacter le support client pour avoir plus d'informations.",
+      };
+    }
+
     const isPasswordValid =
       !matchedAccount.password ||
       matchedAccount.password === password ||
@@ -468,6 +474,12 @@ export async function signInAction(
     } = await supabase.auth.getUser();
 
     if (user) {
+      if (user.user_metadata?.is_banned) {
+        return {
+          error: "Votre compte a été supprimé par l'administrateur. Veuillez contacter le support client pour avoir plus d'informations.",
+        };
+      }
+
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name, is_activated, role")

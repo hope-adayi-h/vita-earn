@@ -12,6 +12,11 @@ export interface StoredUser {
   upline?: string | null;
   role: string;
   isActivated: boolean;
+  isBanned?: boolean;
+  bannedReason?: string;
+  referralCode?: string;
+  balance?: number;
+  points?: number;
   createdAt: string;
 }
 
@@ -53,18 +58,36 @@ function ensureDirectoryAndFile(): string {
       } catch {}
     }
 
-    // Utilisateur Super Administrateur Principal par défaut
+    // Utilisateurs par défaut
     const initialUsers: StoredUser[] = [
       {
         id: "usr_espoir_master",
         username: "Espoir",
         email: "adayiespoir60@gmail.com",
         phone: "+228 90 00 00 00",
-        country: "Togo",
+        country: "TG",
         password: "Espoir@Vita2026!",
         role: "admin",
         isActivated: true,
-        createdAt: new Date().toISOString(),
+        referralCode: "VE-ESPOIR",
+        balance: 3500,
+        points: 0,
+        createdAt: "2026-11-18T00:00:00.000Z",
+      },
+      {
+        id: "usr_kosqi_sample",
+        username: "Kosqi",
+        email: "akpablikossi999@gmail.com",
+        phone: "+228 93597331",
+        country: "TG",
+        password: "Password123!",
+        role: "user",
+        isActivated: false,
+        upline: "Espoir",
+        referralCode: "VE-KOSQI",
+        balance: 0,
+        points: 0,
+        createdAt: "2026-11-18T10:00:00.000Z",
       },
     ];
     try {
@@ -91,6 +114,7 @@ export function findUserByIdentifier(identifier: string): StoredUser | null {
   return (
     users.find(
       (u) =>
+        u.id.toLowerCase() === clean ||
         u.username.toLowerCase() === clean ||
         u.email.toLowerCase() === clean ||
         (u.phone && u.phone.replace(/\s+/g, "") === clean.replace(/\s+/g, ""))
@@ -135,6 +159,7 @@ export function activateUser(identifierOrId: string): StoredUser | null {
 
     if (user) {
       user.isActivated = true;
+      user.isBanned = false;
       fs.writeFileSync(filePath, JSON.stringify(users, null, 2), "utf-8");
       return user;
     }
@@ -142,5 +167,150 @@ export function activateUser(identifierOrId: string): StoredUser | null {
   } catch (err) {
     console.error("Erreur activation user:", err);
     return null;
+  }
+}
+
+export function deactivateUser(identifierOrId: string): StoredUser | null {
+  try {
+    const filePath = ensureDirectoryAndFile();
+    const clean = identifierOrId.toLowerCase().trim();
+    const users = getAllUsers();
+    const user = users.find(
+      (u) =>
+        u.id.toLowerCase() === clean ||
+        u.username.toLowerCase() === clean ||
+        u.email.toLowerCase() === clean
+    );
+
+    if (user) {
+      user.isActivated = false;
+      fs.writeFileSync(filePath, JSON.stringify(users, null, 2), "utf-8");
+      return user;
+    }
+    return null;
+  } catch (err) {
+    console.error("Erreur désactivation user:", err);
+    return null;
+  }
+}
+
+export function banUser(identifierOrId: string, reason?: string): StoredUser | null {
+  try {
+    const filePath = ensureDirectoryAndFile();
+    const clean = identifierOrId.toLowerCase().trim();
+    const users = getAllUsers();
+    const user = users.find(
+      (u) =>
+        u.id.toLowerCase() === clean ||
+        u.username.toLowerCase() === clean ||
+        u.email.toLowerCase() === clean
+    );
+
+    if (user) {
+      user.isBanned = true;
+      user.bannedReason = reason || "Compte suspendu par l'administrateur.";
+      fs.writeFileSync(filePath, JSON.stringify(users, null, 2), "utf-8");
+      return user;
+    }
+    return null;
+  } catch (err) {
+    console.error("Erreur bannissement user:", err);
+    return null;
+  }
+}
+
+export function unbanUser(identifierOrId: string): StoredUser | null {
+  try {
+    const filePath = ensureDirectoryAndFile();
+    const clean = identifierOrId.toLowerCase().trim();
+    const users = getAllUsers();
+    const user = users.find(
+      (u) =>
+        u.id.toLowerCase() === clean ||
+        u.username.toLowerCase() === clean ||
+        u.email.toLowerCase() === clean
+    );
+
+    if (user) {
+      user.isBanned = false;
+      user.bannedReason = undefined;
+      fs.writeFileSync(filePath, JSON.stringify(users, null, 2), "utf-8");
+      return user;
+    }
+    return null;
+  } catch (err) {
+    console.error("Erreur réhabilitation user:", err);
+    return null;
+  }
+}
+
+export function updateUserPassword(identifierOrId: string, newPassword: string): StoredUser | null {
+  try {
+    const filePath = ensureDirectoryAndFile();
+    const clean = identifierOrId.toLowerCase().trim();
+    const users = getAllUsers();
+    const user = users.find(
+      (u) =>
+        u.id.toLowerCase() === clean ||
+        u.username.toLowerCase() === clean ||
+        u.email.toLowerCase() === clean
+    );
+
+    if (user) {
+      user.password = newPassword;
+      fs.writeFileSync(filePath, JSON.stringify(users, null, 2), "utf-8");
+      return user;
+    }
+    return null;
+  } catch (err) {
+    console.error("Erreur mise à jour mot de passe user:", err);
+    return null;
+  }
+}
+
+export function updateUserUpline(identifierOrId: string, newUpline: string): StoredUser | null {
+  try {
+    const filePath = ensureDirectoryAndFile();
+    const clean = identifierOrId.toLowerCase().trim();
+    const users = getAllUsers();
+    const user = users.find(
+      (u) =>
+        u.id.toLowerCase() === clean ||
+        u.username.toLowerCase() === clean ||
+        u.email.toLowerCase() === clean
+    );
+
+    if (user) {
+      user.upline = newUpline;
+      fs.writeFileSync(filePath, JSON.stringify(users, null, 2), "utf-8");
+      return user;
+    }
+    return null;
+  } catch (err) {
+    console.error("Erreur mise à jour parrain user:", err);
+    return null;
+  }
+}
+
+export function deleteUser(identifierOrId: string): boolean {
+  try {
+    const filePath = ensureDirectoryAndFile();
+    const clean = identifierOrId.toLowerCase().trim();
+    const users = getAllUsers();
+    const filtered = users.filter(
+      (u) =>
+        u.id.toLowerCase() !== clean &&
+        u.username.toLowerCase() !== clean &&
+        u.email.toLowerCase() !== clean
+    );
+
+    if (filtered.length !== users.length) {
+      fs.writeFileSync(filePath, JSON.stringify(filtered, null, 2), "utf-8");
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error("Erreur suppression user:", err);
+    return false;
   }
 }

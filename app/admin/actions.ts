@@ -15,7 +15,18 @@ import {
   SUPER_ADMIN_EMAIL,
   checkAdminSession,
 } from "@/lib/security/admin-lock";
-import { getAllUsers, saveUser } from "@/lib/auth/local-store";
+import {
+  getAllUsers,
+  saveUser,
+  activateUser,
+  deactivateUser,
+  banUser,
+  unbanUser,
+  updateUserPassword,
+  updateUserUpline,
+  deleteUser,
+  findUserByIdentifier,
+} from "@/lib/auth/local-store";
 import { updateStoredWithdrawalStatus } from "@/lib/data/withdrawals-store";
 
 const SESSION_COOKIE_NAME = "vita_admin_unlocked";
@@ -456,6 +467,445 @@ export async function updatePlatformSettingsAction(params: {
     return { success: true };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Erreur non autorisée.";
+    return { error: message };
+  }
+}
+
+/**
+ * Activation manuelle d'un utilisateur par l'administrateur
+ */
+export async function activateUserAction(params: {
+  userId: string;
+  identifier: string;
+}): Promise<{ success?: boolean; error?: string; message?: string }> {
+  try {
+    const { user, isAdmin } = await verifyAdminUser();
+    if (!isAdmin) {
+      return { error: "Accès refusé : privilèges administrateur requis." };
+    }
+
+    const clean = params.identifier.trim().toLowerCase();
+
+    // 1. Supabase si connecté
+    try {
+      const adminClient = createAdminClient();
+      await adminClient
+        .from("profiles")
+        .update({ is_activated: true, updated_at: new Date().toISOString() })
+        .eq("id", params.userId);
+
+      const { data: existingPayment } = await adminClient
+        .from("payments")
+        .select("id")
+        .eq("user_id", params.userId)
+        .eq("purpose", "activation")
+        .eq("status", "succeeded")
+        .maybeSingle();
+
+      if (!existingPayment) {
+        await adminClient.from("payments").insert({
+          user_id: params.userId,
+          amount: 4500,
+          currency: "XOF",
+          provider: "MANUAL_ADMIN",
+          status: "succeeded",
+          purpose: "activation",
+          idempotency_key: `manual_act_${params.userId}_${Date.now()}`,
+        });
+      }
+
+      await adminClient.from("audit_logs").insert({
+        user_id: user.id,
+        action: "manual_user_activation",
+        entity_type: "profiles",
+        entity_id: params.userId,
+      });
+    } catch {}
+
+    // 2. Store local & Cookies
+    activateUser(clean || params.userId);
+    try {
+      const cookieStore = cookies();
+      const raw = cookieStore.get("vita_accounts")?.value;
+      if (raw) {
+        const accounts = JSON.parse(raw);
+        if (Array.isArray(accounts)) {
+          const acc = accounts.find(
+            (a: any) =>
+              a.id === params.userId ||
+              a.email?.toLowerCase() === clean ||
+              a.username?.toLowerCase() === clean
+          );
+          if (acc) {
+            acc.isActivated = true;
+            acc.isBanned = false;
+            cookieStore.set("vita_accounts", JSON.stringify(accounts), {
+              path: "/",
+              httpOnly: true,
+              maxAge: 60 * 60 * 24 * 365,
+            });
+          }
+        }
+      }
+    } catch {}
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/utilisateurs");
+    revalidatePath("/admin/arbre");
+
+    return {
+      success: true,
+      message: `Le compte ${params.identifier} a été activé avec succès.`,
+    };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur inattendue.";
+    return { error: message };
+  }
+}
+
+/**
+ * Désactivation manuelle d'un utilisateur par l'administrateur
+ */
+export async function deactivateUserAction(params: {
+  userId: string;
+  identifier: string;
+}): Promise<{ success?: boolean; error?: string; message?: string }> {
+  try {
+    const { user, isAdmin } = await verifyAdminUser();
+    if (!isAdmin) {
+      return { error: "Accès refusé : privilèges administrateur requis." };
+    }
+
+    const clean = params.identifier.trim().toLowerCase();
+
+    // 1. Supabase
+    try {
+      const adminClient = createAdminClient();
+      await adminClient
+        .from("profiles")
+        .update({ is_activated: false, updated_at: new Date().toISOString() })
+        .eq("id", params.userId);
+
+      await adminClient.from("audit_logs").insert({
+        user_id: user.id,
+        action: "manual_user_deactivation",
+        entity_type: "profiles",
+        entity_id: params.userId,
+      });
+    } catch {}
+
+    // 2. Store local & Cookies
+    deactivateUser(clean || params.userId);
+    try {
+      const cookieStore = cookies();
+      const raw = cookieStore.get("vita_accounts")?.value;
+      if (raw) {
+        const accounts = JSON.parse(raw);
+        if (Array.isArray(accounts)) {
+          const acc = accounts.find(
+            (a: any) =>
+              a.id === params.userId ||
+              a.email?.toLowerCase() === clean ||
+              a.username?.toLowerCase() === clean
+          );
+          if (acc) {
+            acc.isActivated = false;
+            cookieStore.set("vita_accounts", JSON.stringify(accounts), {
+              path: "/",
+              httpOnly: true,
+              maxAge: 60 * 60 * 24 * 365,
+            });
+          }
+        }
+      }
+    } catch {}
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/utilisateurs");
+
+    return {
+      success: true,
+      message: `Le compte ${params.identifier} a été désactivé.`,
+    };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur inattendue.";
+    return { error: message };
+  }
+}
+
+/**
+ * Suspension / Suppression d'un compte utilisateur
+ */
+export async function banOrDeleteUserAction(params: {
+  userId: string;
+  identifier: string;
+  reason?: string;
+}): Promise<{ success?: boolean; error?: string; message?: string }> {
+  try {
+    const { user, isAdmin } = await verifyAdminUser();
+    if (!isAdmin) {
+      return { error: "Accès refusé : privilèges administrateur requis." };
+    }
+
+    const clean = params.identifier.trim().toLowerCase();
+    if (clean === SUPER_ADMIN_EMAIL || clean === "espoir") {
+      return { error: "Le compte du Super Administrateur ne peut pas être suspendu ni supprimé." };
+    }
+
+    const reason = params.reason || "Compte suspendu par l'administrateur.";
+
+    // 1. Supabase
+    try {
+      const adminClient = createAdminClient();
+      await adminClient.auth.admin.updateUserById(params.userId, {
+        user_metadata: { is_banned: true, banned_reason: reason },
+      });
+      await adminClient
+        .from("profiles")
+        .update({
+          is_activated: false,
+          kyc_status: "rejected",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", params.userId);
+
+      await adminClient.from("audit_logs").insert({
+        user_id: user.id,
+        action: "ban_or_delete_user",
+        entity_type: "profiles",
+        entity_id: params.userId,
+      });
+    } catch {}
+
+    // 2. Store local & Cookies
+    banUser(clean || params.userId, reason);
+    try {
+      const cookieStore = cookies();
+      const raw = cookieStore.get("vita_accounts")?.value;
+      if (raw) {
+        const accounts = JSON.parse(raw);
+        if (Array.isArray(accounts)) {
+          const acc = accounts.find(
+            (a: any) =>
+              a.id === params.userId ||
+              a.email?.toLowerCase() === clean ||
+              a.username?.toLowerCase() === clean
+          );
+          if (acc) {
+            acc.isBanned = true;
+            acc.bannedReason = reason;
+            acc.isActivated = false;
+            cookieStore.set("vita_accounts", JSON.stringify(accounts), {
+              path: "/",
+              httpOnly: true,
+              maxAge: 60 * 60 * 24 * 365,
+            });
+          }
+        }
+      }
+    } catch {}
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/utilisateurs");
+
+    return {
+      success: true,
+      message: `Le compte ${params.identifier} a été suspendu. L'utilisateur sera notifié de contacter le support client à toute tentative de connexion.`,
+    };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur inattendue.";
+    return { error: message };
+  }
+}
+
+/**
+ * Réhabilitation d'un compte suspendu
+ */
+export async function unbanUserAction(params: {
+  userId: string;
+  identifier: string;
+}): Promise<{ success?: boolean; error?: string; message?: string }> {
+  try {
+    const { user, isAdmin } = await verifyAdminUser();
+    if (!isAdmin) {
+      return { error: "Accès refusé : privilèges administrateur requis." };
+    }
+
+    const clean = params.identifier.trim().toLowerCase();
+
+    try {
+      const adminClient = createAdminClient();
+      await adminClient.auth.admin.updateUserById(params.userId, {
+        user_metadata: { is_banned: false },
+      });
+      await adminClient
+        .from("profiles")
+        .update({ kyc_status: "verified" })
+        .eq("id", params.userId);
+    } catch {}
+
+    unbanUser(clean || params.userId);
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/utilisateurs");
+
+    return {
+      success: true,
+      message: `Le compte ${params.identifier} a été réhabilité avec succès.`,
+    };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur inattendue.";
+    return { error: message };
+  }
+}
+
+/**
+ * Modification / Réinitialisation du mot de passe d'un utilisateur par l'administrateur
+ */
+export async function changeUserPasswordAction(params: {
+  userId: string;
+  identifier: string;
+  newPassword: string;
+}): Promise<{ success?: boolean; error?: string; message?: string }> {
+  try {
+    const { user, isAdmin } = await verifyAdminUser();
+    if (!isAdmin) {
+      return { error: "Accès refusé : privilèges administrateur requis." };
+    }
+
+    if (!params.newPassword || params.newPassword.length < 6) {
+      return { error: "Le mot de passe doit comporter au moins 6 caractères." };
+    }
+
+    const clean = params.identifier.trim().toLowerCase();
+
+    // 1. Supabase
+    try {
+      const adminClient = createAdminClient();
+      await adminClient.auth.admin.updateUserById(params.userId, {
+        password: params.newPassword,
+      });
+
+      await adminClient.from("audit_logs").insert({
+        user_id: user.id,
+        action: "admin_reset_user_password",
+        entity_type: "auth.users",
+        entity_id: params.userId,
+      });
+    } catch {}
+
+    // 2. Store local & Cookies
+    updateUserPassword(clean || params.userId, params.newPassword);
+    try {
+      const cookieStore = cookies();
+      const raw = cookieStore.get("vita_accounts")?.value;
+      if (raw) {
+        const accounts = JSON.parse(raw);
+        if (Array.isArray(accounts)) {
+          const acc = accounts.find(
+            (a: any) =>
+              a.id === params.userId ||
+              a.email?.toLowerCase() === clean ||
+              a.username?.toLowerCase() === clean
+          );
+          if (acc) {
+            acc.password = params.newPassword;
+            cookieStore.set("vita_accounts", JSON.stringify(accounts), {
+              path: "/",
+              httpOnly: true,
+              maxAge: 60 * 60 * 24 * 365,
+            });
+          }
+        }
+      }
+    } catch {}
+
+    revalidatePath("/admin/utilisateurs");
+
+    return {
+      success: true,
+      message: `Le mot de passe de ${params.identifier} a été mis à jour avec succès.`,
+    };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur inattendue.";
+    return { error: message };
+  }
+}
+
+/**
+ * Changement du parrain d'un utilisateur par l'administrateur
+ */
+export async function changeUserUplineAction(params: {
+  userId: string;
+  identifier: string;
+  newUplineIdentifier: string;
+}): Promise<{ success?: boolean; error?: string; message?: string; newUpline?: string }> {
+  try {
+    const { user, isAdmin } = await verifyAdminUser();
+    if (!isAdmin) {
+      return { error: "Accès refusé : privilèges administrateur requis." };
+    }
+
+    const targetUpline = params.newUplineIdentifier.trim().toLowerCase();
+    if (!targetUpline) {
+      return { error: "Veuillez renseigner un parrain valide (email, nom d'utilisateur ou code)." };
+    }
+
+    let foundUplineName = targetUpline;
+    let foundUplineId = "";
+
+    try {
+      const adminClient = createAdminClient();
+      const { data: refProfile } = await adminClient
+        .from("profiles")
+        .select("id, full_name, email, referral_code")
+        .or(`email.eq.${targetUpline},full_name.eq.${targetUpline},referral_code.eq.${targetUpline.toUpperCase()}`)
+        .maybeSingle();
+
+      if (refProfile) {
+        foundUplineName = refProfile.full_name || refProfile.email || targetUpline;
+        foundUplineId = refProfile.id;
+
+        const { data: existingRef } = await adminClient
+          .from("referrals")
+          .select("id")
+          .eq("referred_id", params.userId)
+          .maybeSingle();
+
+        if (existingRef) {
+          await adminClient
+            .from("referrals")
+            .update({ referrer_id: foundUplineId })
+            .eq("id", existingRef.id);
+        } else {
+          await adminClient.from("referrals").insert({
+            referrer_id: foundUplineId,
+            referred_id: params.userId,
+          });
+        }
+
+        await adminClient.from("audit_logs").insert({
+          user_id: user.id,
+          action: "admin_changed_upline",
+          entity_type: "referrals",
+          entity_id: params.userId,
+        });
+      }
+    } catch {}
+
+    // Store local
+    updateUserUpline(params.identifier || params.userId, foundUplineName);
+
+    revalidatePath("/admin/utilisateurs");
+    revalidatePath("/admin/arbre");
+
+    return {
+      success: true,
+      message: `Le parrain de ${params.identifier} a été changé pour ${foundUplineName}.`,
+      newUpline: foundUplineName,
+    };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur inattendue.";
     return { error: message };
   }
 }

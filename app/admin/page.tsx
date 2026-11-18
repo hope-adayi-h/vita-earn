@@ -383,7 +383,8 @@ export default async function AdminDashboardPage() {
         {/* Deux Cartes Blanches Intérieures : Dépôts totaux & Retraits totaux */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-5 relative z-10">
           {/* Carte 1 : Dépôts totaux */}
-          <div className="bg-white rounded-2xl p-3.5 sm:p-4 shadow-sm border border-white/80 text-slate-800">
+          <div className="bg-white rounded-2xl p-3.5 sm:p-4 shadow-sm border border-white/80 text-slate-800 relative pl-4 sm:pl-5 overflow-hidden">
+            <div className="w-1.5 h-9 sm:h-11 rounded-full bg-[#0066FF] absolute left-2 sm:left-2.5 top-1/2 -translate-y-1/2" />
             <div className="flex items-center gap-2 sm:gap-2.5">
               <div className="w-8 h-8 rounded-full bg-[#0084FF] text-white flex items-center justify-center shrink-0 shadow-xs">
                 <ArrowDownToLine className="w-4 h-4 stroke-[2.5]" />
@@ -403,7 +404,8 @@ export default async function AdminDashboardPage() {
           </div>
 
           {/* Carte 2 : Retraits totaux */}
-          <div className="bg-white rounded-2xl p-3.5 sm:p-4 shadow-sm border border-white/80 text-slate-800">
+          <div className="bg-white rounded-2xl p-3.5 sm:p-4 shadow-sm border border-white/80 text-slate-800 relative pl-4 sm:pl-5 overflow-hidden">
+            <div className="w-1.5 h-9 sm:h-11 rounded-full bg-[#00D2FF] absolute left-2 sm:left-2.5 top-1/2 -translate-y-1/2" />
             <div className="flex items-center gap-2 sm:gap-2.5">
               <div className="w-8 h-8 rounded-full bg-[#0084FF] text-white flex items-center justify-center shrink-0 shadow-xs">
                 <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
@@ -526,7 +528,36 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Carte 2 : Total des utilisateurs inscrits qui ont activé leur compte */}
+        {/* Carte 2 : Historique des retraits (Conforme à la capture d'écran) */}
+        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-[#0084FF] text-white flex items-center justify-center shrink-0 shadow-xs">
+                <History className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                  Historique des retraits
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5 truncate">
+                  Consultez l&apos;historique des retraits effectués par les utilisateurs
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/admin/retraits"
+              className="px-4 py-2 rounded-full bg-[#0084FF] hover:bg-blue-600 text-white text-xs font-bold shrink-0 transition-colors flex items-center gap-1 shadow-xs"
+            >
+              <span>Voir l&apos;historique</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            {formatFCFA(totalWithdrawnCompleted)}
+          </div>
+        </div>
+
+        {/* Carte 3 : Total des utilisateurs inscrits qui ont activé leur compte */}
         <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
