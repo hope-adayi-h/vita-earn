@@ -290,11 +290,32 @@ export function UtilisateursClient({
     });
   };
 
-  // 6. Modifier le parrain dans le modal Détails (avec sélection exacte)
+  // 6. Modifier le parrain dans le modal Détails (avec sélection exacte et auto-résolution)
   const handleChangeUpline = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser) return;
-    const targetUpline = (selectedNewUplineUser?.username || newUpline).trim();
+    let targetUpline = (selectedNewUplineUser?.username || newUpline).trim();
+
+    // Auto-résolution intelligente si l'admin a tapé le nom sans cliquer dans la liste
+    if (!selectedNewUplineUser && targetUpline) {
+      const cleanTarget = targetUpline.replace(/^@/, "").toLowerCase();
+      if (cleanTarget === "aucun" || cleanTarget.includes("fondateur")) {
+        targetUpline = "Aucun (Fondateur)";
+      } else {
+        const matched = users.find(
+          (cand) =>
+            cand.id !== selectedUser.id &&
+            (cand.username.toLowerCase() === cleanTarget ||
+              cand.name.toLowerCase() === cleanTarget ||
+              cand.email.toLowerCase() === cleanTarget ||
+              (cand.referralCode && cand.referralCode.toLowerCase() === cleanTarget))
+        );
+        if (matched) {
+          targetUpline = matched.username;
+        }
+      }
+    }
+
     if (!targetUpline) {
       setModalMessage({
         type: "error",
@@ -622,7 +643,7 @@ export function UtilisateursClient({
                       PROFIT
                     </div>
                     <div className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
-                      XOF {(u.profit ?? u.points ?? 0).toLocaleString("fr-FR")}
+                      XOF {(Math.max(u.profit || 0, u.balance || 0, u.points || 0)).toLocaleString("fr-FR")}
                     </div>
                   </div>
 
@@ -631,8 +652,15 @@ export function UtilisateursClient({
                       FILLEULS
                     </div>
                     <div className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
-                      {u.referralsDirectsTotal ?? u.referralsCount ?? 0}
+                      {u.referralsDirectsActive !== undefined
+                        ? u.referralsDirectsActive
+                        : u.referralsDirectsTotal ?? u.referralsCount ?? 0}
                     </div>
+                    {u.referralsDirectsTotal !== undefined && u.referralsDirectsTotal > 0 && (
+                      <div className="text-[10px] text-slate-400 font-medium">
+                        {u.referralsDirectsActive || 0} activé(s) / {u.referralsDirectsTotal}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -818,18 +846,61 @@ export function UtilisateursClient({
                   Changer le parrain de cet utilisateur :
                 </label>
 
-                <div className="relative">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={newUpline}
-                    onChange={(e) => {
-                      setNewUpline(e.target.value);
+                {/* Barre de recherche avec bouton direct (identique à la capture) */}
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={newUpline}
+                      onChange={(e) => {
+                        setNewUpline(e.target.value);
+                        setSelectedNewUplineUser(null);
+                      }}
+                      placeholder="Tapez le nom, pseudo (ex: Koffi, Kosqi)..."
+                      className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-hidden focus:border-[#0084FF] focus:bg-white transition-all shadow-2xs"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isPending || (!selectedNewUplineUser && !newUpline.trim())}
+                    className="px-4 py-2.5 rounded-xl bg-[#0084FF] hover:bg-blue-600 text-white text-xs font-bold transition-all shrink-0 cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
+                  >
+                    <span>Modifier le parrain</span>
+                  </button>
+                </div>
+
+                {/* Suggestions rapides en 1 clic */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Suggestions rapides :
+                  </span>
+                  {users
+                    .filter((u) => u.id !== selectedUser.id && (u.role === "admin" || u.isActivated))
+                    .slice(0, 3)
+                    .map((sug) => (
+                      <button
+                        key={sug.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedNewUplineUser(sug);
+                          setNewUpline(sug.username);
+                        }}
+                        className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-[#0084FF] text-slate-600 text-[11px] font-medium border border-slate-200/80 transition-all cursor-pointer"
+                      >
+                        @{sug.username}
+                      </button>
+                    ))}
+                  <button
+                    type="button"
+                    onClick={() => {
                       setSelectedNewUplineUser(null);
+                      setNewUpline("Aucun (Fondateur)");
                     }}
-                    placeholder="Tapez le nom, pseudo ou email (ex: Koffi, Kosqi)..."
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-hidden focus:border-[#0084FF] focus:bg-white transition-all"
-                  />
+                    className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-medium border border-slate-200/80 transition-all cursor-pointer"
+                  >
+                    Aucun (Fondateur)
+                  </button>
                 </div>
 
                 {/* Liste déroulante des résultats de recherche sous la barre */}
@@ -848,7 +919,7 @@ export function UtilisateursClient({
                             (cand.referralCode &&
                               cand.referralCode.toLowerCase().includes(newUpline.toLowerCase())))
                       )
-                      .slice(0, 5)
+                      .slice(0, 6)
                       .map((cand) => (
                         <button
                           key={cand.id}
@@ -923,19 +994,9 @@ export function UtilisateursClient({
                   </div>
                 )}
 
-                <div className="flex items-center justify-between gap-2 pt-1">
-                  <p className="text-[11px] text-slate-400">
-                    L&apos;administrateur peut réassigner le parrain si le filleul s&apos;est trompé de lien lors de son inscription.
-                  </p>
-                  <button
-                    type="submit"
-                    disabled={isPending || (!selectedNewUplineUser && !newUpline.trim())}
-                    className="px-4 py-2 rounded-xl bg-[#0084FF] hover:bg-blue-600 text-white text-xs font-bold transition-all shrink-0 cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
-                  >
-                    <span>Modifier le parrain</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                <p className="text-[11px] text-slate-400 pt-0.5">
+                  L&apos;administrateur peut réassigner le parrain si le filleul s&apos;est trompé de lien lors de son inscription.
+                </p>
               </form>
             </div>
 

@@ -990,7 +990,10 @@ export async function changeUserUplineAction(params: {
       return { error: "Accès refusé : privilèges administrateur requis." };
     }
 
-    const targetUpline = params.newUplineIdentifier.trim().toLowerCase();
+    let targetUpline = params.newUplineIdentifier.trim();
+    if (targetUpline.startsWith("@")) {
+      targetUpline = targetUpline.slice(1).trim();
+    }
     if (!targetUpline) {
       return { error: "Veuillez renseigner un parrain valide (email, nom d'utilisateur ou code)." };
     }
@@ -998,16 +1001,26 @@ export async function changeUserUplineAction(params: {
     let foundUplineName = targetUpline;
     let foundUplineId = "";
 
+    // Vérifier si réassignation en Fondateur / Aucun
+    if (targetUpline.toLowerCase() === "aucun" || targetUpline.toLowerCase().includes("fondateur")) {
+      foundUplineName = "Aucun (Fondateur)";
+    } else {
+      const localMatched = findUserByIdentifier(targetUpline);
+      if (localMatched) {
+        foundUplineName = localMatched.username;
+      }
+    }
+
     try {
       const adminClient = createAdminClient();
       const { data: refProfile } = await adminClient
         .from("profiles")
         .select("id, full_name, email, referral_code")
-        .or(`email.eq.${targetUpline},full_name.eq.${targetUpline},referral_code.eq.${targetUpline.toUpperCase()}`)
+        .or(`email.eq.${targetUpline.toLowerCase()},full_name.ilike.%${targetUpline}%,referral_code.eq.${targetUpline.toUpperCase()}`)
         .maybeSingle();
 
       if (refProfile) {
-        foundUplineName = refProfile.full_name || refProfile.email || targetUpline;
+        foundUplineName = refProfile.full_name || refProfile.email || foundUplineName;
         foundUplineId = refProfile.id;
 
         const { data: existingRef } = await adminClient
@@ -1039,6 +1052,32 @@ export async function changeUserUplineAction(params: {
 
     // Store local
     updateUserUpline(params.identifier || params.userId, foundUplineName);
+
+    // Mettre à jour cookie de session vita_accounts si présent
+    try {
+      const cookieStore = cookies();
+      const raw = cookieStore.get("vita_accounts")?.value;
+      if (raw) {
+        const accounts = JSON.parse(raw);
+        if (Array.isArray(accounts)) {
+          const cleanUser = (params.identifier || params.userId).toLowerCase().trim();
+          const acc = accounts.find(
+            (a: any) =>
+              a.id === params.userId ||
+              a.email?.toLowerCase() === cleanUser ||
+              a.username?.toLowerCase() === cleanUser
+          );
+          if (acc) {
+            acc.upline = foundUplineName;
+            cookieStore.set("vita_accounts", JSON.stringify(accounts), {
+              path: "/",
+              httpOnly: true,
+              maxAge: 60 * 60 * 24 * 365,
+            });
+          }
+        }
+      }
+    } catch {}
 
     revalidatePath("/admin/utilisateurs");
     revalidatePath("/admin/arbre");

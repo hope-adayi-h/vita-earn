@@ -10,7 +10,8 @@
     "isActivated": true,
     "referralCode": "VE-ESPOIR",
     "balance": 3500,
-    "points": 0,
+    "profit": 3500,
+    "points": 3500,
     "createdAt": "2026-11-18T00:00:00.000Z"
   },
   {
