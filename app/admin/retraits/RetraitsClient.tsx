@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatFCFA } from "@/lib/utils";
-import { reviewWithdrawalAction } from "../actions";
+import { reviewWithdrawalAction, triggerSasPayPayoutAction } from "../actions";
 import { OperatorLogo } from "@/components/OperatorLogo";
 import {
   CheckCircle2,
@@ -16,6 +16,8 @@ import {
   Phone,
   User,
   Filter,
+  Send,
+  Zap,
 } from "lucide-react";
 
 export interface WithdrawalAdminItem {
@@ -30,6 +32,8 @@ export interface WithdrawalAdminItem {
   accountName: string;
   status: "pending" | "processing" | "approved" | "rejected" | "paid";
   adminNote?: string | null;
+  payoutRef?: string | null;
+  payoutProvider?: string | null;
   createdAt: string;
 }
 
@@ -77,6 +81,41 @@ export function RetraitsClient({ initialWithdrawals }: RetraitsClientProps) {
       }
     } catch {
       setErrorMsg("Une erreur est survenue lors de l'opération.");
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleSasPayPayout = async (w: WithdrawalAdminItem) => {
+    const fee5 = Math.round(w.amount * 0.05);
+    const net = w.netAmount || (w.amount - fee5);
+
+    const confirmed = confirm(
+      `DÉCLENCHEMENT DU VIREMENT MOBILE MONEY SASPAY :\n\n` +
+      `• Bénéficiaire : ${w.accountName || w.userName}\n` +
+      `• Numéro : ${w.phoneNumber} (${w.paymentMethod})\n` +
+      `• Montant brut demandé : ${formatFCFA(w.amount)}\n` +
+      `• Frais de retrait 5% : - ${formatFCFA(fee5)}\n` +
+      `• Montant net viré : ${formatFCFA(net)}\n\n` +
+      `Confirmez-vous la validation et le transfert automatique des fonds via SasPay ?`
+    );
+
+    if (!confirmed) return;
+
+    setLoadingId(w.id);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    try {
+      const res = await triggerSasPayPayoutAction(w.id);
+      if (res.error) {
+        setErrorMsg(res.error);
+      } else {
+        setSuccessMsg(res.message || "Virement Mobile Money validé et envoyé via SasPay !");
+        router.refresh();
+      }
+    } catch {
+      setErrorMsg("Une erreur est survenue lors de l'appel à SasPay.");
     } finally {
       setLoadingId(null);
     }
@@ -200,7 +239,7 @@ export function RetraitsClient({ initialWithdrawals }: RetraitsClientProps) {
                         <strong className="text-emerald-700 font-bold">
                           {formatFCFA(w.netAmount)}
                         </strong>{" "}
-                        (Frais : {formatFCFA(w.fee)})
+                        (Frais 5% : {formatFCFA(w.fee || Math.round(w.amount * 0.05))})
                       </span>
                     </div>
                   </div>
@@ -248,6 +287,14 @@ export function RetraitsClient({ initialWithdrawals }: RetraitsClientProps) {
                   </div>
                 )}
 
+                {/* Référence de virement SasPay si existante */}
+                {w.payoutRef && (
+                  <div className="p-3 rounded-xl bg-emerald-50 text-xs text-emerald-900 border border-emerald-200 flex items-center justify-between">
+                    <span className="font-semibold">Reçu / Référence SasPay :</span>
+                    <span className="font-mono font-bold text-emerald-800">{w.payoutRef}</span>
+                  </div>
+                )}
+
                 {/* Zone de refus avec motif */}
                 {isRejecting && (
                   <div className="p-4 rounded-2xl bg-red-50 border border-red-200 space-y-3 animate-fadeIn">
@@ -286,6 +333,23 @@ export function RetraitsClient({ initialWithdrawals }: RetraitsClientProps) {
 
                 {/* Boutons d'actions administratives */}
                 <div className="pt-2 flex flex-wrap items-center gap-2 justify-end border-t border-vita-border/60">
+                  {w.status !== "paid" && w.status !== "rejected" && (
+                    <button
+                      type="button"
+                      onClick={() => handleSasPayPayout(w)}
+                      disabled={isLoading}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-black transition-all shadow-md flex items-center gap-1.5"
+                      title="Valider et déclencher le transfert Mobile Money automatique via SasPay"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                      )}
+                      <span>Valider & Envoyer via SasPay</span>
+                    </button>
+                  )}
+
                   {w.status === "pending" && (
                     <>
                       <button
@@ -300,7 +364,7 @@ export function RetraitsClient({ initialWithdrawals }: RetraitsClientProps) {
                         type="button"
                         onClick={() => handleAction(w.id, "approve")}
                         disabled={isLoading}
-                        className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm"
+                        className="px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100 text-xs font-bold transition-all"
                       >
                         Approuver
                       </button>
@@ -321,7 +385,7 @@ export function RetraitsClient({ initialWithdrawals }: RetraitsClientProps) {
                         type="button"
                         onClick={() => handleAction(w.id, "approve")}
                         disabled={isLoading}
-                        className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm"
+                        className="px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100 text-xs font-bold transition-all"
                       >
                         Approuver
                       </button>
@@ -344,21 +408,17 @@ export function RetraitsClient({ initialWithdrawals }: RetraitsClientProps) {
                           confirm(
                             `Confirmez-vous avoir EFFECTIVEMENT transféré ${formatFCFA(
                               w.netAmount
-                            )} au numéro ${w.phoneNumber} ? Cette action marque le retrait comme payé.`
+                            )} au numéro ${w.phoneNumber} ? Cette action marque le retrait comme payé sans appeler SasPay.`
                           )
                         ) {
-                          handleAction(w.id, "paid", "Transfert Mobile Money validé par l'administrateur");
+                          handleAction(w.id, "paid", "Transfert Mobile Money validé manuellement par l'administrateur");
                         }
                       }}
                       disabled={isLoading}
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-vita-deep to-vita-medium hover:from-vita-medium hover:to-vita-deep text-white text-xs font-black transition-all shadow-md flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-white border border-vita-border text-vita-muted hover:text-vita-text text-[11px] font-semibold transition-all flex items-center gap-1.5"
                     >
-                      {isLoading ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <ShieldCheck className="w-3.5 h-3.5 text-vita-bright" />
-                      )}
-                      <span>Confirmer le paiement réel</span>
+                      <ShieldCheck className="w-3.5 h-3.5 text-vita-medium" />
+                      <span>Marquer payé manuellement</span>
                     </button>
                   )}
                 </div>

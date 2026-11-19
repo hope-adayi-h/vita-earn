@@ -597,8 +597,8 @@ export async function submitActivationPaymentAction(params: {
     feeAmount = (setting.value as { amount: number }).amount || 4500;
   }
 
-  // 2. Initialiser auprès du provider (mock pour le MVP, prêt pour CinetPay/FedaPay)
-  const provider = getPaymentProvider("mock");
+  // 2. Initialiser auprès du provider configuré (SasPay prioritaire, ou Mock pour MVP)
+  const provider = getPaymentProvider();
   const idempotencyKey = `act_${user.id}_${Date.now()}`;
 
   const paymentResult = await provider.initiatePayment({
@@ -644,7 +644,16 @@ export async function submitActivationPaymentAction(params: {
     return { error: "Erreur lors de la création de la transaction de paiement." };
   }
 
-  // 4. En mode MVP : validation immédiate via confirmMockPayment -> activate_account
+  // 4. Si redirection externe fournie (ex: SasPay Checkout hébergé), rediriger l'utilisateur
+  if (paymentResult.checkoutUrl && paymentResult.checkoutUrl.startsWith("http")) {
+    return {
+      success: true,
+      redirectUrl: paymentResult.checkoutUrl,
+      message: "Redirection vers le portail de paiement sécurisé...",
+    };
+  }
+
+  // 5. En mode MVP / simulateur : validation immédiate via confirmMockPayment -> activate_account
   const confirmResult = await confirmMockPayment(paymentRecord.id);
   if (confirmResult.error) {
     return { error: confirmResult.error };

@@ -28,7 +28,8 @@ import {
   deleteUser,
   findUserByIdentifier,
 } from "@/lib/auth/local-store";
-import { updateStoredWithdrawalStatus } from "@/lib/data/withdrawals-store";
+import { updateStoredWithdrawalStatus, getAllStoredWithdrawals } from "@/lib/data/withdrawals-store";
+import { SasPayClient } from "@/lib/payments/saspay";
 
 const SESSION_COOKIE_NAME = "vita_admin_unlocked";
 
@@ -298,6 +299,123 @@ export async function reviewWithdrawalAction(params: {
     };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Erreur non autorisée.";
+    return { error: message };
+  }
+}
+
+/**
+ * Déclenche un virement automatique Mobile Money via l'agrégateur SasPay
+ * après vérification humaine et validation par l'administrateur (Human-in-the-loop).
+ * Déduit les frais stricts de 5% et verse le montant net au numéro du bénéficiaire.
+ */
+export async function triggerSasPayPayoutAction(withdrawalId: string): Promise<{
+  success?: boolean;
+  error?: string;
+  message?: string;
+  payoutRef?: string;
+}> {
+  try {
+    const { user, isAdmin } = await verifyAdminUser();
+    if (!isAdmin) {
+      return { error: "Accès refusé : privilèges administrateur requis." };
+    }
+
+    // 1. Rechercher la demande de retrait
+    const allWithdrawals = getAllStoredWithdrawals();
+    const target = allWithdrawals.find((w) => w.id === withdrawalId);
+
+    if (!target) {
+      return { error: "Demande de retrait introuvable." };
+    }
+
+    if (target.status === "paid") {
+      return { error: "Ce retrait a déjà été payé." };
+    }
+
+    // 2. Calcul des frais stricts de 5% et du montant net
+    const grossAmount = Number(target.amount);
+    const fee = Math.round(grossAmount * 0.05); // 5%
+    const netAmount = Math.max(0, grossAmount - fee);
+
+    // 3. Appel de l'API SasPay Payouts (POST /payouts/initialize/)
+    const saspay = new SasPayClient();
+    const idempotencyKey = `payout_${target.id}_${Date.now()}`;
+
+    const payoutResult = await saspay.initializePayout({
+      amount: netAmount,
+      currency: "XOF",
+      phoneNumber: target.phoneNumber,
+      accountName: target.accountName || target.userName,
+      paymentMethod: target.paymentMethod,
+      idempotencyKey,
+      description: `Retrait VitaEarn #${target.id.substring(0, 8)}`,
+    });
+
+    if (!payoutResult.success) {
+      return {
+        error: payoutResult.error || "Échec du déclenchement du virement SasPay.",
+      };
+    }
+
+    const payoutRef =
+      payoutResult.reference ||
+      payoutResult.payoutId ||
+      `SAS-${Date.now().toString(36).toUpperCase()}`;
+
+    // 4. Mettre à jour le statut en 'paid' avec la référence SasPay
+    updateStoredWithdrawalStatus(
+      target.id,
+      "paid",
+      `Virement Mobile Money de ${netAmount.toLocaleString("fr-FR")} FCFA validé via SasPay (Frais 5%: ${fee.toLocaleString("fr-FR")} FCFA). Réf: ${payoutRef}`,
+      { payoutRef, payoutProvider: "saspay" }
+    );
+
+    // 5. Mettre à jour les cookies si existants
+    try {
+      const cookieStore = cookies();
+      const rawW = cookieStore.get("vita_withdrawals")?.value;
+      if (rawW) {
+        const records = JSON.parse(rawW);
+        if (Array.isArray(records)) {
+          const item = records.find((r: any) => r.id === target.id);
+          if (item) {
+            item.status = "paid";
+            item.processedAt = new Date().toISOString();
+            item.payoutRef = payoutRef;
+            cookieStore.set("vita_withdrawals", JSON.stringify(records), {
+              path: "/",
+              httpOnly: true,
+              maxAge: 60 * 60 * 24 * 365,
+              sameSite: "lax",
+            });
+          }
+        }
+      }
+    } catch {}
+
+    // 6. Si Supabase est connecté, valider via review_withdrawal
+    try {
+      const adminClient = createAdminClient();
+      await adminClient.rpc("review_withdrawal", {
+        p_withdrawal_id: target.id,
+        p_action: "paid",
+        p_admin_id: user.id,
+        p_notes: `Virement SasPay réussi. Réf: ${payoutRef}`,
+      });
+    } catch {}
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/retraits");
+    revalidatePath("/portefeuille");
+    revalidatePath("/retrait");
+
+    return {
+      success: true,
+      payoutRef,
+      message: `Virement de ${netAmount.toLocaleString("fr-FR")} FCFA (frais 5% déduits) envoyé avec succès au numéro ${target.phoneNumber} via SasPay ! Référence : ${payoutRef}`,
+    };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur inattendue.";
     return { error: message };
   }
 }

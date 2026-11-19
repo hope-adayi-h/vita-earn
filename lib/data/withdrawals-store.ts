@@ -14,6 +14,8 @@ export interface StoredWithdrawal {
   accountName: string;
   status: "pending" | "processing" | "approved" | "paid" | "rejected";
   adminNote?: string | null;
+  payoutRef?: string | null;
+  payoutProvider?: string | null;
   createdAt: string;
   processedAt?: string | null;
 }
@@ -54,13 +56,13 @@ function ensureDirectoryAndFile(): string {
         userId: "usr_espoir_master",
         userName: "Espoir",
         amount: 25000,
-        fee: 500,
-        netAmount: 24500,
+        fee: 1250, // 5%
+        netAmount: 23750,
         paymentMethod: "tmoney",
         phoneNumber: "+228 90 00 00 00",
         accountName: "Espoir Adayi",
         status: "paid",
-        adminNote: "Virement T-Money validé avec succès",
+        adminNote: "Virement T-Money validé avec succès via SasPay",
         createdAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
         processedAt: new Date(Date.now() - 3600000 * 24 * 2 + 1800000).toISOString(),
       },
@@ -69,8 +71,8 @@ function ensureDirectoryAndFile(): string {
         userId: "usr_seed_member_1",
         userName: "Kodjo Mensah",
         amount: 15000,
-        fee: 300,
-        netAmount: 14700,
+        fee: 750, // 5%
+        netAmount: 14250,
         paymentMethod: "flooz",
         phoneNumber: "+228 99 12 34 56",
         accountName: "Kodjo Mensah",
@@ -84,8 +86,8 @@ function ensureDirectoryAndFile(): string {
         userId: "usr_seed_member_2",
         userName: "Amina Diallo",
         amount: 10000,
-        fee: 200,
-        netAmount: 9800,
+        fee: 500, // 5%
+        netAmount: 9500,
         paymentMethod: "tmoney",
         phoneNumber: "+228 91 88 77 66",
         accountName: "Amina Diallo",
@@ -131,7 +133,8 @@ export function saveStoredWithdrawal(withdrawal: StoredWithdrawal): void {
 export function updateStoredWithdrawalStatus(
   id: string,
   status: StoredWithdrawal["status"],
-  notes?: string | null
+  notes?: string | null,
+  payoutData?: { payoutRef?: string; payoutProvider?: string }
 ): boolean {
   try {
     const filePath = ensureDirectoryAndFile();
@@ -141,6 +144,8 @@ export function updateStoredWithdrawalStatus(
 
     item.status = status;
     if (notes !== undefined) item.adminNote = notes;
+    if (payoutData?.payoutRef) item.payoutRef = payoutData.payoutRef;
+    if (payoutData?.payoutProvider) item.payoutProvider = payoutData.payoutProvider;
     if (status === "paid" || status === "approved") {
       item.processedAt = new Date().toISOString();
     }

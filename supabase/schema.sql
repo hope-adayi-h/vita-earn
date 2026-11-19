@@ -175,7 +175,7 @@ VALUES
   ('activation_fee', '{"amount": 4500, "currency": "XOF"}'::jsonb, 'Prix du forfait unique d activation du compte'),
   ('referral_enabled', 'false'::jsonb, 'Systeme de parrainage desactive (anti schema pyramidal)'),
   ('withdrawal_min_amount', '{"amount": 2000, "currency": "XOF"}'::jsonb, 'Montant minimum de retrait'),
-  ('withdrawal_fee_percent', '{"percent": 2}'::jsonb, 'Frais de retrait Mobile Money en pourcentage')
+  ('withdrawal_fee_percent', '{"percent": 5}'::jsonb, 'Frais de retrait Mobile Money en pourcentage (5%)')
 ON CONFLICT (key) DO NOTHING;
 
 -- ==============================================================================
@@ -743,7 +743,7 @@ BEGIN
 
   -- Récupérer réglages
   v_min_amount := COALESCE((SELECT (value->>'amount')::BIGINT FROM public.platform_settings WHERE key = 'withdrawal_min_amount'), 2000);
-  v_fee_pct := COALESCE((SELECT (value->>'percent')::NUMERIC FROM public.platform_settings WHERE key = 'withdrawal_fee_percent'), 2.0);
+  v_fee_pct := COALESCE((SELECT (value->>'percent')::NUMERIC FROM public.platform_settings WHERE key = 'withdrawal_fee_percent'), 5.0);
 
   IF p_amount < v_min_amount THEN
     RAISE EXCEPTION 'Le montant minimum de retrait est de % FCFA.', v_min_amount;

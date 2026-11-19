@@ -31,6 +31,7 @@ export default async function AdminReglagesPage() {
   let l3 = 500;
   let platformMargin = 1000;
   let minWithdrawal = 1000;
+  let withdrawalFeePercent = 5;
 
   if (isConfigured) {
     try {
@@ -53,6 +54,9 @@ export default async function AdminReglagesPage() {
           if (s.key === "withdrawal_settings" && s.value?.min_amount) {
             minWithdrawal = Number(s.value.min_amount);
           }
+          if (s.key === "withdrawal_fee_percent" && s.value?.percent) {
+            withdrawalFeePercent = Number(s.value.percent);
+          }
         });
       }
     } catch {}
@@ -74,6 +78,7 @@ export default async function AdminReglagesPage() {
           l3,
           platformMargin,
           minWithdrawal,
+          withdrawalFeePercent,
           whatsapp: "+228 90 00 00 00",
           telegram: support.telegram || "https://t.me/vitaearn_officiel",
           email: support.email || "contact@vitaearn.com",
