@@ -42,8 +42,7 @@ export function WithdrawalModal({ availableBalance }: WithdrawalModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const feePct = 0.05; // 5% de frais de transfert Mobile Money
-  const feeAmount = Math.round(amount * feePct);
+  const feeAmount = 500; // Frais de retrait fixes : 500 FCFA
   const netAmount = Math.max(0, amount - feeAmount);
 
   const handleQuickAmount = (val: number) => {
@@ -283,8 +282,8 @@ export function WithdrawalModal({ availableBalance }: WithdrawalModalProps) {
                 {/* Récapitulatif frais & net à recevoir */}
                 <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-amber-900 space-y-1 text-[11px]">
                   <div className="flex justify-between">
-                    <span>Frais de transfert Mobile Money (5%) :</span>
-                    <span className="font-bold">{formatFCFA(feeAmount)}</span>
+                    <span>Frais de transfert Mobile Money fixes :</span>
+                    <span className="font-bold">500 FCFA</span>
                   </div>
                   <div className="flex justify-between text-xs font-black border-t border-amber-200/70 pt-1 text-vita-deep">
                     <span>Montant net versé sur votre compte :</span>

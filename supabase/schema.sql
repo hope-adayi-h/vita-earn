@@ -175,7 +175,7 @@ VALUES
   ('activation_fee', '{"amount": 4500, "currency": "XOF"}'::jsonb, 'Prix du forfait unique d activation du compte'),
   ('referral_enabled', 'false'::jsonb, 'Systeme de parrainage desactive (anti schema pyramidal)'),
   ('withdrawal_min_amount', '{"amount": 2000, "currency": "XOF"}'::jsonb, 'Montant minimum de retrait'),
-  ('withdrawal_fee_percent', '{"percent": 5}'::jsonb, 'Frais de retrait Mobile Money en pourcentage (5%)')
+  ('withdrawal_fixed_fee', '{"amount": 500, "currency": "XOF"}'::jsonb, 'Frais de retrait Mobile Money fixes (500 FCFA pour tous montants)')
 ON CONFLICT (key) DO NOTHING;
 
 -- ==============================================================================
@@ -743,7 +743,7 @@ BEGIN
 
   -- Récupérer réglages
   v_min_amount := COALESCE((SELECT (value->>'amount')::BIGINT FROM public.platform_settings WHERE key = 'withdrawal_min_amount'), 2000);
-  v_fee_pct := COALESCE((SELECT (value->>'percent')::NUMERIC FROM public.platform_settings WHERE key = 'withdrawal_fee_percent'), 5.0);
+  v_fee := COALESCE((SELECT (value->>'amount')::BIGINT FROM public.platform_settings WHERE key = 'withdrawal_fixed_fee'), 500);
 
   IF p_amount < v_min_amount THEN
     RAISE EXCEPTION 'Le montant minimum de retrait est de % FCFA.', v_min_amount;
@@ -753,8 +753,7 @@ BEGIN
     RAISE EXCEPTION 'Solde insuffisant pour effectuer ce retrait.';
   END IF;
 
-  -- Calcul des frais et montant net
-  v_fee := ROUND(p_amount * (v_fee_pct / 100.0));
+  -- Calcul du montant net (frais fixes de 500 FCFA)
   v_net := p_amount - v_fee;
 
   -- Création de la demande

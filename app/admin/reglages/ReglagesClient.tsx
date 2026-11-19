@@ -24,7 +24,7 @@ interface ReglagesClientProps {
     l3: number;
     platformMargin: number;
     minWithdrawal: number;
-    withdrawalFeePercent: number;
+    withdrawalFixedFee: number;
     whatsapp: string;
     telegram: string;
     email: string;
@@ -37,7 +37,7 @@ export function ReglagesClient({ initialSettings }: ReglagesClientProps) {
   const [l2, setL2] = useState(initialSettings.l2);
   const [l3, setL3] = useState(initialSettings.l3);
   const [minWithdrawal, setMinWithdrawal] = useState(initialSettings.minWithdrawal);
-  const [withdrawalFeePercent, setWithdrawalFeePercent] = useState(initialSettings.withdrawalFeePercent || 5);
+  const [withdrawalFixedFee, setWithdrawalFixedFee] = useState(initialSettings.withdrawalFixedFee || 500);
   const [whatsapp, setWhatsapp] = useState(initialSettings.whatsapp);
   const [telegram, setTelegram] = useState(initialSettings.telegram);
   const [email, setEmail] = useState(initialSettings.email);
@@ -73,14 +73,14 @@ export function ReglagesClient({ initialSettings }: ReglagesClientProps) {
 
         await updatePlatformSettingsAction({
           key: "withdrawal_settings",
-          value: { min_amount: Number(minWithdrawal), fee_percent: Number(withdrawalFeePercent) },
+          value: { min_amount: Number(minWithdrawal), fixed_fee: Number(withdrawalFixedFee) },
           description: "Paramètres des retraits Mobile Money",
         });
 
         await updatePlatformSettingsAction({
-          key: "withdrawal_fee_percent",
-          value: { percent: Number(withdrawalFeePercent) },
-          description: "Frais de retrait Mobile Money en pourcentage (5%)",
+          key: "withdrawal_fixed_fee",
+          value: { amount: Number(withdrawalFixedFee), currency: "XOF" },
+          description: "Frais de retrait Mobile Money fixes (500 FCFA)",
         });
 
         await updatePlatformSettingsAction({
@@ -178,20 +178,19 @@ export function ReglagesClient({ initialSettings }: ReglagesClientProps) {
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-700 dark:text-gray-300">
-              Frais de Retrait Mobile Money (%)
+              Frais de Retrait Fixes (FCFA)
             </label>
             <div className="relative">
               <input
                 type="number"
                 min={0}
-                max={50}
-                step={0.5}
-                value={withdrawalFeePercent}
-                onChange={(e) => setWithdrawalFeePercent(Number(e.target.value))}
+                step={50}
+                value={withdrawalFixedFee}
+                onChange={(e) => setWithdrawalFixedFee(Number(e.target.value))}
                 className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-emerald-950/20 border border-gray-200 dark:border-emerald-900/40 text-sm font-bold text-gray-900 dark:text-white"
               />
-              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-extrabold text-emerald-700 dark:text-emerald-400">
-                %
+              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-extrabold text-amber-700 dark:text-amber-400">
+                FCFA
               </span>
             </div>
           </div>

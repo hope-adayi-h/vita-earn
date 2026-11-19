@@ -56,13 +56,13 @@ function ensureDirectoryAndFile(): string {
         userId: "usr_espoir_master",
         userName: "Espoir",
         amount: 25000,
-        fee: 1250, // 5%
-        netAmount: 23750,
+        fee: 500, // Frais fixes 500 FCFA
+        netAmount: 24500,
         paymentMethod: "tmoney",
         phoneNumber: "+228 90 00 00 00",
         accountName: "Espoir Adayi",
         status: "paid",
-        adminNote: "Virement T-Money validé avec succès via SasPay",
+        adminNote: "Transfert Mobile Money validé par l'administrateur",
         createdAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
         processedAt: new Date(Date.now() - 3600000 * 24 * 2 + 1800000).toISOString(),
       },
@@ -71,8 +71,8 @@ function ensureDirectoryAndFile(): string {
         userId: "usr_seed_member_1",
         userName: "Kodjo Mensah",
         amount: 15000,
-        fee: 750, // 5%
-        netAmount: 14250,
+        fee: 500, // Frais fixes 500 FCFA
+        netAmount: 14500,
         paymentMethod: "flooz",
         phoneNumber: "+228 99 12 34 56",
         accountName: "Kodjo Mensah",
@@ -86,7 +86,7 @@ function ensureDirectoryAndFile(): string {
         userId: "usr_seed_member_2",
         userName: "Amina Diallo",
         amount: 10000,
-        fee: 500, // 5%
+        fee: 500, // Frais fixes 500 FCFA
         netAmount: 9500,
         paymentMethod: "tmoney",
         phoneNumber: "+228 91 88 77 66",

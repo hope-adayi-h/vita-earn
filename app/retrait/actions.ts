@@ -275,7 +275,7 @@ export async function submitWithdrawalAction(formData: FormData): Promise<{
     return { error: `Le montant minimum de retrait est de ${minWithdrawal.toLocaleString("fr-FR")} FCFA.` };
   }
 
-  const fee = Math.round(amount * 0.05); // 5% de frais de retrait Mobile Money
+  const fee = 500; // Frais de retrait fixes : 500 FCFA
   const netAmount = Math.max(0, amount - fee);
 
   const cookieStore = cookies();
@@ -415,7 +415,7 @@ export async function submitWithdrawalAction(formData: FormData): Promise<{
 
   return {
     success: true,
-    message: `Votre demande de retrait de ${amount.toLocaleString("fr-FR")} FCFA vers ${operator} a été enregistrée avec succès (Frais 5%: ${fee.toLocaleString("fr-FR")} FCFA, Net reçu: ${netAmount.toLocaleString("fr-FR")} FCFA). Référence : ${newRecord.reference}. Délai estimé de virement : 10 minutes à 24 heures.`,
+    message: `Votre demande de retrait de ${amount.toLocaleString("fr-FR")} FCFA vers ${operator} a été enregistrée avec succès (Frais fixes : 500 FCFA, Net reçu : ${netAmount.toLocaleString("fr-FR")} FCFA). Référence : ${newRecord.reference}. Délai estimé de virement : 10 minutes à 24 heures.`,
     netAmount,
     fee,
   };

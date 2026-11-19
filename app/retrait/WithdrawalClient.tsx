@@ -153,7 +153,7 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
   const registeredName = initialData.user.fullName || initialData.user.username || "Titulaire";
 
   const numAmount = typeof amount === "number" ? amount : 0;
-  const withdrawalFee = Math.round(numAmount * 0.05); // Frais de retrait 5%
+  const withdrawalFee = 500; // Frais de retrait fixes : 500 FCFA pour tous les montants
   const netAmountCalculated = Math.max(0, numAmount - withdrawalFee);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -352,7 +352,7 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
             </div>
           </div>
 
-          {/* TABLEAU RÉCAPITULATIF DES FRAIS (5% MOBILE MONEY) */}
+          {/* TABLEAU RÉCAPITULATIF DES FRAIS (500 FCFA FIXES) */}
           <div className="p-4 rounded-2xl bg-gray-50 dark:bg-[#17241C] border border-gray-200 dark:border-[#1E2E24] text-xs space-y-2">
             <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
               <span>Montant du retrait demandé :</span>
@@ -361,8 +361,8 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
               </span>
             </div>
             <div className="flex items-center justify-between text-amber-700 dark:text-amber-400">
-              <span>Frais de retrait Mobile Money (5%) :</span>
-              <span className="font-bold">- {numAmount > 0 ? formatFCFA(withdrawalFee) : "0 FCFA"}</span>
+              <span>Frais de retrait fixes :</span>
+              <span className="font-bold">- 500 FCFA</span>
             </div>
             <div className="flex items-center justify-between text-gray-500 dark:text-gray-400 text-[11px]">
               <span>Numéro récepteur sécurisé :</span>
@@ -375,7 +375,7 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
             <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-[#1E2E24] text-sm font-black">
               <span className="text-gray-900 dark:text-gray-100">Montant net à recevoir :</span>
               <span className="text-emerald-700 dark:text-emerald-400 text-base">
-                {numAmount > 0 ? formatFCFA(netAmountCalculated) : "0 FCFA"}
+                {numAmount > 500 ? formatFCFA(netAmountCalculated) : "0 FCFA"}
               </span>
             </div>
           </div>

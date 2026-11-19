@@ -332,9 +332,9 @@ export async function triggerSasPayPayoutAction(withdrawalId: string): Promise<{
       return { error: "Ce retrait a déjà été payé." };
     }
 
-    // 2. Calcul des frais stricts de 5% et du montant net
+    // 2. Calcul des frais fixes de 500 FCFA et du montant net
     const grossAmount = Number(target.amount);
-    const fee = Math.round(grossAmount * 0.05); // 5%
+    const fee = 500; // Frais fixes 500 FCFA
     const netAmount = Math.max(0, grossAmount - fee);
 
     // 3. Appel de l'API SasPay Payouts (POST /payouts/initialize/)
