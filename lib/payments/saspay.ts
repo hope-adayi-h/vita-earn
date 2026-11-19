@@ -124,6 +124,72 @@ export function detectCountryAndMethod(phoneNumber: string, methodStr: string): 
   return { country, method, formattedPhone: formatted };
 }
 
+/**
+ * Calcule le montant à prélever chez l'agrégateur SasPay :
+ * - Togo et zone standard (Bénin, Côte d'Ivoire, Sénégal, etc.) : 4 500 FCFA
+ * - Pays à frais opérateurs élevés (Ghana, Gabon, Congo, Guinée, Niger, Burkina Faso / Ouaga, Zambie - 5,7%) : 4 620 FCFA
+ * RÈGLE D'AFFICHAGE STRICTE : Sur l'interface VitaEarn, l'utilisateur voit TOUJOURS 4 500 FCFA.
+ * C'est SasPay qui applique le débit de 4 620 FCFA directement sur le compte mobile money du payeur.
+ */
+export function calculateEffectiveChargeAmount(country?: string, phone?: string): {
+  nominalAmount: number;
+  chargeAmount: number;
+  isHighFeeCountry: boolean;
+  countryCode: string;
+} {
+  const c = (country || "").toUpperCase().trim();
+  const cleanPhone = (phone || "").replace(/[\s\-\(\)]/g, "");
+
+  const highFeeCountries = ["GH", "GA", "CG", "CD", "GN", "NE", "BF", "ZM"];
+  const highFeePrefixes = [
+    "+233", "233", // Ghana
+    "+241", "241", // Gabon
+    "+242", "242", // Congo Brazzaville
+    "+243", "243", // Congo RDC
+    "+224", "224", // Guinée
+    "+227", "227", // Niger
+    "+226", "226", // Burkina Faso (Ouagadougou)
+    "+260", "260", // Zambie
+  ];
+
+  const matchesPrefix = highFeePrefixes.some((prefix) => cleanPhone.startsWith(prefix));
+  const matchesCode = highFeeCountries.includes(c);
+  const matchesName =
+    c.includes("GHANA") ||
+    c.includes("GABON") ||
+    c.includes("CONGO") ||
+    c.includes("GUIN") ||
+    c.includes("NIGER") ||
+    c.includes("BURKINA") ||
+    c.includes("OUAGA") ||
+    c.includes("ZAMB");
+
+  const isHighFee = matchesPrefix || matchesCode || matchesName;
+
+  // Déterminer le code pays normalisé
+  let countryCode = "TG";
+  if (cleanPhone.startsWith("+233") || cleanPhone.startsWith("233") || c.includes("GH")) countryCode = "GH";
+  else if (cleanPhone.startsWith("+241") || cleanPhone.startsWith("241") || c.includes("GA")) countryCode = "GA";
+  else if (cleanPhone.startsWith("+242") || cleanPhone.startsWith("242") || c.includes("CG")) countryCode = "CG";
+  else if (cleanPhone.startsWith("+243") || cleanPhone.startsWith("243") || c.includes("CD")) countryCode = "CD";
+  else if (cleanPhone.startsWith("+224") || cleanPhone.startsWith("224") || c.includes("GN")) countryCode = "GN";
+  else if (cleanPhone.startsWith("+227") || cleanPhone.startsWith("227") || c.includes("NE")) countryCode = "NE";
+  else if (cleanPhone.startsWith("+226") || cleanPhone.startsWith("226") || c.includes("BF") || c.includes("OUAGA")) countryCode = "BF";
+  else if (cleanPhone.startsWith("+260") || cleanPhone.startsWith("260") || c.includes("ZM")) countryCode = "ZM";
+  else if (cleanPhone.startsWith("+225") || cleanPhone.startsWith("225") || c.includes("CI")) countryCode = "CI";
+  else if (cleanPhone.startsWith("+229") || cleanPhone.startsWith("229") || c.includes("BJ")) countryCode = "BJ";
+  else if (cleanPhone.startsWith("+221") || cleanPhone.startsWith("221") || c.includes("SN")) countryCode = "SN";
+  else if (cleanPhone.startsWith("+237") || cleanPhone.startsWith("237") || c.includes("CM")) countryCode = "CM";
+  else if (cleanPhone.startsWith("+223") || cleanPhone.startsWith("223") || c.includes("ML")) countryCode = "ML";
+
+  return {
+    nominalAmount: 4500,
+    chargeAmount: isHighFee ? 4620 : 4500,
+    isHighFeeCountry: isHighFee,
+    countryCode,
+  };
+}
+
 export class SasPayClient {
   private apiKey: string;
   private webhookSecret: string;

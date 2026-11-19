@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPaymentProvider } from "@/lib/payments";
+import { SasPayClient, calculateEffectiveChargeAmount } from "@/lib/payments/saspay";
 import { activateUser } from "@/lib/auth/local-store";
 import type { ActivationData } from "./types";
 
@@ -228,6 +229,127 @@ export async function getActivationData(): Promise<ActivationData> {
         }
       : null,
   };
+}
+
+/**
+ * Initialise le paiement d'activation direct avec SasPay
+ * Redirige l'utilisateur vers la page de paiement hébergée (Hosted Checkout)
+ * - Calcule les frais exacts : 4 500 FCFA pour le Togo/standard, 4 620 FCFA pour les pays à frais élevés (Ghana, Gabon, Congo, Guinée, Niger, Ouaga/Burkina, Zambie)
+ * - RÈGLE D'AFFICHAGE : L'utilisateur voit toujours 4 500 FCFA sur l'application.
+ */
+export async function startSasPayActivationAction(params: {
+  channel?: string;
+  walletNumber?: string;
+  fullName?: string;
+}): Promise<{ success?: boolean; error?: string; checkoutUrl?: string }> {
+  try {
+    const supabase = createClient();
+    let user: any = null;
+    try {
+      const { data } = await supabase.auth.getUser();
+      user = data?.user || null;
+    } catch {}
+
+    const cookieStore = cookies();
+    const sessionUserCookie = cookieStore.get("vita_session_user")?.value;
+    let sessionUser: any = null;
+    if (sessionUserCookie) {
+      try {
+        sessionUser = JSON.parse(sessionUserCookie);
+      } catch {
+        try {
+          sessionUser = JSON.parse(decodeURIComponent(sessionUserCookie));
+        } catch {}
+      }
+    }
+
+    const testUser = cookieStore.get("vita_test_user")?.value;
+    const testEmail = cookieStore.get("vita_test_email")?.value;
+
+    const effectiveUserId =
+      user?.id || sessionUser?.id || (testUser ? `usr_${testUser}` : `usr_${Date.now()}`);
+    const effectiveEmail =
+      user?.email || sessionUser?.email || testEmail || "client@vitaearn.com";
+    const effectiveName =
+      params.fullName?.trim() ||
+      sessionUser?.fullName ||
+      sessionUser?.username ||
+      testUser ||
+      user?.email?.split("@")[0] ||
+      "Client VitaEarn";
+    const effectivePhone = params.walletNumber?.trim() || sessionUser?.phone || "";
+    const effectiveCountry = sessionUser?.country || "";
+
+    // 1. Calcul du montant à débiter chez SasPay selon le pays
+    const feeInfo = calculateEffectiveChargeAmount(effectiveCountry, effectivePhone);
+
+    // 2. Initialiser auprès de SasPay
+    const saspay = new SasPayClient();
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://vita-earn.netlify.app").replace(/\/+$/, "");
+    const returnUrl = `${appUrl}/activation/callback`;
+
+    // Si pas de clés SasPay en dev/test local, simulation élégante
+    if (!saspay.isConfigured()) {
+      return {
+        success: true,
+        checkoutUrl: `/activation/callback?session_id=sim_${Date.now()}`,
+      };
+    }
+
+    const res = await saspay.createCheckoutSession({
+      amount: feeInfo.chargeAmount,
+      currency: "XOF",
+      description: "Activation de compte VitaEarn",
+      customerEmail: effectiveEmail,
+      customerName: effectiveName,
+      customerPhone: effectivePhone,
+      returnUrl,
+      metadata: {
+        userId: effectiveUserId,
+        purpose: "activation",
+        nominalAmount: feeInfo.nominalAmount,
+        chargeAmount: feeInfo.chargeAmount,
+        country: feeInfo.countryCode,
+      },
+    });
+
+    if (!res.success || !res.checkoutUrl) {
+      return {
+        error: res.error || "Impossible de générer le lien de paiement SasPay.",
+      };
+    }
+
+    // 3. Enregistrer l'intention de paiement dans Supabase si connecté
+    if (user) {
+      try {
+        await supabase.from("payments").insert({
+          user_id: user.id,
+          amount: 4500,
+          currency: "XOF",
+          purpose: "activation",
+          status: "pending",
+          provider: "saspay",
+          provider_ref: res.sessionId || res.checkoutUrl,
+          idempotency_key: `act_${user.id}_${Date.now()}`,
+          metadata: {
+            charge_amount: feeInfo.chargeAmount,
+            nominal_amount: feeInfo.nominalAmount,
+            country: feeInfo.countryCode,
+            phone: effectivePhone,
+            initiated_at: new Date().toISOString(),
+          },
+        });
+      } catch {}
+    }
+
+    return {
+      success: true,
+      checkoutUrl: res.checkoutUrl,
+    };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur inattendue.";
+    return { error: message };
+  }
 }
 
 /**

@@ -1,5 +1,5 @@
 import { PaymentProvider, CreatePaymentParams, CreatePaymentResult, VerifyPaymentResult } from "./types";
-import { SasPayClient } from "./saspay";
+import { SasPayClient, calculateEffectiveChargeAmount } from "./saspay";
 
 export class SasPayPaymentProvider implements PaymentProvider {
   readonly name = "saspay";
@@ -26,8 +26,14 @@ export class SasPayPaymentProvider implements PaymentProvider {
       };
     }
 
+    const feeInfo = calculateEffectiveChargeAmount(
+      (params.metadata?.country as string) || (params.metadata?.countryCode as string),
+      params.customerPhone
+    );
+    const chargeAmount = feeInfo.chargeAmount;
+
     const res = await this.client.createCheckoutSession({
-      amount: params.amount,
+      amount: chargeAmount,
       currency: params.currency || "XOF",
       description: `Activation compte VitaEarn #${params.userId.substring(0, 8)}`,
       customerEmail: params.customerEmail || "client@vitaearn.com",
@@ -38,6 +44,9 @@ export class SasPayPaymentProvider implements PaymentProvider {
         userId: params.userId,
         purpose: params.purpose,
         idempotencyKey: params.idempotencyKey,
+        nominalAmount: feeInfo.nominalAmount,
+        chargeAmount: feeInfo.chargeAmount,
+        country: feeInfo.countryCode,
       },
     });
 

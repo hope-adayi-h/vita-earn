@@ -175,6 +175,10 @@ export function PaiementClient({ initialData }: PaiementClientProps) {
       if (res.error) {
         setErrorMessage(res.error);
       } else if (res.success) {
+        if (res.redirectUrl && res.redirectUrl.startsWith("http")) {
+          window.location.href = res.redirectUrl;
+          return;
+        }
         setIsSuccess(true);
         setTimeout(() => {
           router.push("/activation");

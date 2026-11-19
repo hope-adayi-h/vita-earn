@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/context/AppContext";
 import type { ActivationData } from "./types";
+import { startSasPayActivationAction } from "./actions";
 import {
   User,
   CreditCard,
@@ -19,6 +20,7 @@ import {
   Smartphone,
   ChevronDown,
   ArrowUp,
+  ExternalLink,
 } from "lucide-react";
 
 interface ActivationClientProps {
@@ -34,8 +36,16 @@ const PAYMENT_CHANNELS = [
   { id: "mtn_ci", name: "MTN MoMo Côte d'Ivoire (+225)", country: "Côte d'Ivoire", code: "+225" },
   { id: "wave_ci", name: "Wave Côte d'Ivoire / Sénégal (+225 / +221)", country: "UEMOA", code: "+225" },
   { id: "orange_sn", name: "Orange Money Sénégal (+221)", country: "Sénégal", code: "+221" },
+  { id: "orange_bf", name: "Orange / Moov Burkina Faso (+226)", country: "Burkina Faso", code: "+226" },
+  { id: "airtel_ne", name: "Airtel / Moov Niger (+227)", country: "Niger", code: "+227" },
+  { id: "orange_gn", name: "Orange / MTN Guinée (+224)", country: "Guinée", code: "+224" },
+  { id: "airtel_ga", name: "Airtel / Moov Gabon (+241)", country: "Gabon", code: "+241" },
+  { id: "airtel_cg", name: "Airtel / MTN Congo (+242 / +243)", country: "Congo", code: "+242" },
+  { id: "mtn_gh", name: "MTN / Vodafone Ghana (+233)", country: "Ghana", code: "+233" },
+  { id: "mtn_zm", name: "MTN / Airtel Zambie (+260)", country: "Zambie", code: "+260" },
   { id: "mtn_cm", name: "MTN MoMo Cameroun (+237)", country: "Cameroun", code: "+237" },
   { id: "orange_cm", name: "Orange Money Cameroun (+237)", country: "Cameroun", code: "+237" },
+  { id: "card_all", name: "Carte Bancaire Visa / Mastercard (Tous pays)", country: "International", code: "" },
 ];
 
 export function ActivationClient({ initialData }: ActivationClientProps) {
@@ -45,26 +55,39 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
   const [fullName, setFullName] = useState(initialData.user.fullName || initialData.user.username || "");
   const [walletNumber, setWalletNumber] = useState(initialData.user.phone || "");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showStkModal, setShowStkModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const displayUsername = initialData.user.username || initialData.user.fullName || "Utilisateur";
   const displayPhone = walletNumber || initialData.user.phone || "+228 90 00 00 00";
   const currency = initialData.currency || "XOF";
   const feeAmount = initialData.feeAmount || 4500;
 
-  const handleStartPayment = (e: React.FormEvent) => {
+  const handleStartPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     setIsProcessing(true);
-    setShowStkModal(true);
 
-    setTimeout(() => {
-      const form = document.getElementById("stk-payment-form") as HTMLFormElement;
-      if (form) {
-        form.submit();
+    try {
+      const res = await startSasPayActivationAction({
+        channel: selectedChannel,
+        walletNumber: walletNumber.trim(),
+        fullName: fullName.trim(),
+      });
+
+      if (res.error) {
+        setErrorMessage(res.error);
+        setIsProcessing(false);
+      } else if (res.checkoutUrl) {
+        // Redirection directe vers la page officielle de paiement sécurisée de SasPay
+        window.location.href = res.checkoutUrl;
       } else {
-        router.push("/api/auth/quick-activate");
+        setErrorMessage("Lien de paiement non reçu. Veuillez réessayer.");
+        setIsProcessing(false);
       }
-    }, 2400);
+    } catch {
+      setErrorMessage("Une erreur réseau est survenue lors de la connexion à SasPay.");
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -173,32 +196,30 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
         </Link>
       </div>
 
-      {/* CARTE 4 : Paiement Mobile Money (STK Push) */}
+      {/* CARTE 4 : Paiement Mobile Money & Carte Bancaire (SasPay) */}
       <div className="bg-white rounded-2xl border border-gray-200/80 p-5 shadow-xs">
         <div className="flex items-start justify-between pb-3 mb-4 border-b border-gray-100">
           <div>
             <h2 className="text-sm font-bold text-gray-900">{t("act.stkTitle")}</h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              {t("act.stkSub")}
+              Réglez vos frais d'activation en ligne via Mobile Money ou Carte Bancaire
             </p>
           </div>
-          <div className="w-9 h-9 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600 border border-sky-100 flex-shrink-0">
-            <PhoneCall className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100 flex-shrink-0">
+            <CreditCard className="w-4 h-4" />
           </div>
         </div>
 
-        <form
-          id="stk-payment-form"
-          method="POST"
-          action="/api/auth/quick-activate"
-          onSubmit={handleStartPayment}
-          className="space-y-4"
-        >
-          {/* Données d'identification de l'utilisateur pour activation garantie */}
-          <input type="hidden" name="username" value={displayUsername} />
-          <input type="hidden" name="email" value={initialData.user.email || ""} />
+        {/* Message d'erreur éventuel */}
+        {errorMessage && (
+          <div className="mb-4 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2.5">
+            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-600" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
 
-          {/* Sélection du canal */}
+        <form onSubmit={handleStartPayment} className="space-y-4">
+          {/* Sélection du canal / pays */}
           <div>
             <label htmlFor="channel-select" className="text-xs font-semibold text-gray-700 mb-1.5 block">
               {t("act.selectChannel")}
@@ -221,13 +242,10 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
             </div>
           </div>
 
-          {/* Nom du propriétaire masqué pour garder l'alignement strict avec l'écran STK */}
-          <input type="hidden" name="fullName" value={fullName} />
-
-          {/* Numéro de portefeuille */}
+          {/* Numéro de téléphone Mobile Money */}
           <div>
             <label htmlFor="walletNumber" className="text-xs font-semibold text-gray-700 mb-1.5 block">
-              {t("act.walletNumber")}
+              Numéro de compte Mobile Money
             </label>
             <input
               id="walletNumber"
@@ -241,10 +259,10 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
             />
           </div>
 
-          {/* Montant (Amount) avec badge XOF */}
+          {/* Montant officiel : toujours 4 500 FCFA affiché */}
           <div>
             <label htmlFor="amount" className="text-xs font-semibold text-gray-700 mb-1.5 block">
-              {t("act.amount")}
+              Montant de l'adhésion
             </label>
             <div className="flex rounded-xl border border-gray-200 overflow-hidden bg-gray-50">
               <span className="inline-flex items-center px-4 py-2.5 bg-gray-100 text-xs font-bold text-gray-600 border-r border-gray-200 select-none">
@@ -254,18 +272,21 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
                 id="amount"
                 name="amount"
                 type="text"
-                value={feeAmount}
+                value="4 500"
                 readOnly
-                className="w-full px-3.5 py-2.5 bg-gray-50 text-xs sm:text-sm font-bold text-gray-900 cursor-not-allowed select-none focus:outline-hidden"
+                className="w-full px-3.5 py-2.5 bg-gray-50 text-xs sm:text-sm font-black text-gray-900 cursor-not-allowed select-none focus:outline-hidden"
               />
             </div>
+            <p className="text-[11px] text-gray-500 mt-1">
+              Adhésion annuelle donnant accès à toutes les formations et outils d'affiliation.
+            </p>
           </div>
 
-          {/* Boutons d'action : Dashboard & Make Payment */}
+          {/* Boutons d'action : Dashboard & Payer avec SasPay */}
           <div className="pt-2 grid grid-cols-2 gap-3">
             <Link
               href="/"
-              className="touch-target px-3 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+              className="touch-target px-3 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 transition-colors"
             >
               <Home className="w-4 h-4" />
               <span>{t("act.dashboard")}</span>
@@ -274,22 +295,27 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
             <button
               type="submit"
               disabled={isProcessing}
-              className="touch-target px-3 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 shadow-xs transition-colors disabled:opacity-75 disabled:cursor-wait"
+              className="touch-target px-3 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 shadow-md transition-colors disabled:opacity-75 disabled:cursor-wait cursor-pointer"
             >
               {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>{t("act.sendingStk")}</span>
+                  <span>Connexion SasPay...</span>
                 </>
               ) : (
                 <>
                   <Wallet className="w-4 h-4" />
-                  <span>{t("act.payNow")}</span>
+                  <span>Payer 4 500 FCFA</span>
                 </>
               )}
             </button>
           </div>
         </form>
+
+        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-center gap-1.5 text-[11px] text-gray-500">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <span>Portail officiel sécurisé SasPay (T-Money, Flooz, Wave, MTN, Orange, Carte)</span>
+        </div>
       </div>
 
       {/* BOUTON DU BAS : Aller au tableau de bord */}
@@ -314,42 +340,11 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
       <button
         type="button"
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className="fixed bottom-20 right-4 z-40 w-11 h-11 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-lg flex items-center justify-center transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+        className="fixed bottom-20 right-4 z-40 w-11 h-11 rounded-full bg-[#16A34A] hover:bg-[#15803D] text-white shadow-lg flex items-center justify-center transition-transform hover:scale-105 active:scale-95 cursor-pointer"
         aria-label="Retour en haut"
       >
         <ArrowUp className="w-5 h-5 text-white" />
       </button>
-
-      {/* MODAL SIMULATION STK PUSH */}
-      {showStkModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl border border-gray-100 animate-in fade-in zoom-in-95">
-            <div className="w-16 h-16 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center mx-auto border-2 border-sky-200">
-              <PhoneCall className="w-8 h-8 animate-pulse text-sky-600" />
-            </div>
-
-            <div>
-              <h3 className="text-base font-extrabold text-gray-900">
-                {t("act.modalTitle")}
-              </h3>
-              <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
-                {t("act.modalPrompt")}
-              </p>
-            </div>
-
-            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 text-[11px] text-gray-600 text-left space-y-1">
-              <p>{t("act.modalStep1")}</p>
-              <p>{t("act.modalStep2")}</p>
-              <p>{t("act.modalStep3")}</p>
-            </div>
-
-            <div className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 py-2.5 rounded-xl border border-emerald-100">
-              <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
-              <span>{t("act.modalValidating")}</span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
