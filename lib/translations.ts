@@ -48,7 +48,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "dash.welcome": "Bienvenue,",
     "dash.mainBalance": "Solde Principal",
     "dash.available": "Disponible",
-    "dash.withdraw": "Retirer de Solde",
+    "dash.withdraw": "Retirer",
     "dash.deposit": "Recharger",
     "dash.history": "Historique",
     "dash.withdrawals": "Retraits Totaux",

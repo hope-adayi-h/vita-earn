@@ -250,22 +250,22 @@ export function Navbar({ user }: NavbarProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#131E17]/95 backdrop-blur-md border-b border-gray-100 dark:border-[#1E2E24] shadow-xs transition-colors">
-        <div className="max-w-5xl mx-auto px-2 sm:px-4 h-15 sm:h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white/80 dark:bg-[#131E17]/80 backdrop-blur-xl backdrop-saturate-150 border-b border-gray-200/60 dark:border-[#1E2E24]/70 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] transition-all">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-3.5 min-h-[66px] sm:min-h-[74px] flex items-center justify-between">
           {/* ========================================================================= */}
-          {/* 1. ZONE GAUCHE : Bouton Menu ☰ (inchangé)                                 */}
+          {/* 1. ZONE GAUCHE : Bouton Menu ☰ (avec marge confortable et tactile)       */}
           {/* ========================================================================= */}
-          <div className="flex items-center shrink-0 w-20 sm:w-24 justify-start">
+          <div className="flex items-center shrink-0 w-20 sm:w-28 justify-start">
             <button
               type="button"
               onClick={() => {
                 setSidebarOpen(true);
                 closeDropdowns();
               }}
-              className="p-1.5 -ml-1 rounded-xl text-gray-800 dark:text-gray-100 hover:text-vita-deep hover:bg-vita-surface dark:hover:bg-slate-800 transition-colors focus:outline-hidden cursor-pointer"
+              className="p-2 -ml-1 rounded-2xl text-gray-800 dark:text-gray-100 hover:text-vita-deep hover:bg-vita-surface/80 dark:hover:bg-slate-800/80 transition-all focus:outline-hidden cursor-pointer"
               aria-label="Ouvrir le menu de navigation"
             >
-              <Menu className="w-5 h-5 sm:w-6 sm:h-6 text-gray-800 dark:text-gray-100" />
+              <Menu className="w-6 h-6 sm:w-7 sm:h-7 text-gray-800 dark:text-gray-100" />
             </button>
           </div>
 
@@ -279,22 +279,22 @@ export function Navbar({ user }: NavbarProps) {
                 closeSidebar();
                 closeDropdowns();
               }}
-              className="flex items-center gap-1.5 sm:gap-2 group py-1 shrink-0"
+              className="flex items-center gap-2 sm:gap-2.5 group py-1 shrink-0"
             >
               <Image
                 src="/images/logo-icon.png"
                 alt="Vita Earn"
-                width={38}
-                height={32}
-                className="h-7 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105 duration-200 shrink-0"
+                width={44}
+                height={38}
+                className="h-8 sm:h-9.5 w-auto object-contain transition-transform group-hover:scale-105 duration-200 shrink-0 drop-shadow-xs"
                 priority
               />
               <Image
                 src="/images/logo-text.png"
                 alt="Vita Earn"
-                width={110}
-                height={18}
-                className="h-4 sm:h-[18px] w-auto object-contain dark:brightness-200 shrink-0"
+                width={125}
+                height={22}
+                className="h-5 sm:h-6 w-auto object-contain dark:brightness-200 shrink-0"
                 priority
               />
             </Link>
@@ -303,19 +303,19 @@ export function Navbar({ user }: NavbarProps) {
           {/* ========================================================================= */}
           {/* 3. ZONE DROITE : Bouton thème (lune/soleil) + Avatar avec point vert en ligne */}
           {/* ========================================================================= */}
-          <div className="flex items-center justify-end shrink-0 w-20 sm:w-24 gap-1.5 sm:gap-2.5 relative">
+          <div className="flex items-center justify-end shrink-0 w-20 sm:w-28 gap-2 sm:gap-3 relative">
             {/* Bouton Mode Sombre / Clair (Lune / Soleil) */}
             <button
               type="button"
               onClick={toggleTheme}
-              className="p-1.5 sm:p-2 rounded-xl text-gray-700 dark:text-gray-200 hover:text-vita-deep hover:bg-vita-surface dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-2 rounded-2xl text-gray-700 dark:text-gray-200 hover:text-vita-deep hover:bg-vita-surface/80 dark:hover:bg-slate-800/80 transition-all cursor-pointer"
               aria-label={theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"}
               title={theme === "dark" ? t("top.light") : t("top.dark")}
             >
               {theme === "dark" ? (
-                <Sun className="w-4 h-4 text-amber-400 animate-in spin-in-90 duration-200" />
+                <Sun className="w-4.5 h-4.5 text-amber-400 animate-in spin-in-90 duration-200" />
               ) : (
-                <Moon className="w-4 h-4 text-gray-700 dark:text-gray-200 hover:text-emerald-600 transition-colors" />
+                <Moon className="w-4.5 h-4.5 text-gray-700 dark:text-gray-200 hover:text-emerald-600 transition-colors" />
               )}
             </button>
 
@@ -334,7 +334,7 @@ export function Navbar({ user }: NavbarProps) {
                 <img
                   src={avatar}
                   alt={userDisplayName || "Avatar"}
-                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border border-emerald-500/40 shadow-xs"
+                  className="w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 rounded-full object-cover border border-emerald-500/40 shadow-xs"
                 />
                 {/* Point vert en haut montrant le statut en ligne */}
                 <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">

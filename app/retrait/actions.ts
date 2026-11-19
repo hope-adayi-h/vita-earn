@@ -57,7 +57,7 @@ export async function getWithdrawalData(): Promise<WithdrawalPageData> {
   let email = "user@vitaearn.com";
   let phone = registeredPhoneCookie || sessionUser?.phone || "";
   let isActivated = Boolean(isActivatedCookie);
-  let balance = 4500; // Solde par défaut ou crédité
+  let balance = Number(sessionUser?.balance) || 0; // Solde retirable initial à 0 F (gains parrainage/tâches)
   let totalWithdrawn = 0;
   let sumWithdrawnCookie = 0;
 
@@ -99,10 +99,12 @@ export async function getWithdrawalData(): Promise<WithdrawalPageData> {
     }
   } catch {}
 
-  // Solde spécial pour Koffi ou autres comptes démo
+  // Solde spécial pour comptes de démonstration
   if (username.toLowerCase() === "koffi") {
     balance = 1070;
     totalWithdrawn = 445249;
+  } else if (username.toLowerCase() === "espoir") {
+    balance = 3500;
   }
 
   // Calcul des retraits locaux sauvegardés

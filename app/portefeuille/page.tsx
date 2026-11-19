@@ -59,9 +59,9 @@ export default async function PortefeuillePage() {
   }
 
   let username = sessionUser?.username || testUser || "Utilisateur";
-  let availableBalance = 4500;
+  let availableBalance = Number(sessionUser?.balance) || 0;
   let pendingBalance = 0;
-  let totalEarned = 4500;
+  let totalEarned = Number(sessionUser?.profit) || Number(sessionUser?.balance) || 0;
   let totalWithdrawn = 0;
 
   if (username.toLowerCase() === "koffi") {
@@ -69,6 +69,11 @@ export default async function PortefeuillePage() {
     pendingBalance = 0;
     totalEarned = 446319;
     totalWithdrawn = 445249;
+  } else if (username.toLowerCase() === "espoir") {
+    availableBalance = 3500;
+    pendingBalance = 0;
+    totalEarned = 3500;
+    totalWithdrawn = 0;
   }
 
   let withdrawals: WithdrawalItem[] = [];

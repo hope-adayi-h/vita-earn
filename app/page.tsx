@@ -386,9 +386,11 @@ export default async function HomePage() {
   }
   userInitial = userName.charAt(0).toUpperCase();
 
-  // Solde par défaut pour compte activé si non chargé depuis la base
-  if (isActivated && balance === 0 && totalWithdrawn === 0) {
-    balance = 4500;
+  // Nouveau compte activé : le solde retirable commence à 0 F CFA
+  // Les 4 500 F CFA d'abonnement constituent une dépense (enregistrée dans Dépenses)
+  // Le solde augmente uniquement avec les gains réels (parrainages, tâches, bonus)
+  if (sessionUser?.balance !== undefined) {
+    balance = Number(sessionUser.balance) || 0;
   }
 
   // Déduction immédiate de tous les retraits effectués enregistrés
@@ -446,7 +448,7 @@ export default async function HomePage() {
               )}
             </div>
             <p className="text-[11px] sm:text-xs text-emerald-50 mt-1 leading-snug">
-              Chez <strong className="text-white font-bold">Vita Earn</strong>, accédez à un ensemble diversifié de 10+ ressources numériques pour développer vos compétences et vos projets.
+              Chez <strong className="text-white font-bold">Vita Earn</strong>, accédez à un ensemble diversifié de 10+ ressources numériques pour développer vos compétences et vos <strong className="text-white font-black uppercase tracking-wider text-xs sm:text-sm">PROJETS</strong>.
             </p>
           </div>
         </div>
