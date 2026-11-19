@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getPaymentProvider } from "@/lib/payments";
 import { SasPayClient, calculateEffectiveChargeAmount } from "@/lib/payments/saspay";
 import { activateUser } from "@/lib/auth/local-store";
+import { saveStoredDeposit, resolveOperatorName } from "@/lib/data/deposits-store";
 import type { ActivationData } from "./types";
 
 export type { ActivationData };
@@ -341,6 +342,29 @@ export async function startSasPayActivationAction(params: {
         });
       } catch {}
     }
+
+    // 4. Enregistrement direct dans le registre local des dépôts Mobile Money (Admin)
+    try {
+      const operatorName = resolveOperatorName(params.channel, effectivePhone);
+      saveStoredDeposit({
+        id: res.sessionId || `dep_${Date.now()}`,
+        userId: effectiveUserId,
+        username: sessionUser?.username || testUser || effectiveName,
+        fullName: effectiveName,
+        email: effectiveEmail,
+        phone: effectivePhone || "+228 90 00 00 00",
+        operator: operatorName,
+        amount: 4500,
+        currency: "XOF",
+        purpose: "Activation de compte",
+        status: "pending",
+        provider: "saspay",
+        providerRef: res.sessionId || res.checkoutUrl || "",
+        confirmationSource: "En attente de règlement SasPay",
+        createdAt: new Date().toISOString(),
+        confirmedAt: null,
+      });
+    } catch {}
 
     return {
       success: true,

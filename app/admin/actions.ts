@@ -29,6 +29,7 @@ import {
   findUserByIdentifier,
 } from "@/lib/auth/local-store";
 import { updateStoredWithdrawalStatus, getAllStoredWithdrawals } from "@/lib/data/withdrawals-store";
+import { saveStoredDeposit, resolveOperatorName } from "@/lib/data/deposits-store";
 import { SasPayClient } from "@/lib/payments/saspay";
 
 const SESSION_COOKIE_NAME = "vita_admin_unlocked";
@@ -668,8 +669,32 @@ export async function activateUserAction(params: {
       }
     } catch {}
 
+    // 3. Enregistrement dans le registre des dépôts
+    try {
+      const foundU = findUserByIdentifier(clean || params.userId);
+      saveStoredDeposit({
+        id: `dep_adm_${params.userId}_${Date.now()}`,
+        userId: params.userId,
+        username: foundU?.username || params.identifier,
+        fullName: (foundU as any)?.fullName || foundU?.username || params.identifier,
+        email: foundU?.email || `${params.identifier}@vitaearn.com`,
+        phone: foundU?.phone || "+228 90 00 00 00",
+        operator: resolveOperatorName("", foundU?.phone),
+        amount: 4500,
+        currency: "XOF",
+        purpose: "Activation de compte",
+        status: "succeeded",
+        provider: "MANUAL_ADMIN",
+        providerRef: `adm_${Date.now()}`,
+        confirmationSource: "Validé manuellement par l'Administrateur",
+        createdAt: new Date().toISOString(),
+        confirmedAt: new Date().toISOString(),
+      });
+    } catch {}
+
     revalidatePath("/admin");
     revalidatePath("/admin/utilisateurs");
+    revalidatePath("/admin/depots");
     revalidatePath("/admin/arbre");
 
     return {

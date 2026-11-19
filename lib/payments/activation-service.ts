@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { activateUser } from "@/lib/auth/local-store";
+import { updateStoredDepositStatus } from "@/lib/data/deposits-store";
 
 /**
  * Exécute l'activation atomique d'un compte utilisateur et la distribution
@@ -15,6 +16,15 @@ export async function processSuccessfulActivation(params: {
   // 1. Activation dans le store local (résilience hors-ligne / fallback)
   try {
     activateUser(userId);
+  } catch {}
+
+  // 1.b Mise à jour du statut dans le registre des dépôts d'encaissement
+  try {
+    updateStoredDepositStatus({
+      identifierOrRef: providerRef || userId,
+      status: "succeeded",
+      confirmationSource: "Paiement automatique confirmé par SasPay",
+    });
   } catch {}
 
   // 2. Traitement côté Supabase si disponible
