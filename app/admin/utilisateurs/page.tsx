@@ -233,10 +233,10 @@ export default async function AdminUtilisateursPage({
       createdAt: d.createdAt,
     }));
 
-    // Calcul du profit cumulé (Commissions sur abonnements payés et vérifiés)
+    // Calcul du profit cumulé (Commissions sur abonnements payés et vérifiés ou solde direct)
     const cumulativeCommissions =
       (level1.length * 2000) + (level2.length * 1000) + (level3.length * 500);
-    const totalProfit = Math.max(cumulativeCommissions, user.profit || 0);
+    const totalProfit = Math.max(cumulativeCommissions, user.balance || 0, user.profit || 0);
 
     const userW = allWithdrawals
       .filter((w) =>
