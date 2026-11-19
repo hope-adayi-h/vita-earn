@@ -17,6 +17,7 @@ export interface StoredUser {
   referralCode?: string;
   balance?: number;
   points?: number;
+  profit?: number;
   createdAt: string;
 }
 
@@ -264,6 +265,30 @@ export function updateUserPassword(identifierOrId: string, newPassword: string):
     return null;
   } catch (err) {
     console.error("Erreur mise à jour mot de passe user:", err);
+    return null;
+  }
+}
+
+export function updateUserPhone(identifierOrId: string, newPhone: string): StoredUser | null {
+  try {
+    const filePath = ensureDirectoryAndFile();
+    const clean = identifierOrId.toLowerCase().trim();
+    const users = getAllUsers();
+    const user = users.find(
+      (u) =>
+        u.id.toLowerCase() === clean ||
+        u.username.toLowerCase() === clean ||
+        u.email.toLowerCase() === clean
+    );
+
+    if (user) {
+      user.phone = newPhone;
+      fs.writeFileSync(filePath, JSON.stringify(users, null, 2), "utf-8");
+      return user;
+    }
+    return null;
+  } catch (err) {
+    console.error("Erreur mise à jour téléphone user:", err);
     return null;
   }
 }

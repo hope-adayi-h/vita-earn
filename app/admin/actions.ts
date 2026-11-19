@@ -23,6 +23,7 @@ import {
   banUser,
   unbanUser,
   updateUserPassword,
+  updateUserPhone,
   updateUserUpline,
   deleteUser,
   findUserByIdentifier,
@@ -903,6 +904,87 @@ export async function changeUserUplineAction(params: {
       success: true,
       message: `Le parrain de ${params.identifier} a été changé pour ${foundUplineName}.`,
       newUpline: foundUplineName,
+    };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur inattendue.";
+    return { error: message };
+  }
+}
+
+/**
+ * Modification du numéro de téléphone d'un utilisateur par l'administrateur
+ */
+export async function updateUserPhoneAction(params: {
+  userId: string;
+  identifier: string;
+  newPhone: string;
+}): Promise<{ success?: boolean; error?: string; message?: string; newPhone?: string }> {
+  try {
+    const { user, isAdmin } = await verifyAdminUser();
+    if (!isAdmin) {
+      return { error: "Accès refusé : privilèges administrateur requis." };
+    }
+
+    const cleanPhone = params.newPhone.trim();
+    if (!cleanPhone || cleanPhone.length < 6) {
+      return { error: "Veuillez renseigner un numéro de téléphone valide (ex: +228 90 00 00 00)." };
+    }
+
+    const clean = params.identifier.trim().toLowerCase();
+
+    // 1. Supabase
+    try {
+      const adminClient = createAdminClient();
+      await adminClient
+        .from("profiles")
+        .update({ phone: cleanPhone, updated_at: new Date().toISOString() })
+        .eq("id", params.userId);
+
+      await adminClient.auth.admin.updateUserById(params.userId, {
+        phone: cleanPhone,
+        user_metadata: { phone: cleanPhone },
+      });
+
+      await adminClient.from("audit_logs").insert({
+        user_id: user.id,
+        action: "admin_update_user_phone",
+        entity_type: "profiles",
+        entity_id: params.userId,
+      });
+    } catch {}
+
+    // 2. Store local & Cookies
+    updateUserPhone(clean || params.userId, cleanPhone);
+    try {
+      const cookieStore = cookies();
+      const raw = cookieStore.get("vita_accounts")?.value;
+      if (raw) {
+        const accounts = JSON.parse(raw);
+        if (Array.isArray(accounts)) {
+          const acc = accounts.find(
+            (a: any) =>
+              a.id === params.userId ||
+              a.email?.toLowerCase() === clean ||
+              a.username?.toLowerCase() === clean
+          );
+          if (acc) {
+            acc.phone = cleanPhone;
+            cookieStore.set("vita_accounts", JSON.stringify(accounts), {
+              path: "/",
+              httpOnly: true,
+              maxAge: 60 * 60 * 24 * 365,
+            });
+          }
+        }
+      }
+    } catch {}
+
+    revalidatePath("/admin/utilisateurs");
+
+    return {
+      success: true,
+      message: `Le numéro de téléphone de ${params.identifier} a été mis à jour avec succès : ${cleanPhone}`,
+      newPhone: cleanPhone,
     };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Erreur inattendue.";

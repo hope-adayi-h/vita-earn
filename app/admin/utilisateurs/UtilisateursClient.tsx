@@ -30,6 +30,8 @@ import {
   X,
   AlertTriangle,
   UserPlus,
+  Check,
+  ArrowRight,
 } from "lucide-react";
 import { formatFCFA } from "@/lib/utils";
 import {
@@ -39,6 +41,7 @@ import {
   unbanUserAction,
   changeUserPasswordAction,
   changeUserUplineAction,
+  updateUserPhoneAction,
   manageAdminRoleAction,
 } from "@/app/admin/actions";
 
@@ -81,10 +84,15 @@ export interface UserItem {
   upline?: string;
   balance?: number;
   points?: number;
+  profit?: number;
   referralsCount?: number;
+  referralsDirectsTotal?: number;
+  referralsDirectsActive?: number;
+  referralsDirectsPending?: number;
   referralsLevel1?: ReferralMember[];
   referralsLevel2?: ReferralMember[];
   referralsLevel3?: ReferralMember[];
+  referralsPendingDirects?: ReferralMember[];
   withdrawals?: UserWithdrawalItem[];
   transactions?: UserTransactionItem[];
   createdAt: string;
@@ -111,6 +119,8 @@ export function UtilisateursClient({
   // Formulaires dans le modal
   const [newPassword, setNewPassword] = useState("");
   const [newUpline, setNewUpline] = useState("");
+  const [selectedNewUplineUser, setSelectedNewUplineUser] = useState<UserItem | null>(null);
+  const [editPhone, setEditPhone] = useState("");
 
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [modalMessage, setModalMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -238,18 +248,70 @@ export function UtilisateursClient({
       if (res.error) {
         setModalMessage({ type: "error", text: res.error });
       } else {
-        setModalMessage({ type: "success", text: res.message || "Mot de passe modifié." });
+        setModalMessage({ type: "success", text: res.message || "Mot de passe modifié avec succès." });
         setNewPassword("");
       }
     });
   };
 
-  // 5. Modifier le parrain dans le modal Détails
+  // 5. Modifier le numéro de téléphone dans le modal Détails
+  const handleUpdatePhone = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+    const cleanPhone = editPhone.trim();
+    if (!cleanPhone || cleanPhone.length < 6) {
+      setModalMessage({
+        type: "error",
+        text: "Veuillez renseigner un numéro de téléphone valide (ex: +228 90 00 00 00).",
+      });
+      return;
+    }
+
+    setModalMessage(null);
+    startTransition(async () => {
+      const res = await updateUserPhoneAction({
+        userId: selectedUser.id,
+        identifier: selectedUser.email || selectedUser.username,
+        newPhone: cleanPhone,
+      });
+
+      if (res.error) {
+        setModalMessage({ type: "error", text: res.error });
+      } else {
+        setModalMessage({
+          type: "success",
+          text: res.message || "Numéro de téléphone mis à jour avec succès.",
+        });
+        setUsers((prev) =>
+          prev.map((u) => (u.id === selectedUser.id ? { ...u, phone: cleanPhone } : u))
+        );
+        setSelectedUser((prev) => (prev ? { ...prev, phone: cleanPhone } : null));
+      }
+    });
+  };
+
+  // 6. Modifier le parrain dans le modal Détails (avec sélection exacte)
   const handleChangeUpline = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser) return;
-    if (!newUpline.trim()) {
-      setModalMessage({ type: "error", text: "Veuillez saisir un parrain valide." });
+    const targetUpline = (selectedNewUplineUser?.username || newUpline).trim();
+    if (!targetUpline) {
+      setModalMessage({
+        type: "error",
+        text: "Veuillez rechercher et sélectionner un parrain valide.",
+      });
+      return;
+    }
+
+    if (
+      targetUpline.toLowerCase() === selectedUser.username.toLowerCase() ||
+      targetUpline.toLowerCase() === selectedUser.email.toLowerCase() ||
+      (selectedUser.referralCode && targetUpline.toUpperCase() === selectedUser.referralCode.toUpperCase())
+    ) {
+      setModalMessage({
+        type: "error",
+        text: "Un utilisateur ne peut pas être son propre parrain.",
+      });
       return;
     }
 
@@ -258,24 +320,28 @@ export function UtilisateursClient({
       const res = await changeUserUplineAction({
         userId: selectedUser.id,
         identifier: selectedUser.email || selectedUser.username,
-        newUplineIdentifier: newUpline,
+        newUplineIdentifier: targetUpline,
       });
 
       if (res.error) {
         setModalMessage({ type: "error", text: res.error });
       } else {
-        setModalMessage({ type: "success", text: res.message || "Parrain modifié avec succès." });
-        const updatedUpline = res.newUpline || newUpline;
+        const updatedUpline = res.newUpline || targetUpline;
+        setModalMessage({
+          type: "success",
+          text: res.message || `Parrain modifié avec succès pour @${updatedUpline}.`,
+        });
         setUsers((prev) =>
           prev.map((u) => (u.id === selectedUser.id ? { ...u, upline: updatedUpline } : u))
         );
         setSelectedUser((prev) => (prev ? { ...prev, upline: updatedUpline } : null));
         setNewUpline("");
+        setSelectedNewUplineUser(null);
       }
     });
   };
 
-  // 6. Gestion du rôle admin
+  // 7. Gestion du rôle admin
   const handleToggleRole = (user: UserItem) => {
     const newRole = user.role === "admin" ? "user" : "admin";
     setMessage(null);
@@ -540,7 +606,7 @@ export function UtilisateursClient({
                   </div>
                 </div>
 
-                {/* 2. LIGNE DU MILIEU : SOLDE (SANS POINT AU MILIEU), POINTS, FILLEULS */}
+                {/* 2. LIGNE DU MILIEU : SOLDE (SANS POINT AU MILIEU), PROFIT, FILLEULS */}
                 <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-100 text-center">
                   <div>
                     <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -553,10 +619,10 @@ export function UtilisateursClient({
 
                   <div>
                     <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      POINTS
+                      PROFIT
                     </div>
                     <div className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
-                      {u.points || 0}
+                      XOF {(u.profit ?? u.points ?? 0).toLocaleString("fr-FR")}
                     </div>
                   </div>
 
@@ -565,7 +631,7 @@ export function UtilisateursClient({
                       FILLEULS
                     </div>
                     <div className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
-                      {u.referralsCount || 0}
+                      {u.referralsDirectsTotal ?? u.referralsCount ?? 0}
                     </div>
                   </div>
                 </div>
@@ -577,6 +643,10 @@ export function UtilisateursClient({
                     type="button"
                     onClick={() => {
                       setSelectedUser(u);
+                      setEditPhone(u.phone || "");
+                      setNewUpline("");
+                      setSelectedNewUplineUser(null);
+                      setNewPassword("");
                       setModalMessage(null);
                     }}
                     className="px-2.5 sm:px-4 py-2.5 rounded-xl sm:rounded-2xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
@@ -727,7 +797,7 @@ export function UtilisateursClient({
               </div>
             </div>
 
-            {/* 2. Parrain Actuel & Possibilité de Changer de Parrain */}
+            {/* 2. Parrain Actuel & Recherche / Modification en direct */}
             <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -736,36 +806,136 @@ export function UtilisateursClient({
                   </h3>
                   <div className="flex items-center gap-1.5 mt-1 font-bold text-slate-900">
                     <GitBranch className="w-4 h-4 text-[#0084FF]" />
-                    <span>{selectedUser.upline || "Aucun (Racine)"}</span>
+                    <span>{selectedUser.upline || "Aucun (Racine / Fondateur)"}</span>
                   </div>
                 </div>
                 <span className="text-xs text-slate-500">Lignée d&apos;affiliation</span>
               </div>
 
-              {/* Formulaire pour modifier le parrain */}
-              <form onSubmit={handleChangeUpline} className="pt-2 border-t border-slate-100 space-y-2">
+              {/* Formulaire et Recherche en direct pour modifier le parrain */}
+              <form onSubmit={handleChangeUpline} className="pt-2 border-t border-slate-100 space-y-2.5">
                 <label className="text-xs font-bold text-slate-700 block">
                   Changer le parrain de cet utilisateur :
                 </label>
-                <div className="flex gap-2">
+
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={newUpline}
-                    onChange={(e) => setNewUpline(e.target.value)}
-                    placeholder="Email, username ou code du nouveau parrain..."
-                    className="flex-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-hidden focus:border-[#0084FF]"
+                    onChange={(e) => {
+                      setNewUpline(e.target.value);
+                      setSelectedNewUplineUser(null);
+                    }}
+                    placeholder="Tapez le nom, pseudo ou email (ex: Koffi, Kosqi)..."
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-hidden focus:border-[#0084FF] focus:bg-white transition-all"
                   />
+                </div>
+
+                {/* Liste déroulante des résultats de recherche sous la barre */}
+                {newUpline.trim().length > 0 && !selectedNewUplineUser && (
+                  <div className="rounded-xl border border-blue-200 bg-blue-50/40 p-2 space-y-1.5 max-h-48 overflow-y-auto shadow-xs">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-blue-700 px-1">
+                      Comptes correspondants :
+                    </div>
+                    {users
+                      .filter(
+                        (cand) =>
+                          cand.id !== selectedUser.id &&
+                          (cand.username.toLowerCase().includes(newUpline.toLowerCase()) ||
+                            cand.name.toLowerCase().includes(newUpline.toLowerCase()) ||
+                            cand.email.toLowerCase().includes(newUpline.toLowerCase()) ||
+                            (cand.referralCode &&
+                              cand.referralCode.toLowerCase().includes(newUpline.toLowerCase())))
+                      )
+                      .slice(0, 5)
+                      .map((cand) => (
+                        <button
+                          key={cand.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedNewUplineUser(cand);
+                            setNewUpline(cand.username);
+                          }}
+                          className="w-full text-left p-2 rounded-lg flex items-center justify-between gap-2 text-xs bg-white hover:bg-blue-100/70 border border-slate-200/70 transition-all cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-7 h-7 rounded-full bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center font-bold text-[10px] shrink-0">
+                              {(cand.username || cand.name).slice(0, 2).toUpperCase()}
+                            </div>
+                            <div className="min-w-0 truncate">
+                              <div className="font-bold text-slate-900 truncate">
+                                @{cand.username} ({cand.name})
+                              </div>
+                              <div className="text-[10px] text-slate-500 truncate">
+                                {cand.email} • {cand.phone || "Sans téléphone"}
+                              </div>
+                            </div>
+                          </div>
+                          <span
+                            className={`text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                              cand.isActivated
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-slate-200 text-slate-700"
+                            }`}
+                          >
+                            {cand.isActivated ? "Activé" : "En attente"}
+                          </span>
+                        </button>
+                      ))}
+                    {users.filter(
+                      (cand) =>
+                        cand.id !== selectedUser.id &&
+                        (cand.username.toLowerCase().includes(newUpline.toLowerCase()) ||
+                          cand.name.toLowerCase().includes(newUpline.toLowerCase()) ||
+                          cand.email.toLowerCase().includes(newUpline.toLowerCase()) ||
+                          (cand.referralCode &&
+                            cand.referralCode.toLowerCase().includes(newUpline.toLowerCase())))
+                    ).length === 0 && (
+                      <div className="text-xs text-slate-500 p-2 text-center">
+                        Aucun utilisateur trouvé pour &quot;{newUpline}&quot;.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Aperçu du parrain sélectionné avec confirmation visuelle */}
+                {selectedNewUplineUser && (
+                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="truncate">
+                        Nouveau parrain sélectionné :{" "}
+                        <strong className="font-black">@{selectedNewUplineUser.username}</strong>{" "}
+                        ({selectedNewUplineUser.name} - {selectedNewUplineUser.email})
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedNewUplineUser(null);
+                        setNewUpline("");
+                      }}
+                      className="text-[10px] font-bold text-emerald-700 hover:underline shrink-0 ml-2"
+                    >
+                      Changer
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <p className="text-[11px] text-slate-400">
+                    L&apos;administrateur peut réassigner le parrain si le filleul s&apos;est trompé de lien lors de son inscription.
+                  </p>
                   <button
                     type="submit"
-                    disabled={isPending}
-                    className="px-4 py-2 rounded-xl bg-[#0084FF] hover:bg-blue-600 text-white text-xs font-bold transition-all shrink-0 cursor-pointer disabled:opacity-50"
+                    disabled={isPending || (!selectedNewUplineUser && !newUpline.trim())}
+                    className="px-4 py-2 rounded-xl bg-[#0084FF] hover:bg-blue-600 text-white text-xs font-bold transition-all shrink-0 cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
                   >
-                    Modifier le parrain
+                    <span>Modifier le parrain</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400">
-                  L&apos;administrateur peut réassigner le parrain si le filleul s&apos;est trompé de lien lors de son inscription.
-                </p>
               </form>
             </div>
 
@@ -782,70 +952,160 @@ export function UtilisateursClient({
 
               <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-100">
                 <span className="text-xs font-bold text-blue-800 uppercase tracking-wider">
-                  Commissions Cumulées
+                  Commissions Cumulées (Profit)
                 </span>
                 <div className="text-2xl font-black text-[#0084FF] mt-1">
-                  {formatFCFA(selectedUser.points || 0)}
+                  {formatFCFA(selectedUser.profit ?? selectedUser.points ?? 0)}
                 </div>
               </div>
             </div>
 
-            {/* 4. Ses Filleuls par Niveau (Niveau 1, 2, 3) */}
+            {/* 4. Ses Filleuls par Niveau (Niveau 1, 2, 3 - Uniquement Comptes Activés) */}
             <div className="space-y-3">
-              <h3 className="font-black text-slate-900 text-sm flex items-center justify-between">
-                <span>Réseau de Filleuls (Programme 3 Niveaux)</span>
-                <span className="text-xs text-slate-500 font-normal">
-                  Total : {selectedUser.referralsCount || 0} membre(s)
-                </span>
-              </h3>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-1">
+                <h3 className="font-black text-slate-900 text-sm">
+                  Réseau de Filleuls (Programme 3 Niveaux)
+                </h3>
+                <div className="flex items-center gap-2 text-xs flex-wrap">
+                  <span className="font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                    Total inscrits : {selectedUser.referralsDirectsTotal || selectedUser.referralsCount || 0} membre(s)
+                  </span>
+                  <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    {selectedUser.referralsLevel1?.length || 0} qualifié(s)
+                  </span>
+                  {(selectedUser.referralsPendingDirects?.length || 0) > 0 && (
+                    <span className="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                      {selectedUser.referralsPendingDirects?.length} en attente
+                    </span>
+                  )}
+                </div>
+              </div>
 
+              {/* Les 3 Cartes de Niveau (Comptabilisent UNIQUEMENT les membres ACTIVÉS) */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 {/* Niveau 1 */}
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-xs font-bold text-slate-500 uppercase">Niveau 1 (Directs)</div>
+                  <div className="text-xs font-bold text-slate-500 uppercase">Niveau 1 (Directs Activés)</div>
                   <div className="text-xl font-black text-slate-900 mt-0.5">
                     {selectedUser.referralsLevel1?.length || 0}
                   </div>
                   <div className="text-[10px] text-emerald-600 font-semibold mt-1">
-                    2 000 FCFA par activation
+                    2 000 FCFA par activation • Total : {formatFCFA((selectedUser.referralsLevel1?.length || 0) * 2000)}
                   </div>
                 </div>
 
                 {/* Niveau 2 */}
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-xs font-bold text-slate-500 uppercase">Niveau 2 (Second)</div>
+                  <div className="text-xs font-bold text-slate-500 uppercase">Niveau 2 (Second Activés)</div>
                   <div className="text-xl font-black text-slate-900 mt-0.5">
                     {selectedUser.referralsLevel2?.length || 0}
                   </div>
                   <div className="text-[10px] text-emerald-600 font-semibold mt-1">
-                    1 000 FCFA par activation
+                    1 000 FCFA par activation • Total : {formatFCFA((selectedUser.referralsLevel2?.length || 0) * 1000)}
                   </div>
                 </div>
 
                 {/* Niveau 3 */}
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-xs font-bold text-slate-500 uppercase">Niveau 3 (Troisième)</div>
+                  <div className="text-xs font-bold text-slate-500 uppercase">Niveau 3 (Troisième Activés)</div>
                   <div className="text-xl font-black text-slate-900 mt-0.5">
                     {selectedUser.referralsLevel3?.length || 0}
                   </div>
                   <div className="text-[10px] text-emerald-600 font-semibold mt-1">
-                    500 FCFA par activation
+                    500 FCFA par activation • Total : {formatFCFA((selectedUser.referralsLevel3?.length || 0) * 500)}
                   </div>
                 </div>
               </div>
 
-              {/* Détail des filleuls niveau 1 si présents */}
+              {/* Filleuls directs qualifiés Niveau 1 (Activés) */}
               {selectedUser.referralsLevel1 && selectedUser.referralsLevel1.length > 0 && (
-                <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 max-h-40 overflow-y-auto space-y-1.5">
-                  <div className="text-xs font-bold text-slate-700">Détail des filleuls directs (Niveau 1) :</div>
+                <div className="bg-emerald-50/50 rounded-2xl p-3 border border-emerald-200/70 max-h-40 overflow-y-auto space-y-1.5">
+                  <div className="text-xs font-bold text-emerald-900 flex items-center justify-between">
+                    <span>Filleuls directs qualifiés (Niveau 1 activés) :</span>
+                    <span className="text-[11px] font-mono font-black text-emerald-700">
+                      +{formatFCFA(selectedUser.referralsLevel1.length * 2000)}
+                    </span>
+                  </div>
                   {selectedUser.referralsLevel1.map((ref) => (
-                    <div key={ref.id} className="flex items-center justify-between text-xs py-1 border-b border-slate-200/50 last:border-none">
-                      <span className="font-bold text-slate-800">{ref.name}</span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ref.isActivated ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"}`}>
-                        {ref.isActivated ? "Activé" : "En attente"}
+                    <div
+                      key={ref.id}
+                      className="flex items-center justify-between text-xs py-1 border-b border-emerald-100 last:border-none"
+                    >
+                      <span className="font-bold text-slate-800">@{ref.name} ({ref.email})</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        • Activé (2 000 FCFA)
                       </span>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Filleuls de second niveau qualifiés Niveau 2 (Activés) */}
+              {selectedUser.referralsLevel2 && selectedUser.referralsLevel2.length > 0 && (
+                <div className="bg-blue-50/50 rounded-2xl p-3 border border-blue-200/70 max-h-40 overflow-y-auto space-y-1.5">
+                  <div className="text-xs font-bold text-blue-900 flex items-center justify-between">
+                    <span>Filleuls second niveau qualifiés (Niveau 2 activés) :</span>
+                    <span className="text-[11px] font-mono font-black text-blue-700">
+                      +{formatFCFA(selectedUser.referralsLevel2.length * 1000)}
+                    </span>
+                  </div>
+                  {selectedUser.referralsLevel2.map((ref) => (
+                    <div
+                      key={ref.id}
+                      className="flex items-center justify-between text-xs py-1 border-b border-blue-100 last:border-none"
+                    >
+                      <span className="font-bold text-slate-800">@{ref.name} ({ref.email})</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                        • Activé (1 000 FCFA)
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Inscrits directs en attente d'activation (NON comptabilisés dans Niveau 1) */}
+              {selectedUser.referralsPendingDirects && selectedUser.referralsPendingDirects.length > 0 && (
+                <div className="bg-amber-50/50 rounded-2xl p-3 border border-amber-200/80 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-amber-900">
+                    <span>
+                      Inscrits directs en attente d&apos;activation ({selectedUser.referralsPendingDirects.length}) :
+                    </span>
+                    <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">
+                      Non qualifiés Niveau 1
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-amber-800/90 leading-tight">
+                    Ces personnes ont utilisé le lien de parrainage mais n&apos;ont pas encore activé leur compte. Elles ne sont pas comptabilisées au Niveau 1 et ne génèrent de commission qu&apos;après activation.
+                  </p>
+                  <div className="max-h-36 overflow-y-auto space-y-1.5 pt-1">
+                    {selectedUser.referralsPendingDirects.map((ref) => (
+                      <div
+                        key={ref.id}
+                        className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-white border border-amber-200/60"
+                      >
+                        <div className="min-w-0">
+                          <span className="font-bold text-slate-900">@{ref.name}</span>
+                          <span className="text-slate-500 ml-1.5 text-[11px] truncate">({ref.email})</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                            • En attente
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const target = users.find((u) => u.id === ref.id || u.email === ref.email);
+                              if (target) handleActivate(target);
+                            }}
+                            disabled={isPending}
+                            className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-[#0084FF] hover:bg-blue-600 text-white cursor-pointer transition-colors shadow-xs"
+                          >
+                            Activer
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -908,14 +1168,40 @@ export function UtilisateursClient({
               )}
             </div>
 
-            {/* 7. Actions Administrateur : Modifier mot de passe & Statut */}
+            {/* 7. Actions Administrateur : Modifier coordonnées & Statut */}
             <div className="bg-slate-50 rounded-2xl p-4 space-y-4">
               <h3 className="font-black text-slate-900 text-xs uppercase tracking-wider text-slate-400">
-                Actions Administrateur
+                Actions & Coordonnées Utilisateur
               </h3>
 
+              {/* Modifier le numéro de téléphone */}
+              <form onSubmit={handleUpdatePhone} className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 block">
+                  Modifier le numéro de téléphone de l&apos;utilisateur :
+                </label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="tel"
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      placeholder="+228 90 00 00 00"
+                      className="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 focus:outline-hidden focus:border-[#0084FF]"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isPending || !editPhone.trim()}
+                    className="px-4 py-2 rounded-xl bg-[#0084FF] hover:bg-blue-600 text-white text-xs font-bold transition-all shrink-0 cursor-pointer disabled:opacity-50"
+                  >
+                    Enregistrer le numéro
+                  </button>
+                </div>
+              </form>
+
               {/* Modifier le mot de passe */}
-              <form onSubmit={handleChangePassword} className="space-y-2">
+              <form onSubmit={handleChangePassword} className="space-y-2 pt-2 border-t border-slate-200/60">
                 <label className="text-xs font-bold text-slate-700 block">
                   Définir un nouveau mot de passe :
                 </label>

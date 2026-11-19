@@ -34,6 +34,29 @@ export default async function AdminUtilisateursPage({
   const localUsers = getAllUsers();
   const allWithdrawals = getAllStoredWithdrawals();
 
+  // Liste consolidée de tous les utilisateurs pour le calcul exact des lignées d'affiliation
+  type RawMember = {
+    id: string;
+    name: string;
+    username: string;
+    email: string;
+    phone: string;
+    country: string;
+    role: string;
+    isActivated: boolean;
+    isBanned: boolean;
+    bannedReason?: string;
+    referralCode?: string;
+    upline?: string | null;
+    balance: number;
+    profit: number;
+    createdAt: string;
+    kycStatus?: string;
+  };
+
+  const rawUsersMap = new Map<string, RawMember>();
+
+  // 1. Ajouter d'abord les profils Supabase
   if (isConfigured) {
     try {
       const adminClient = createAdminClient();
@@ -42,144 +65,57 @@ export default async function AdminUtilisateursPage({
         .select("id, full_name, email, phone, role, is_activated, referral_code, created_at, kyc_status")
         .order("created_at", { ascending: false });
 
-      // Charger les parrainages
       const { data: referrals } = await adminClient
         .from("referrals")
         .select("referrer_id, referred_id");
 
       if (profiles && profiles.length > 0) {
-        formattedUsers = profiles.map((p) => {
-          // Retrouver parrain
+        profiles.forEach((p) => {
           const refRecord = referrals?.find((r) => r.referred_id === p.id);
           const uplineProfile = refRecord
             ? profiles.find((pr) => pr.id === refRecord.referrer_id)
             : null;
 
-          // Retrouver filleuls N1
-          const n1Records = referrals?.filter((r) => r.referrer_id === p.id) || [];
-          const n1Profiles = n1Records
-            .map((r) => profiles.find((pr) => pr.id === r.referred_id))
-            .filter(Boolean)
-            .map((pr) => ({
-              id: pr!.id,
-              name: pr!.full_name || pr!.email?.split("@")[0] || "Membre",
-              email: pr!.email || "",
-              isActivated: Boolean(pr!.is_activated),
-              createdAt: pr!.created_at,
-            }));
+          const username = (p.full_name || p.email?.split("@")[0] || "user").toLowerCase().replace(/\s+/g, "");
 
-          // Retrouver filleuls N2
-          const n1Ids = n1Records.map((r) => r.referred_id);
-          const n2Records = referrals?.filter((r) => n1Ids.includes(r.referrer_id)) || [];
-          const n2Profiles = n2Records
-            .map((r) => profiles.find((pr) => pr.id === r.referred_id))
-            .filter(Boolean)
-            .map((pr) => ({
-              id: pr!.id,
-              name: pr!.full_name || pr!.email?.split("@")[0] || "Membre",
-              email: pr!.email || "",
-              isActivated: Boolean(pr!.is_activated),
-              createdAt: pr!.created_at,
-            }));
-
-          // Retrouver filleuls N3
-          const n2Ids = n2Records.map((r) => r.referred_id);
-          const n3Records = referrals?.filter((r) => n2Ids.includes(r.referrer_id)) || [];
-          const n3Profiles = n3Records
-            .map((r) => profiles.find((pr) => pr.id === r.referred_id))
-            .filter(Boolean)
-            .map((pr) => ({
-              id: pr!.id,
-              name: pr!.full_name || pr!.email?.split("@")[0] || "Membre",
-              email: pr!.email || "",
-              isActivated: Boolean(pr!.is_activated),
-              createdAt: pr!.created_at,
-            }));
-
-          const userW = allWithdrawals
-            .filter((w) => w.accountName.toLowerCase().includes(p.full_name?.toLowerCase() || "") || w.phoneNumber === p.phone)
-            .map((w) => ({
-              id: w.id,
-              amount: w.amount,
-              method: w.paymentMethod,
-              status: w.status,
-              date: w.createdAt,
-            }));
-
-          // Correspondance avec le localStore si disponible
-          const localMatch = localUsers.find(
-            (lu) => lu.id === p.id || lu.email.toLowerCase() === p.email?.toLowerCase()
-          );
-
-          return {
+          rawUsersMap.set(p.id, {
             id: p.id,
             name: p.full_name || p.email?.split("@")[0] || "Membre",
-            username: p.full_name?.toLowerCase().replace(/\s+/g, "") || "user",
+            username,
             email: p.email || "",
             phone: p.phone || "",
             country: "TG",
             role: p.role || "user",
             isActivated: Boolean(p.is_activated),
-            isBanned: Boolean(localMatch?.isBanned || p.kyc_status === "rejected"),
-            bannedReason: localMatch?.bannedReason,
+            isBanned: p.kyc_status === "rejected",
             referralCode: p.referral_code || "VE-" + p.id.slice(0, 6).toUpperCase(),
-            upline: uplineProfile?.full_name || uplineProfile?.email || localMatch?.upline || "Aucun (Racine)",
-            balance: localMatch?.balance ?? (p.is_activated ? 3500 : 0),
-            points: localMatch?.points ?? (n1Profiles.length * 2000),
-            referralsCount: n1Profiles.length + n2Profiles.length + n3Profiles.length,
-            referralsLevel1: n1Profiles,
-            referralsLevel2: n2Profiles,
-            referralsLevel3: n3Profiles,
-            withdrawals: userW,
-            transactions: [
-              ...(p.is_activated
-                ? [
-                    {
-                      id: `tx_act_${p.id}`,
-                      type: "Activation de compte",
-                      amount: 4500,
-                      description: "Paiement abonnement validé",
-                      date: p.created_at,
-                    },
-                  ]
-                : []),
-            ],
+            upline: uplineProfile?.full_name || uplineProfile?.email || null,
+            balance: p.is_activated ? 3500 : 0,
+            profit: 0,
             createdAt: p.created_at,
-          };
+            kycStatus: p.kyc_status,
+          });
         });
       }
     } catch {}
   }
 
-  // Fusion avec les utilisateurs du store local pour garantir la présence d'Espoir, Kosqi, Koffi
+  // 2. Fusionner avec le local store pour assurer la présence et les données enrichies (Espoir, Kosqi, Koffi, etc.)
   localUsers.forEach((lu) => {
-    const alreadyExists = formattedUsers.some(
-      (u) => u.id === lu.id || u.email.toLowerCase() === lu.email.toLowerCase()
+    const existing = Array.from(rawUsersMap.values()).find(
+      (m) => m.id === lu.id || m.email.toLowerCase() === lu.email.toLowerCase()
     );
 
-    if (!alreadyExists) {
-      const userW = allWithdrawals
-        .filter((w) => w.accountName.toLowerCase().includes(lu.username.toLowerCase()) || w.phoneNumber === lu.phone)
-        .map((w) => ({
-          id: w.id,
-          amount: w.amount,
-          method: w.paymentMethod,
-          status: w.status,
-          date: w.createdAt,
-        }));
-
-      // Calcul des filleuls locaux
-      const n1Local = localUsers
-        .filter((other) => other.upline?.toLowerCase() === lu.username.toLowerCase() || other.upline?.toLowerCase() === lu.email.toLowerCase() || other.upline === lu.referralCode)
-        .map((other) => ({
-          id: other.id,
-          name: other.username,
-          email: other.email,
-          isActivated: other.isActivated,
-          createdAt: other.createdAt,
-        }));
-
-      formattedUsers.push({
+    if (existing) {
+      existing.phone = lu.phone || existing.phone;
+      existing.upline = lu.upline || existing.upline;
+      existing.balance = lu.balance ?? existing.balance;
+      existing.profit = lu.profit ?? existing.profit;
+      existing.isBanned = Boolean(lu.isBanned || existing.isBanned);
+      existing.bannedReason = lu.bannedReason;
+      if (lu.isActivated) existing.isActivated = true;
+    } else {
+      rawUsersMap.set(lu.id, {
         id: lu.id,
         name: lu.username,
         username: lu.username.toLowerCase(),
@@ -193,28 +129,180 @@ export default async function AdminUtilisateursPage({
         referralCode: lu.referralCode || "VE-" + lu.username.toUpperCase(),
         upline: lu.upline || (lu.role === "admin" ? "Aucun (Fondateur)" : "Espoir"),
         balance: lu.balance ?? (lu.isActivated ? 3500 : 0),
-        points: lu.points ?? (n1Local.length * 2000),
-        referralsCount: n1Local.length,
-        referralsLevel1: n1Local,
-        referralsLevel2: [],
-        referralsLevel3: [],
-        withdrawals: userW,
-        transactions: [
-          ...(lu.isActivated
-            ? [
-                {
-                  id: `tx_act_${lu.id}`,
-                  type: "Activation de compte",
-                  amount: 4500,
-                  description: "Abonnement annuel VitaEarn validé",
-                  date: lu.createdAt,
-                },
-              ]
-            : []),
-        ],
+        profit: lu.profit ?? 0,
         createdAt: lu.createdAt,
       });
     }
+  });
+
+  const allConsolidatedUsers = Array.from(rawUsersMap.values());
+
+  // 3. Calcul rigoureux du Réseau d'Affiliation 3 Niveaux & Profits selon la règle :
+  // - Les Niveaux 1, 2, 3 ne comptabilisent QUE les utilisateurs ACTIVÉS.
+  // - Les utilisateurs inscrits mais NON ACTIVÉS sont regroupés dans les filleuls en attente.
+  // - Rémunération : N1 = 2 000 FCFA, N2 = 1 000 FCFA, N3 = 500 FCFA.
+  formattedUsers = allConsolidatedUsers.map((user) => {
+    // Vérification de filiation directe
+    const isDirectChild = (candidate: RawMember) => {
+      if (candidate.id === user.id) return false;
+      if (!candidate.upline) return false;
+      const up = candidate.upline.toLowerCase().trim();
+      return (
+        up === user.id.toLowerCase() ||
+        up === user.username.toLowerCase() ||
+        up === user.name.toLowerCase() ||
+        up === user.email.toLowerCase() ||
+        (user.referralCode && up === user.referralCode.toLowerCase())
+      );
+    };
+
+    const directsAll = allConsolidatedUsers.filter(isDirectChild);
+    const directsActive = directsAll.filter((d) => d.isActivated);
+    const directsPending = directsAll.filter((d) => !d.isActivated);
+
+    // NIVEAU 1 : Uniquement les directs ACTIVÉS
+    const level1 = directsActive.map((d) => ({
+      id: d.id,
+      name: d.username || d.name,
+      email: d.email,
+      isActivated: true,
+      createdAt: d.createdAt,
+    }));
+
+    // NIVEAU 2 : Uniquement les filleuls ACTIVÉS des membres de Niveau 1
+    const level1Keys = directsActive.flatMap((d) => [
+      d.id.toLowerCase(),
+      d.username.toLowerCase(),
+      d.name.toLowerCase(),
+      d.email.toLowerCase(),
+      d.referralCode ? d.referralCode.toLowerCase() : "",
+    ]).filter(Boolean);
+
+    const isLevel2Child = (candidate: RawMember) => {
+      if (candidate.id === user.id) return false;
+      if (directsAll.some((d) => d.id === candidate.id)) return false;
+      if (!candidate.upline) return false;
+      const up = candidate.upline.toLowerCase().trim();
+      return level1Keys.includes(up);
+    };
+
+    const level2All = allConsolidatedUsers.filter(isLevel2Child);
+    const level2Active = level2All.filter((d) => d.isActivated);
+    const level2 = level2Active.map((d) => ({
+      id: d.id,
+      name: d.username || d.name,
+      email: d.email,
+      isActivated: true,
+      createdAt: d.createdAt,
+    }));
+
+    // NIVEAU 3 : Uniquement les filleuls ACTIVÉS des membres de Niveau 2
+    const level2Keys = level2Active.flatMap((d) => [
+      d.id.toLowerCase(),
+      d.username.toLowerCase(),
+      d.name.toLowerCase(),
+      d.email.toLowerCase(),
+      d.referralCode ? d.referralCode.toLowerCase() : "",
+    ]).filter(Boolean);
+
+    const isLevel3Child = (candidate: RawMember) => {
+      if (candidate.id === user.id) return false;
+      if (directsAll.some((d) => d.id === candidate.id)) return false;
+      if (level2All.some((d) => d.id === candidate.id)) return false;
+      if (!candidate.upline) return false;
+      const up = candidate.upline.toLowerCase().trim();
+      return level2Keys.includes(up);
+    };
+
+    const level3All = allConsolidatedUsers.filter(isLevel3Child);
+    const level3Active = level3All.filter((d) => d.isActivated);
+    const level3 = level3Active.map((d) => ({
+      id: d.id,
+      name: d.username || d.name,
+      email: d.email,
+      isActivated: true,
+      createdAt: d.createdAt,
+    }));
+
+    // Filleuls directs en attente d'activation
+    const pendingDirects = directsPending.map((d) => ({
+      id: d.id,
+      name: d.username || d.name,
+      email: d.email,
+      isActivated: false,
+      createdAt: d.createdAt,
+    }));
+
+    // Calcul du profit cumulé (Commissions sur abonnements payés et vérifiés)
+    const cumulativeCommissions =
+      (level1.length * 2000) + (level2.length * 1000) + (level3.length * 500);
+    const totalProfit = Math.max(cumulativeCommissions, user.profit || 0);
+
+    const userW = allWithdrawals
+      .filter((w) =>
+        w.accountName.toLowerCase().includes(user.username.toLowerCase()) ||
+        w.accountName.toLowerCase().includes(user.name.toLowerCase()) ||
+        (user.phone && w.phoneNumber === user.phone)
+      )
+      .map((w) => ({
+        id: w.id,
+        amount: w.amount,
+        method: w.paymentMethod,
+        status: w.status,
+        date: w.createdAt,
+      }));
+
+    return {
+      id: user.id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      country: user.country,
+      role: user.role,
+      isActivated: user.isActivated,
+      isBanned: user.isBanned,
+      bannedReason: user.bannedReason,
+      referralCode: user.referralCode,
+      upline: user.upline || (user.role === "admin" ? "Aucun (Fondateur)" : "Espoir"),
+      balance: user.balance,
+      points: totalProfit,
+      profit: totalProfit,
+      referralsCount: directsAll.length,
+      referralsDirectsTotal: directsAll.length,
+      referralsDirectsActive: directsActive.length,
+      referralsDirectsPending: directsPending.length,
+      referralsLevel1: level1,
+      referralsLevel2: level2,
+      referralsLevel3: level3,
+      referralsPendingDirects: pendingDirects,
+      withdrawals: userW,
+      transactions: [
+        ...(user.isActivated
+          ? [
+              {
+                id: `tx_act_${user.id}`,
+                type: "Activation de compte",
+                amount: 4500,
+                description: "Abonnement annuel VitaEarn validé",
+                date: user.createdAt,
+              },
+            ]
+          : []),
+        ...(cumulativeCommissions > 0
+          ? [
+              {
+                id: `tx_comm_${user.id}`,
+                type: "Commissions d'Affiliation",
+                amount: cumulativeCommissions,
+                description: `Gains d'équipe (${level1.length} N1, ${level2.length} N2, ${level3.length} N3)`,
+                date: new Date().toISOString(),
+              },
+            ]
+          : []),
+      ],
+      createdAt: user.createdAt,
+    };
   });
 
   return (
