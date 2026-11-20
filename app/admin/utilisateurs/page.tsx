@@ -6,6 +6,8 @@ import { getAllStoredWithdrawals } from "@/lib/data/withdrawals-store";
 import { UtilisateursClient, type UserItem } from "./UtilisateursClient";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Gestion des Utilisateurs — Administration Vita Earn",
 };
@@ -60,14 +62,20 @@ export default async function AdminUtilisateursPage({
   if (isConfigured) {
     try {
       const adminClient = createAdminClient();
-      const { data: profiles } = await adminClient
-        .from("profiles")
-        .select("id, full_name, email, phone, role, is_activated, referral_code, created_at, kyc_status")
-        .order("created_at", { ascending: false });
+      const [{ data: profiles }, { data: referrals }, { data: wallets }] = await Promise.all([
+        adminClient
+          .from("profiles")
+          .select("id, full_name, email, phone, role, is_activated, referral_code, created_at, kyc_status")
+          .order("created_at", { ascending: false }),
+        adminClient
+          .from("referrals")
+          .select("referrer_id, referred_id"),
+        adminClient
+          .from("wallet_balances")
+          .select("user_id, balance, available_balance, total_earned"),
+      ]);
 
-      const { data: referrals } = await adminClient
-        .from("referrals")
-        .select("referrer_id, referred_id");
+      const walletMap = new Map((wallets || []).map((w) => [w.user_id, w]));
 
       if (profiles && profiles.length > 0) {
         profiles.forEach((p) => {
@@ -77,6 +85,9 @@ export default async function AdminUtilisateursPage({
             : null;
 
           const username = (p.full_name || p.email?.split("@")[0] || "user").toLowerCase().replace(/\s+/g, "");
+          const wb = walletMap.get(p.id);
+          const realBalance = Number(wb?.available_balance ?? wb?.balance ?? 0);
+          const realProfit = Number(wb?.total_earned ?? 0);
 
           rawUsersMap.set(p.id, {
             id: p.id,
@@ -90,8 +101,8 @@ export default async function AdminUtilisateursPage({
             isBanned: p.kyc_status === "rejected",
             referralCode: p.referral_code || "VE-" + p.id.slice(0, 6).toUpperCase(),
             upline: uplineProfile?.full_name || uplineProfile?.email || null,
-            balance: p.is_activated ? 3500 : 0,
-            profit: 0,
+            balance: realBalance,
+            profit: realProfit,
             createdAt: p.created_at,
             kycStatus: p.kyc_status,
           });
@@ -100,7 +111,7 @@ export default async function AdminUtilisateursPage({
     } catch {}
   }
 
-  // 2. Fusionner avec le local store pour assurer la présence et les données enrichies (Espoir, Kosqi, Koffi, etc.)
+  // 2. Fusionner avec le local store pour assurer la présence et les données enrichies
   localUsers.forEach((lu) => {
     const existing = Array.from(rawUsersMap.values()).find(
       (m) => m.id === lu.id || m.email.toLowerCase() === lu.email.toLowerCase()
@@ -127,8 +138,8 @@ export default async function AdminUtilisateursPage({
         isBanned: Boolean(lu.isBanned),
         bannedReason: lu.bannedReason,
         referralCode: lu.referralCode || "VE-" + lu.username.toUpperCase(),
-        upline: lu.upline || (lu.role === "admin" ? "Aucun (Fondateur)" : "Espoir"),
-        balance: lu.balance ?? (lu.isActivated ? 3500 : 0),
+        upline: lu.upline || (lu.role === "admin" ? "Aucun (Fondateur)" : null),
+        balance: lu.balance ?? 0,
         profit: lu.profit ?? 0,
         createdAt: lu.createdAt,
       });

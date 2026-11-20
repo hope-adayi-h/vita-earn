@@ -459,7 +459,7 @@ export function PaiementAlternatifClient({
             </div>
 
             {/* Composant de bouton alternatif avec aperçu */}
-            <AlternativePaymentButton config={previewConfig} username="koffi" />
+            <AlternativePaymentButton config={previewConfig} username="utilisateur" />
           </div>
         ) : (
           <div className="p-6 text-center text-xs text-slate-400">

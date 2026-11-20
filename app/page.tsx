@@ -27,6 +27,8 @@ import {
   Award,
 } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Tableau de Bord — Vita Earn",
   description: "Gérez vos revenus, votre solde et vos retraits Mobile Money en temps réel.",
@@ -139,12 +141,45 @@ export default async function HomePage() {
 
   try {
     if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name, is_activated, referral_code, welcome_bonus_claimed")
-        .eq("id", user.id)
-        .maybeSingle();
+      // Optimisation majeure : Exécution parallèle simultanée des requêtes Supabase
+      const [
+        profileRes,
+        wbRes,
+        commsRes,
+        userTaskEarningsRes,
+        l1ReferralsRes,
+        entriesRes,
+      ] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("full_name, is_activated, referral_code, welcome_bonus_claimed")
+          .eq("id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("wallet_balances")
+          .select("balance, available_balance, pending_balance, total_earned, total_withdrawn")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("commissions")
+          .select("level, amount, status")
+          .eq("beneficiary_id", user.id),
+        supabase
+          .from("user_task_earnings")
+          .select("task_type, accumulated_amount")
+          .eq("user_id", user.id),
+        supabase
+          .from("referrals")
+          .select("referred_id, created_at")
+          .eq("referrer_id", user.id),
+        supabase
+          .from("ledger_entries")
+          .select("id, amount, entry_type, description, created_at")
+          .order("created_at", { ascending: false })
+          .limit(5),
+      ]);
 
+      const profile = profileRes.data;
       isActivated = Boolean(profile?.is_activated || sessionUser?.isActivated || isActivatedCookie);
       welcomeBonusClaimed = Boolean(profile?.welcome_bonus_claimed);
 
@@ -175,12 +210,7 @@ export default async function HomePage() {
         referralCode = newCode;
       }
 
-      const { data: wb } = await supabase
-        .from("wallet_balances")
-        .select("balance, available_balance, pending_balance, total_earned, total_withdrawn")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
+      const wb = wbRes.data;
       if (wb) {
         balance = Number(wb.available_balance ?? wb.balance) || 0;
         totalEarned = Number(wb.total_earned) || 0;
@@ -191,12 +221,8 @@ export default async function HomePage() {
         totalExpenses = 4500;
       }
 
-      // Lecture des commissions par niveau
-      const { data: comms } = await supabase
-        .from("commissions")
-        .select("level, amount, status")
-        .eq("beneficiary_id", user.id);
-
+      // Lecture des commissions réelles par niveau
+      const comms = commsRes.data;
       if (comms) {
         comms.forEach((c) => {
           const amt = Number(c.amount) || 0;
@@ -207,11 +233,7 @@ export default async function HomePage() {
       }
 
       // Lecture des gains des tâches quotidiennes (Time Table)
-      const { data: userTaskEarnings } = await supabase
-        .from("user_task_earnings")
-        .select("task_type, accumulated_amount")
-        .eq("user_id", user.id);
-
+      const userTaskEarnings = userTaskEarningsRes.data;
       if (userTaskEarnings) {
         const triviaObj = userTaskEarnings.find((t) => t.task_type === "trivia");
         if (triviaObj) {
@@ -219,20 +241,14 @@ export default async function HomePage() {
         }
       }
 
-      // Réseau de parrainage sur 3 générations
-      // 1. Niveau 1 (Filleuls directs)
-      const { data: l1Referrals } = await supabase
-        .from("referrals")
-        .select("referred_id, created_at")
-        .eq("referrer_id", user.id);
-
+      // Réseau de parrainage sur 3 générations (uniquement si des filleuls existent)
+      const l1Referrals = l1ReferralsRes.data;
       const l1Ids = (l1Referrals || []).map((r) => r.referred_id);
       level1Count = l1Ids.length;
 
       let l2Ids: string[] = [];
       let l3Ids: string[] = [];
 
-      // 2. Niveau 2 (Filleuls du niveau 1)
       if (l1Ids.length > 0) {
         const { data: l2Referrals } = await supabase
           .from("referrals")
@@ -242,7 +258,6 @@ export default async function HomePage() {
         l2Ids = (l2Referrals || []).map((r) => r.referred_id);
         level2Count = l2Ids.length;
 
-        // 3. Niveau 3 (Filleuls du niveau 2)
         if (l2Ids.length > 0) {
           const { data: l3Referrals } = await supabase
             .from("referrals")
@@ -254,7 +269,7 @@ export default async function HomePage() {
         }
       }
 
-      // Récupérer les profils des filleuls pour la liste
+      // Récupérer les profils des filleuls réels
       const allReferredIds = [...l1Ids, ...l2Ids, ...l3Ids];
       if (allReferredIds.length > 0) {
         const { data: refProfiles } = await supabase
@@ -298,13 +313,8 @@ export default async function HomePage() {
         });
       }
 
-      // Dernières écritures du grand livre
-      const { data: entries } = await supabase
-        .from("ledger_entries")
-        .select("id, amount, entry_type, description, created_at")
-        .order("created_at", { ascending: false })
-        .limit(5);
-
+      // Dernières écritures réelles du grand livre
+      const entries = entriesRes.data;
       if (entries) {
         ledgerEntries = entries.map((e) => ({
           id: e.id,
@@ -327,18 +337,9 @@ export default async function HomePage() {
       if (testUser.toLowerCase() !== "membre") {
         userName = testUser.trim().charAt(0).toUpperCase() + testUser.trim().slice(1);
       }
-      isActivated = true;
-      if (testUser.toLowerCase() === "koffi") {
-        balance = 1070;
-        totalWithdrawn = 445249;
-        totalEarned = 3449121;
+      isActivated = Boolean(isActivatedCookie);
+      if (isActivated) {
         totalExpenses = 4500;
-        level1Count = 14;
-        level2Count = 8;
-        level3Count = 3;
-        level1Earned = 28000;
-        level2Earned = 8000;
-        level3Earned = 1500;
       }
     }
   } catch {
@@ -352,7 +353,8 @@ export default async function HomePage() {
       if (isActivated) totalExpenses = 4500;
     } else if (testUser && testUser.toLowerCase() !== "membre") {
       userName = testUser.trim().charAt(0).toUpperCase() + testUser.trim().slice(1);
-      isActivated = true;
+      isActivated = Boolean(isActivatedCookie);
+      if (isActivated) totalExpenses = 4500;
     }
   }
 

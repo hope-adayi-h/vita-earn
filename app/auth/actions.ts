@@ -341,7 +341,6 @@ export async function signInAction(
       !matchedAccount.password ||
       matchedAccount.password === password ||
       password === "User2026!" ||
-      password === "koffi123" ||
       password === "admin" ||
       password.length >= 6;
 
@@ -400,29 +399,6 @@ export async function signInAction(
     }
 
     redirect("/admin");
-  }
-
-  // 2. Compte test Utilisateur dédié
-  const isTestUser =
-    (cleanId === "koffi" || cleanId === "koffi@vitaearn.com") &&
-    (password === "User2026!" || password === "koffi123" || password === "koffi");
-
-  if (isTestUser) {
-    cookieStore.set("vita_test_role", "user", AUTH_COOKIE_OPTIONS);
-    cookieStore.set("vita_test_user", "Koffi", AUTH_COOKIE_OPTIONS);
-    cookieStore.set("vita_test_email", "koffi@vitaearn.com", AUTH_COOKIE_OPTIONS);
-
-    try {
-      const supabase = createClient();
-      await supabase.auth.signInWithPassword({
-        email: "koffi@vitaearn.com",
-        password,
-      });
-    } catch {
-      // Ignoré si Supabase local non connecté
-    }
-
-    redirect("/");
   }
 
   const supabase = createClient();

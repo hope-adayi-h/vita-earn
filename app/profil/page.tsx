@@ -13,12 +13,31 @@ import {
 } from "lucide-react";
 import { signOutAction } from "@/app/auth/actions";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Paramètres du compte — Vita Earn",
   description: "Gère ton profil, ta sécurité et tes préférences.",
 };
 
 export default async function ProfilPage() {
+  const cookieStore = cookies();
+  const sessionUserCookie = cookieStore.get("vita_session_user")?.value;
+  let sessionUser: any = null;
+  if (sessionUserCookie) {
+    try {
+      sessionUser = JSON.parse(sessionUserCookie);
+    } catch {
+      try {
+        sessionUser = JSON.parse(decodeURIComponent(sessionUserCookie));
+      } catch {}
+    }
+  }
+
+  const testUser = cookieStore.get("vita_test_user")?.value || sessionUser?.username;
+  const testEmail = cookieStore.get("vita_test_email")?.value || sessionUser?.email;
+  const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
+
   const supabase = createClient();
   let user: any = null;
   try {
@@ -26,77 +45,37 @@ export default async function ProfilPage() {
     user = data?.user || null;
   } catch {}
 
-  const cookieStore = cookies();
-  const sessionUserCookie = cookieStore.get("vita_session_user")?.value;
-  let sessionUser: any = null;
-  if (sessionUserCookie) {
-    try {
-      sessionUser = JSON.parse(sessionUserCookie);
-    } catch {}
-  }
-  const testUser = cookieStore.get("vita_test_user")?.value || sessionUser?.username;
-  const testEmail = cookieStore.get("vita_test_email")?.value || sessionUser?.email;
-  const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
-
-  const userEmail = user?.email || testEmail || sessionUser?.email || "adandohoinc@gmail.com";
+  const userEmail = user?.email || testEmail || sessionUser?.email || "";
   const adminClient = createAdminClient();
 
-  // 1. Récupération du profil
   let profile: any = null;
+  let balance = 0;
+  let inviteCount = 0;
+  let uplineUsername = "—";
+
   if (user?.id) {
     try {
-      const { data: p } = await adminClient
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-      profile = p;
-    } catch {}
-  }
+      const [pRes, wRes, refCountRes, uplineRes] = await Promise.all([
+        adminClient.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+        adminClient.from("wallet_balances").select("balance, available_balance").eq("user_id", user.id).maybeSingle(),
+        adminClient.from("referrals").select("id", { count: "exact", head: true }).eq("referrer_id", user.id),
+        adminClient.from("referrals").select("referrer_id").eq("referred_id", user.id).maybeSingle(),
+      ]);
 
-  const isActivated = user
-    ? Boolean(profile?.is_activated)
-    : Boolean(isActivatedCookie || (sessionUser?.isActivated ?? true));
+      profile = pRes.data;
+      if (wRes.data) {
+        balance = Number(wRes.data.available_balance ?? wRes.data.balance) || 0;
+      }
+      inviteCount = refCountRes.count || 0;
 
-  const username =
-    profile?.full_name ||
-    testUser ||
-    sessionUser?.name ||
-    (user?.email ? user.email.split("@")[0] : "camsho");
-
-  // Initiales (2 lettres pour l'avatar rond : ex. "camsho" -> "CA", "John Doe" -> "JD")
-  const words = username.trim().split(/\s+/).filter(Boolean);
-  const initials = (
-    words.length > 1
-      ? (words[0][0] + words[1][0])
-      : username.trim().slice(0, 2)
-  ).toUpperCase() || "CA";
-
-  const country = profile?.country || "TOGO";
-
-  // 2. Récupération du solde réel dans le grand livre
-  let balance = 25676;
-  if (user?.id) {
-    try {
-      const { data: wallet } = await adminClient
-        .from("wallets")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (wallet) {
-        const { data: entries } = await adminClient
-          .from("ledger_entries")
-          .select("amount")
-          .eq("wallet_id", wallet.id);
-
-        if (entries && entries.length > 0) {
-          balance = entries.reduce(
-            (sum, e) => sum + (Number(e.amount) || 0),
-            0
-          );
-        } else {
-          balance = 0;
+      if (uplineRes.data?.referrer_id) {
+        const { data: uplineProfile } = await adminClient
+          .from("profiles")
+          .select("full_name")
+          .eq("id", uplineRes.data.referrer_id)
+          .maybeSingle();
+        if (uplineProfile?.full_name) {
+          uplineUsername = uplineProfile.full_name;
         }
       }
     } catch {}
@@ -104,48 +83,31 @@ export default async function ProfilPage() {
     balance = Number(sessionUser.balance) || 0;
   }
 
-  // 3. Nombre d'invités directs (Niveau 1)
-  let inviteCount = 2654;
-  if (user?.id) {
-    try {
-      const { count: directCount } = await adminClient
-        .from("referrals")
-        .select("id", { count: "exact", head: true })
-        .eq("referrer_id", user.id);
-      inviteCount = directCount || 0;
-    } catch {}
-  }
+  const isActivated = user
+    ? Boolean(profile?.is_activated)
+    : Boolean(isActivatedCookie || sessionUser?.isActivated);
 
-  // 4. Parrain direct (upline)
-  let uplineUsername = "greatness";
-  if (user?.id) {
-    try {
-      const { data: refRecord } = await adminClient
-        .from("referrals")
-        .select("referrer_id")
-        .eq("referred_id", user.id)
-        .maybeSingle();
+  const rawUsername =
+    profile?.full_name ||
+    sessionUser?.username ||
+    sessionUser?.fullName ||
+    testUser ||
+    (user?.email ? user.email.split("@")[0] : "");
 
-      if (refRecord?.referrer_id) {
-        const { data: uplineProfile } = await adminClient
-          .from("profiles")
-          .select("full_name")
-          .eq("id", refRecord.referrer_id)
-          .maybeSingle();
+  const username = rawUsername ? rawUsername.trim().charAt(0).toUpperCase() + rawUsername.trim().slice(1) : "Membre";
 
-        if (uplineProfile?.full_name) {
-          uplineUsername = uplineProfile.full_name;
-        }
-      } else {
-        uplineUsername = "—";
-      }
-    } catch {
-      uplineUsername = "—";
-    }
-  }
+  const words = username.trim().split(/\s+/).filter(Boolean);
+  const initials = (
+    words.length > 1
+      ? (words[0][0] + words[1][0])
+      : username.trim().slice(0, 2)
+  ).toUpperCase() || "VE";
 
-  // 5. Dates d'inscription
-  const dateObj = new Date(profile?.created_at || user?.created_at || "2026-06-13T10:00:00Z");
+  const country = profile?.country || sessionUser?.country || "TOGO";
+
+  const dateRaw = profile?.created_at || user?.created_at || sessionUser?.createdAt;
+  const dateObj = dateRaw ? new Date(dateRaw) : new Date();
+
   const monthNamesShort = [
     "Jan", "Fév", "Mar", "Avr", "Mai", "Juin",
     "Juil", "Août", "Sep", "Oct", "Nov", "Déc"
@@ -158,8 +120,8 @@ export default async function ProfilPage() {
   ];
   const joinedFullDate = `${dateObj.getDate()} ${monthNamesFull[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
 
-  const phone = profile?.phone || "22892529768";
-  const referralCode = profile?.referral_code || "VEKOFFI";
+  const phone = profile?.phone || sessionUser?.phone || "Non renseigné";
+  const referralCode = profile?.referral_code || sessionUser?.referralCode || "VE8K2X";
   const appUrl = getBaseAppUrl();
 
   return (
@@ -177,7 +139,7 @@ export default async function ProfilPage() {
 
         {/* 1. Carte de profil avec bannière et avatar */}
         <div className="bg-white dark:bg-[#131E17] rounded-3xl border border-gray-100 dark:border-[#1E2E24] shadow-xs overflow-hidden">
-          {/* Bannière en dégradé vert avec halo violet discret */}
+          {/* Bannière en dégradé vert avec halo discret */}
           <div className="h-28 sm:h-32 w-full bg-gradient-to-r from-[#14500C] via-[#2F7A1A] to-[#7ED321] relative overflow-hidden">
             <div className="absolute -top-12 -right-12 w-44 h-44 bg-[#7C3AED]/25 rounded-full blur-2xl pointer-events-none" />
           </div>
@@ -185,7 +147,7 @@ export default async function ProfilPage() {
           {/* Informations utilisateur sous la bannière */}
           <div className="px-5 sm:px-7 pb-6 pt-0 relative z-10">
             <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3">
-              {/* Avatar rond avec initiales (fond #D9F99D, texte #14500C) */}
+              {/* Avatar rond avec initiales */}
               <div className="flex items-end gap-3.5 -mt-10 sm:-mt-12 relative z-10">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#D9F99D] text-[#14500C] font-black text-2xl sm:text-3xl flex items-center justify-center border-4 border-white dark:border-[#131E17] shadow-md shrink-0 select-none">
                   {initials}
@@ -219,7 +181,7 @@ export default async function ProfilPage() {
 
         {/* 2. Quatre cartes en grille 2×2 */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          {/* CARTE 1 : SOLDE (#D9F99D vers #86EFAC) */}
+          {/* CARTE 1 : SOLDE */}
           <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-gradient-to-br from-[#D9F99D] to-[#86EFAC] shadow-xs space-y-2 border border-emerald-300/40">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/95 shadow-2xs flex items-center justify-center">
               <Wallet className="w-4 h-4 text-[#14500C]" />
@@ -234,7 +196,7 @@ export default async function ProfilPage() {
             </div>
           </div>
 
-          {/* CARTE 2 : INVITÉS (#DCFCE7 vers #A7F3D0) */}
+          {/* CARTE 2 : INVITÉS */}
           <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-gradient-to-br from-[#DCFCE7] to-[#A7F3D0] shadow-xs space-y-2 border border-emerald-300/40">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/95 shadow-2xs flex items-center justify-center">
               <Users className="w-4 h-4 text-[#14500C]" />
@@ -249,7 +211,7 @@ export default async function ProfilPage() {
             </div>
           </div>
 
-          {/* CARTE 3 : STATUT (#166534 vers #65A30D, texte blanc) */}
+          {/* CARTE 3 : STATUT */}
           <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-gradient-to-br from-[#166534] to-[#65A30D] shadow-xs space-y-2 text-white">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/95 shadow-2xs flex items-center justify-center">
               <ShieldCheck className="w-4 h-4 text-[#166534]" />
@@ -264,7 +226,7 @@ export default async function ProfilPage() {
             </div>
           </div>
 
-          {/* CARTE 4 : INSCRIT (#EDE9FE vers #BBF7D0) */}
+          {/* CARTE 4 : INSCRIT */}
           <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-gradient-to-br from-[#EDE9FE] to-[#BBF7D0] shadow-xs space-y-2 border border-emerald-200/50">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/95 shadow-2xs flex items-center justify-center">
               <Calendar className="w-4 h-4 text-purple-700" />
@@ -287,7 +249,7 @@ export default async function ProfilPage() {
           </span>
         </div>
 
-        {/* 4. Cartes blanches arrondies avec les informations utilisateur */}
+        {/* 4. Cartes avec les informations utilisateur */}
         <div className="space-y-2.5">
           {/* NOM D'UTILISATEUR */}
           <div className="bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] rounded-2xl p-3.5 sm:p-4 shadow-2xs">
@@ -350,7 +312,7 @@ export default async function ProfilPage() {
           </div>
         </div>
 
-        {/* 5. Bloc "Inviter des amis" réutilisé en bas de la page */}
+        {/* 5. Bloc "Inviter des amis" */}
         <div className="pt-2">
           <ReferralSection referralCode={referralCode} appUrl={appUrl} username={username} />
         </div>

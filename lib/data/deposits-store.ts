@@ -95,62 +95,7 @@ function getFilePath(): string {
 function ensureDirectoryAndFile(): string {
   const filePath = getFilePath();
   if (!fs.existsSync(filePath)) {
-    const initialDeposits: StoredDeposit[] = [
-      {
-        id: "dep_init_01",
-        userId: "usr_koffi_01",
-        username: "koffi",
-        fullName: "Koffi Mensah",
-        email: "koffi@vitaearn.com",
-        phone: "+228 90 12 34 56",
-        operator: "T-Money (Togocel)",
-        amount: 4500,
-        currency: "XOF",
-        purpose: "Activation de compte",
-        status: "succeeded",
-        provider: "saspay",
-        providerRef: "sp_live_9a7d2e4f",
-        confirmationSource: "Paiement automatique confirmé par SasPay",
-        createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-        confirmedAt: new Date(Date.now() - 3600000 * 24 + 15000).toISOString(),
-      },
-      {
-        id: "dep_init_02",
-        userId: "usr_espoir_master",
-        username: "espoir",
-        fullName: "Espoir Adayi",
-        email: "adayiespoir60@gmail.com",
-        phone: "+228 90 00 00 00",
-        operator: "T-Money (Togocel)",
-        amount: 4500,
-        currency: "XOF",
-        purpose: "Activation de compte",
-        status: "succeeded",
-        provider: "MANUAL_ADMIN",
-        providerRef: "adm_act_master",
-        confirmationSource: "Validé manuellement par l'Administrateur",
-        createdAt: new Date(Date.now() - 3600000 * 48).toISOString(),
-        confirmedAt: new Date(Date.now() - 3600000 * 48 + 5000).toISOString(),
-      },
-      {
-        id: "dep_init_03",
-        userId: "usr_kosqi_02",
-        username: "kosqi",
-        fullName: "Kosqi",
-        email: "akpablikossi999@gmail.com",
-        phone: "+228 93 59 73 31",
-        operator: "T-Money (Togocel)",
-        amount: 4500,
-        currency: "XOF",
-        purpose: "Activation de compte",
-        status: "pending",
-        provider: "saspay",
-        providerRef: "sp_sess_hefOSYmK",
-        confirmationSource: "En attente de règlement SasPay",
-        createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-        confirmedAt: null,
-      },
-    ];
+    const initialDeposits: StoredDeposit[] = [];
 
     try {
       fs.writeFileSync(filePath, JSON.stringify(initialDeposits, null, 2), "utf-8");

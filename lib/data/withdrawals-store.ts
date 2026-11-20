@@ -49,53 +49,7 @@ function getFilePath(): string {
 function ensureDirectoryAndFile(): string {
   const filePath = getFilePath();
   if (!fs.existsSync(filePath)) {
-    // Seed initial withdrawals demonstratifs pour l'admin
-    const initialWithdrawals: StoredWithdrawal[] = [
-      {
-        id: "wdr_init_01",
-        userId: "usr_espoir_master",
-        userName: "Espoir",
-        amount: 25000,
-        fee: 500, // Frais fixes 500 FCFA
-        netAmount: 24500,
-        paymentMethod: "tmoney",
-        phoneNumber: "+228 90 00 00 00",
-        accountName: "Espoir Adayi",
-        status: "paid",
-        adminNote: "Transfert Mobile Money validé par l'administrateur",
-        createdAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
-        processedAt: new Date(Date.now() - 3600000 * 24 * 2 + 1800000).toISOString(),
-      },
-      {
-        id: "wdr_init_02",
-        userId: "usr_seed_member_1",
-        userName: "Kodjo Mensah",
-        amount: 15000,
-        fee: 500, // Frais fixes 500 FCFA
-        netAmount: 14500,
-        paymentMethod: "flooz",
-        phoneNumber: "+228 99 12 34 56",
-        accountName: "Kodjo Mensah",
-        status: "paid",
-        adminNote: "Validé par administrateur",
-        createdAt: new Date(Date.now() - 3600000 * 18).toISOString(),
-        processedAt: new Date(Date.now() - 3600000 * 17).toISOString(),
-      },
-      {
-        id: "wdr_init_03",
-        userId: "usr_seed_member_2",
-        userName: "Amina Diallo",
-        amount: 10000,
-        fee: 500, // Frais fixes 500 FCFA
-        netAmount: 9500,
-        paymentMethod: "tmoney",
-        phoneNumber: "+228 91 88 77 66",
-        accountName: "Amina Diallo",
-        status: "pending",
-        adminNote: null,
-        createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
-      },
-    ];
+    const initialWithdrawals: StoredWithdrawal[] = [];
     try {
       fs.writeFileSync(filePath, JSON.stringify(initialWithdrawals, null, 2), "utf-8");
     } catch {}

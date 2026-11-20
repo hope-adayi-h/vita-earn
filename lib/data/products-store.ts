@@ -53,100 +53,7 @@ const DEFAULT_SETTINGS: MarketplaceSettings = {
   updatedBy: "superadmin",
 };
 
-const SEED_PRODUCTS: StoredProduct[] = [
-  {
-    id: "prod_seed_1",
-    sellerId: "usr_seed_1",
-    sellerUsername: "Digital Academy Lomé",
-    sellerPhone: "+228 90 12 34 56",
-    sellerLocation: "Lomé, Togo",
-    title: "Pack Formation Vente WhatsApp & E-commerce 2026",
-    description:
-      "Guide complet étape par étape pour automatiser vos ventes sur WhatsApp Business et acquérir des clients au Togo et en Afrique de l'Ouest.",
-    price: 4500,
-    productType: "digital",
-    category: "digital",
-    imageUrl:
-      "https://images.unsplash.com/photo-1616469829941-c7200edec809?w=800&auto=format&fit=crop&q=80",
-    digitalLink: "https://drive.google.com/drive/folders/formation-whatsapp-2026",
-    status: "active",
-    createdAt: "2026-11-15T10:00:00.000Z",
-    updatedAt: "2026-11-15T10:00:00.000Z",
-  },
-  {
-    id: "prod_seed_2",
-    sellerId: "usr_seed_2",
-    sellerUsername: "Tech Store Lomé",
-    sellerPhone: "+228 91 23 45 67",
-    sellerLocation: "Lomé (Tokoin)",
-    title: "Montre Connectée Sport & Santé Pro étanche",
-    description:
-      "Suivi du rythme cardiaque, notifications WhatsApp et appels Bluetooth, autonomie 7 jours. Compatible Android et iPhone.",
-    price: 16500,
-    productType: "physical",
-    category: "tech",
-    imageUrl:
-      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80",
-    status: "active",
-    createdAt: "2026-11-16T11:30:00.000Z",
-    updatedAt: "2026-11-16T11:30:00.000Z",
-  },
-  {
-    id: "prod_seed_3",
-    sellerId: "usr_seed_3",
-    sellerUsername: "Studio Graphik Togo",
-    sellerPhone: "+228 92 34 56 78",
-    sellerLocation: "Lomé, Togo",
-    title: "150+ Templates Canva Pro pour Vendeurs Africains",
-    description:
-      "Visuels percutants pour vos publications Facebook, Instagram et statuts WhatsApp adaptés au marché francophone.",
-    price: 3500,
-    productType: "digital",
-    category: "digital",
-    imageUrl:
-      "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800&auto=format&fit=crop&q=80",
-    digitalLink: "https://www.canva.com/templates/afrique-pro-pack-150",
-    status: "active",
-    createdAt: "2026-11-17T14:15:00.000Z",
-    updatedAt: "2026-11-17T14:15:00.000Z",
-  },
-  {
-    id: "prod_seed_4",
-    sellerId: "usr_seed_4",
-    sellerUsername: "Afrik Électro",
-    sellerPhone: "+228 93 45 67 89",
-    sellerLocation: "Lomé (Assivito)",
-    title: "Écouteurs Sans Fil TWS Bluetooth 5.3 Stéréo",
-    description:
-      "Son puissant haute fidélité, réduction de bruit passive, boîte de charge avec affichage LED numérique.",
-    price: 8500,
-    productType: "physical",
-    category: "tech",
-    imageUrl:
-      "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&auto=format&fit=crop&q=80",
-    status: "active",
-    createdAt: "2026-11-18T09:45:00.000Z",
-    updatedAt: "2026-11-18T09:45:00.000Z",
-  },
-  {
-    id: "prod_seed_5",
-    sellerId: "usr_seed_5",
-    sellerUsername: "Service Pro Consulting",
-    sellerPhone: "+228 90 88 77 66",
-    sellerLocation: "Lomé, Togo",
-    title: "Prestation Création & Optimisation de Page Facebook Pro",
-    description:
-      "Configuration complète de votre page Facebook et WhatsApp Business avec tunnel de vente, visuels de couverture et paramétrage des réponses automatiques.",
-    price: 15000,
-    productType: "service",
-    category: "service",
-    imageUrl:
-      "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&auto=format&fit=crop&q=80",
-    status: "active",
-    createdAt: "2026-11-19T08:20:00.000Z",
-    updatedAt: "2026-11-19T08:20:00.000Z",
-  },
-];
+const SEED_PRODUCTS: StoredProduct[] = [];
 
 function getProductsFilePath(): string {
   try {
@@ -335,7 +242,7 @@ export async function getAllStoredProducts(): Promise<StoredProduct[]> {
         .eq("key", "marketplace_products")
         .maybeSingle();
 
-      if (!error && Array.isArray(data?.value) && data.value.length > 0) {
+      if (!error && Array.isArray(data?.value)) {
         return data.value as StoredProduct[];
       }
     }
@@ -347,8 +254,8 @@ export async function getAllStoredProducts(): Promise<StoredProduct[]> {
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, "utf-8").replace(/^\uFEFF/, "");
       const parsed = JSON.parse(content);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+      if (Array.isArray(parsed)) {
+        return parsed as StoredProduct[];
       }
     }
   } catch {}

@@ -34,103 +34,108 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/auth/reset-password") ||
     path.startsWith("/auth/callback");
 
-  // 2. Vérification de la session utilisateur sécurisée (source de vérité Supabase JWT)
+  // 2. Vérification rapide et optimisée de la session utilisateur
   let isAuthenticated = false;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (
-    supabaseUrl &&
-    !supabaseUrl.includes("placeholder") &&
-    supabaseAnonKey &&
-    !supabaseAnonKey.includes("placeholder")
-  ) {
+  // Optimisation P0 : Vérification instantanée des cookies locaux sans appel réseau bloquant
+  const sessionUserCookie = request.cookies.get("vita_session_user")?.value;
+  if (sessionUserCookie) {
     try {
-      const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            request.cookies.set({
-              name,
-              value,
-              ...options,
-            });
-            response = NextResponse.next({
-              request: {
-                headers: request.headers,
-              },
-            });
-            response.cookies.set({
-              name,
-              value,
-              ...options,
-            });
-          },
-          remove(name: string, options: CookieOptions) {
-            request.cookies.set({
-              name,
-              value: "",
-              ...options,
-            });
-            response = NextResponse.next({
-              request: {
-                headers: request.headers,
-              },
-            });
-            response.cookies.set({
-              name,
-              value: "",
-              ...options,
-            });
-          },
-        },
-      });
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user) {
+      const parsed = JSON.parse(sessionUserCookie);
+      if (parsed?.id || parsed?.username || parsed?.email) {
         isAuthenticated = true;
       }
     } catch {
-      // Échec fermé
-    }
-  }
-
-  // Fallback de session si Supabase indisponible ou session persistée localement
-  if (!isAuthenticated) {
-    const sessionUserCookie = request.cookies.get("vita_session_user")?.value;
-    if (sessionUserCookie) {
       try {
-        const parsed = JSON.parse(sessionUserCookie);
+        const parsed = JSON.parse(decodeURIComponent(sessionUserCookie));
         if (parsed?.id || parsed?.username || parsed?.email) {
           isAuthenticated = true;
         }
-      } catch {
-        try {
-          const parsed = JSON.parse(decodeURIComponent(sessionUserCookie));
-          if (parsed?.id || parsed?.username || parsed?.email) {
-            isAuthenticated = true;
-          }
-        } catch {}
-      }
-    }
-
-    const testUser = request.cookies.get("vita_test_user")?.value;
-    const testEmail = request.cookies.get("vita_test_email")?.value;
-    const testRole = request.cookies.get("vita_test_role")?.value;
-    const adminUnlockCookie = request.cookies.get("vita_admin_unlocked")?.value;
-
-    if (testUser || testEmail || testRole || adminUnlockCookie) {
-      isAuthenticated = true;
+      } catch {}
     }
   }
 
+  const testUser = request.cookies.get("vita_test_user")?.value;
+  const testEmail = request.cookies.get("vita_test_email")?.value;
+  const testRole = request.cookies.get("vita_test_role")?.value;
   const adminUnlockCookie = request.cookies.get("vita_admin_unlocked")?.value;
+
+  if (testUser || testEmail || testRole || adminUnlockCookie) {
+    isAuthenticated = true;
+  }
+
+  // Vérifier s'il y a un cookie de session Supabase officiel (sb-*-auth-token)
+  const allCookies = request.cookies.getAll();
+  const hasSupabaseAuthCookie = allCookies.some(
+    (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token")
+  );
+
+  // Si non encore authentifié mais qu'un cookie Supabase officiel existe, vérifier le token
+  if (!isAuthenticated && hasSupabaseAuthCookie) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (
+      supabaseUrl &&
+      !supabaseUrl.includes("placeholder") &&
+      supabaseAnonKey &&
+      !supabaseAnonKey.includes("placeholder")
+    ) {
+      try {
+        const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+          cookies: {
+            get(name: string) {
+              return request.cookies.get(name)?.value;
+            },
+            set(name: string, value: string, options: CookieOptions) {
+              request.cookies.set({
+                name,
+                value,
+                ...options,
+              });
+              response = NextResponse.next({
+                request: {
+                  headers: request.headers,
+                },
+              });
+              response.cookies.set({
+                name,
+                value,
+                ...options,
+              });
+            },
+            remove(name: string, options: CookieOptions) {
+              request.cookies.set({
+                name,
+                value: "",
+                ...options,
+              });
+              response = NextResponse.next({
+                request: {
+                  headers: request.headers,
+                },
+              });
+              response.cookies.set({
+                name,
+                value: "",
+                ...options,
+              });
+            },
+          },
+        });
+
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          isAuthenticated = true;
+        }
+      } catch {
+        // Échec fermé
+      }
+    }
+  }
 
   // RÈGLE P0 : Sas de déverrouillage Administrateur obligatoire (Face ID / Code Secret)
   // Le sas /admin/lock reste accessible pour la saisie du code secret maître

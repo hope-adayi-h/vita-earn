@@ -929,7 +929,7 @@ export function UtilisateursClient({
                         setNewUpline(e.target.value);
                         setSelectedNewUplineUser(null);
                       }}
-                      placeholder="Tapez le nom, pseudo (ex: Koffi, Kosqi)..."
+                      placeholder="Tapez le nom, identifiant ou e-mail..."
                       className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-hidden focus:border-[#0084FF] focus:bg-white transition-all shadow-2xs"
                     />
                   </div>

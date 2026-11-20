@@ -99,14 +99,6 @@ export async function getWithdrawalData(): Promise<WithdrawalPageData> {
     }
   } catch {}
 
-  // Solde spécial pour comptes de démonstration
-  if (username.toLowerCase() === "koffi") {
-    balance = 1070;
-    totalWithdrawn = 445249;
-  } else if (username.toLowerCase() === "espoir") {
-    balance = 3500;
-  }
-
   // Calcul des retraits locaux sauvegardés
   try {
     const rawW = cookieStore.get("vita_withdrawals")?.value;
@@ -123,24 +115,27 @@ export async function getWithdrawalData(): Promise<WithdrawalPageData> {
     const supabase = createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (authUser) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name, phone, is_activated")
-        .eq("id", authUser.id)
-        .maybeSingle();
+      const [profileRes, wbRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("full_name, phone, is_activated")
+          .eq("id", authUser.id)
+          .maybeSingle(),
+        supabase
+          .from("wallet_balances")
+          .select("balance, available_balance, total_withdrawn")
+          .eq("user_id", authUser.id)
+          .maybeSingle(),
+      ]);
 
+      const profile = profileRes.data;
       if (profile) {
         fullName = profile.full_name || fullName;
         phone = profile.phone || phone;
         isActivated = Boolean(profile.is_activated || isActivated);
       }
 
-      const { data: wb } = await supabase
-        .from("wallet_balances")
-        .select("balance, available_balance, total_withdrawn")
-        .eq("user_id", authUser.id)
-        .maybeSingle();
-
+      const wb = wbRes.data;
       if (wb) {
         balance = Number(wb.available_balance ?? wb.balance) || 0;
         totalWithdrawn = Number(wb.total_withdrawn) || 0;
@@ -217,43 +212,6 @@ export async function getWithdrawalHistory(): Promise<WithdrawalRecord[]> {
       }
     }
   } catch {}
-
-  // Données de démonstration si aucun historique pour les comptes connus (ex: Koffi)
-  const testUser = cookieStore.get("vita_test_user")?.value;
-  if (localRecords.length === 0 && testUser?.toLowerCase() === "koffi") {
-    return [
-      {
-        id: "wdr_101",
-        amount: 150000,
-        paymentMethod: "T-Money Togo (+228)",
-        phoneNumber: "+228 90 •• •• 88",
-        accountName: "Koffi Mensah",
-        status: "completed",
-        createdAt: "2026-11-12T14:30:00Z",
-        reference: "TX-TM-89421",
-      },
-      {
-        id: "wdr_102",
-        amount: 200000,
-        paymentMethod: "Moov Flooz Togo (+228)",
-        phoneNumber: "+228 98 •• •• 12",
-        accountName: "Koffi Mensah",
-        status: "completed",
-        createdAt: "2026-11-08T10:15:00Z",
-        reference: "TX-FL-44019",
-      },
-      {
-        id: "wdr_103",
-        amount: 95249,
-        paymentMethod: "T-Money Togo (+228)",
-        phoneNumber: "+228 90 •• •• 88",
-        accountName: "Koffi Mensah",
-        status: "completed",
-        createdAt: "2026-11-01T16:45:00Z",
-        reference: "TX-TM-11093",
-      },
-    ];
-  }
 
   return localRecords;
 }

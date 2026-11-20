@@ -19,6 +19,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Portefeuille — Vita Earn",
 };
@@ -64,18 +66,6 @@ export default async function PortefeuillePage() {
   let totalEarned = Number(sessionUser?.profit) || Number(sessionUser?.balance) || 0;
   let totalWithdrawn = 0;
 
-  if (username.toLowerCase() === "koffi") {
-    availableBalance = 1070;
-    pendingBalance = 0;
-    totalEarned = 446319;
-    totalWithdrawn = 445249;
-  } else if (username.toLowerCase() === "espoir") {
-    availableBalance = 3500;
-    pendingBalance = 0;
-    totalEarned = 3500;
-    totalWithdrawn = 0;
-  }
-
   let withdrawals: WithdrawalItem[] = [];
   let ledgerEntries: Array<{
     id: string;
@@ -110,79 +100,28 @@ export default async function PortefeuillePage() {
     }
   } catch {}
 
-  if (withdrawals.length === 0 && username.toLowerCase() === "koffi") {
-    withdrawals = [
-      {
-        id: "w-demo-1",
-        amount: 25000,
-        net_amount: 25000,
-        payment_method: "T-Money (Togo)",
-        phone_number: "+228 90 •• •• 88",
-        status: "paid",
-        created_at: new Date(Date.now() - 3600 * 1000 * 24 * 2).toISOString(),
-      },
-      {
-        id: "w-demo-2",
-        amount: 15000,
-        net_amount: 15000,
-        payment_method: "Flooz (Moov Togo)",
-        phone_number: "+228 98 •• •• 12",
-        status: "paid",
-        created_at: new Date(Date.now() - 3600 * 1000 * 24 * 5).toISOString(),
-      },
-      {
-        id: "w-demo-3",
-        amount: 10000,
-        net_amount: 10000,
-        payment_method: "T-Money (Togo)",
-        phone_number: "+228 90 •• •• 88",
-        status: "paid",
-        created_at: new Date(Date.now() - 3600 * 1000 * 24 * 9).toISOString(),
-      },
-    ];
-  }
-
-  if (ledgerEntries.length === 0) {
-    ledgerEntries = [
-      {
-        id: "led-1",
-        amount: 2000,
-        entry_type: "referral_l1",
-        description: "Commission Parrainage Niveau 1 (Abonné validé)",
-        created_at: new Date(Date.now() - 3600 * 1000 * 4).toISOString(),
-      },
-      {
-        id: "led-2",
-        amount: 1000,
-        entry_type: "referral_l2",
-        description: "Commission Parrainage Niveau 2 (Réseau)",
-        created_at: new Date(Date.now() - 3600 * 1000 * 18).toISOString(),
-      },
-      {
-        id: "led-3",
-        amount: 500,
-        entry_type: "referral_l3",
-        description: "Commission Parrainage Niveau 3 (Réseau indirect)",
-        created_at: new Date(Date.now() - 3600 * 1000 * 36).toISOString(),
-      },
-      {
-        id: "led-4",
-        amount: -25000,
-        entry_type: "withdrawal",
-        description: "Retrait Mobile Money T-Money",
-        created_at: new Date(Date.now() - 3600 * 1000 * 24 * 2).toISOString(),
-      },
-    ];
-  }
-
   if (user) {
     try {
-      const { data: wb } = await supabase
-        .from("wallet_balances")
-        .select("balance, available_balance, pending_balance, total_earned, total_withdrawn")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const [wbRes, withdrawalsRes, entriesRes] = await Promise.all([
+        supabase
+          .from("wallet_balances")
+          .select("balance, available_balance, pending_balance, total_earned, total_withdrawn")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("withdrawals")
+          .select("id, amount, net_amount, payment_method, phone_number, status, admin_note, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(10),
+        supabase
+          .from("ledger_entries")
+          .select("id, amount, entry_type, description, created_at")
+          .order("created_at", { ascending: false })
+          .limit(20),
+      ]);
 
+      const wb = wbRes.data;
       if (wb) {
         availableBalance = Number(wb.available_balance ?? wb.balance) || 0;
         pendingBalance = Number(wb.pending_balance) || 0;
@@ -190,25 +129,12 @@ export default async function PortefeuillePage() {
         totalWithdrawn = Number(wb.total_withdrawn) || 0;
       }
 
-      // Demandes de retraits de l'utilisateur
-      const { data: userWithdrawals } = await supabase
-        .from("withdrawals")
-        .select("id, amount, net_amount, payment_method, phone_number, status, admin_note, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
+      const userWithdrawals = withdrawalsRes.data;
       if (userWithdrawals && userWithdrawals.length > 0) {
         withdrawals = userWithdrawals as unknown as WithdrawalItem[];
       }
 
-      // Écritures du grand livre
-      const { data: entries } = await supabase
-        .from("ledger_entries")
-        .select("id, amount, entry_type, description, created_at")
-        .order("created_at", { ascending: false })
-        .limit(20);
-
+      const entries = entriesRes.data;
       if (entries && entries.length > 0) {
         ledgerEntries = entries.map((e) => ({
           id: e.id,

@@ -336,7 +336,7 @@ export function PaiementClient({
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Ex. Koffi Mensah"
+                placeholder="Votre nom complet"
                 required
                 className="w-full touch-target rounded-xl border border-vita-border bg-white pl-10 pr-4 text-xs sm:text-sm text-vita-text placeholder:text-vita-muted/60 focus:outline-none focus:ring-2 focus:ring-vita-medium"
               />
