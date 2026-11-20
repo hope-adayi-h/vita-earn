@@ -74,7 +74,7 @@ export default function LoginPage() {
                 name="identifier"
                 required
                 autoComplete="username"
-                placeholder="Ex. koffi228 ou nom@exemple.com"
+                placeholder="Entrer ton nom d'utilisateur ou email"
                 className="w-full touch-target rounded-xl border border-vita-border bg-vita-surface/50 pl-10 pr-3.5 text-xs sm:text-sm text-vita-text focus:outline-none focus:border-vita-medium focus:bg-white focus:ring-2 focus:ring-vita-bright/30 transition-all shadow-sm"
               />
             </div>

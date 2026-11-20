@@ -10,6 +10,7 @@ import {
   X,
   Home,
   ShoppingBag,
+  PlusCircle,
   Wallet,
   User,
   ShieldCheck,
@@ -204,6 +205,7 @@ export function Navbar({ user }: NavbarProps) {
   const navLinks = [
     { label: t("nav.home"), href: "/", icon: Home },
     { label: t("nav.market"), href: "/marche", icon: ShoppingBag },
+    { label: "Vendre un article", href: "/vendre", icon: PlusCircle },
     { label: t("nav.tasks"), href: "/taches", icon: CalendarCheck },
     { label: t("nav.withdrawal"), href: "/retrait", icon: Wallet },
     { label: t("nav.team"), href: "/equipe", icon: Users },
@@ -229,6 +231,7 @@ export function Navbar({ user }: NavbarProps) {
     { label: t("nav.wheel"), href: "/roue", icon: Disc },
     { label: t("nav.tasks"), href: "/taches", icon: CalendarCheck },
     { label: t("nav.market"), href: "/marche", icon: ShoppingBag },
+    { label: "Vendre un article", href: "/vendre", icon: PlusCircle },
     { label: t("nav.jobs"), href: "/emploi", icon: Briefcase },
     { label: t("nav.premium"), href: "/applications-premium", icon: Sparkles },
     { label: t("nav.training"), href: "/formations", icon: GraduationCap },

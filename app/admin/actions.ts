@@ -31,6 +31,11 @@ import {
 } from "@/lib/auth/local-store";
 import { updateStoredWithdrawalStatus, getAllStoredWithdrawals } from "@/lib/data/withdrawals-store";
 import { saveStoredDeposit, resolveOperatorName } from "@/lib/data/deposits-store";
+import {
+  updateStoredProductStatus,
+  saveMarketplaceSettings,
+  getMarketplaceSettings,
+} from "@/lib/data/products-store";
 import { SasPayClient } from "@/lib/payments/saspay";
 
 const SESSION_COOKIE_NAME = "vita_admin_unlocked";
@@ -515,21 +520,22 @@ export async function moderateProductAction(params: {
 }): Promise<{ success?: boolean; error?: string }> {
   try {
     const { user } = await verifyAdminUser();
-    const adminClient = createAdminClient();
 
-    const { error } = await adminClient
-      .from("products")
-      .update({
-        status: params.status,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", params.productId);
+    // 1. Mise à jour dans le store persistant
+    await updateStoredProductStatus(params.productId, params.status, params.notes);
 
-    if (error) {
-      return { error: error.message };
-    }
-
+    // 2. Synchronisation Supabase si disponible
     try {
+      const adminClient = createAdminClient();
+      await adminClient
+        .from("products")
+        .update({
+          status: params.status === "active" ? "approved" : params.status,
+          rejection_reason: params.notes || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", params.productId);
+
       await adminClient.from("audit_logs").insert({
         user_id: user.id,
         action: `product_${params.status}`,
@@ -540,6 +546,33 @@ export async function moderateProductAction(params: {
 
     revalidatePath("/admin");
     revalidatePath("/admin/produits");
+    revalidatePath("/marche");
+    revalidatePath("/vendre");
+
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur non autorisée.";
+    return { error: message };
+  }
+}
+
+/**
+ * Enregistrement des paramètres marketplace par l'administrateur
+ */
+export async function saveMarketplaceSettingsAction(input: {
+  freeProductsLimit: number;
+  extraProductPrice: number;
+  totalExtraRevenue?: number;
+}): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const { user } = await verifyAdminUser();
+    const res = await saveMarketplaceSettings(input, user.email || user.id);
+    if (!res.success) {
+      return { error: res.error || "Erreur lors de l'enregistrement des paramètres." };
+    }
+
+    revalidatePath("/admin/produits");
+    revalidatePath("/vendre");
     revalidatePath("/marche");
 
     return { success: true };
