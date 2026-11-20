@@ -272,17 +272,9 @@ function RegisterForm() {
 
           {/* 5. Parrain */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-vita-text uppercase tracking-wider">
-                Code Parrain / Recommandé par
-              </label>
-              {hasUpline && sponsorName && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Parrainé par {sponsorName}</span>
-                </span>
-              )}
-            </div>
+            <label className="block text-xs font-bold text-vita-text uppercase tracking-wider mb-1.5">
+              Parrain
+            </label>
             <div className="relative">
               <input
                 type="text"
@@ -292,22 +284,13 @@ function RegisterForm() {
                 readOnly={hasUpline}
                 placeholder={!hasUpline ? "Nom d'utilisateur ou code du parrain (ex: Espoir)" : ""}
                 onChange={!hasUpline ? (e) => setSponsorName(e.target.value) : undefined}
-                className={`w-full touch-target rounded-xl border px-3.5 text-xs sm:text-sm font-black shadow-xs transition-all ${
+                className={`w-full touch-target rounded-xl border px-3.5 text-xs sm:text-sm font-semibold shadow-xs transition-all ${
                   hasUpline
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-950 cursor-not-allowed select-none"
+                    ? "border-vita-border bg-vita-surface/60 text-vita-text cursor-not-allowed select-none"
                     : "border-vita-border bg-vita-surface/50 text-vita-text focus:outline-none focus:border-vita-medium focus:bg-white focus:ring-2 focus:ring-vita-bright/30"
                 }`}
               />
             </div>
-            {hasUpline && sponsorName ? (
-              <p className="text-[11px] text-emerald-700 font-semibold mt-1">
-                Votre inscription est automatiquement rattachée à votre parrain <strong className="text-emerald-900 font-black">{sponsorName}</strong>.
-              </p>
-            ) : (
-              <p className="text-[11px] text-vita-muted mt-1">
-                Si vous avez été invité par un ami ou parrain, son nom apparaîtra ici automatiquement.
-              </p>
-            )}
           </div>
 
           {/* 6. Enter Password */}
