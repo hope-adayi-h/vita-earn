@@ -75,25 +75,30 @@ export async function getAlternativePaymentSettings(): Promise<AlternativePaymen
     if (isConfigured) {
       const adminClient = createAdminClient();
       const { data, error } = await adminClient
-        .from("alternative_payment_settings")
-        .select("*")
-        .eq("id", 1)
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "alternative_payment_settings")
         .maybeSingle();
 
-      if (!error && data) {
+      if (!error && data?.value) {
+        const val = data.value as any;
         return {
-          isEnabled: Boolean(data.is_enabled),
-          paymentUrl: data.payment_url || "",
-          buttonLabel: data.button_label || DEFAULT_SETTINGS.buttonLabel,
-          userMessage: data.user_message || DEFAULT_SETTINGS.userMessage,
-          targetCountries: Array.isArray(data.target_countries) ? data.target_countries : [],
-          allCountries: Boolean(data.all_countries),
-          email: data.email || "",
-          whatsappNumber: data.whatsapp_number || "",
+          isEnabled: Boolean(val.isEnabled ?? val.is_enabled),
+          paymentUrl: val.paymentUrl || val.payment_url || "",
+          buttonLabel: val.buttonLabel || val.button_label || DEFAULT_SETTINGS.buttonLabel,
+          userMessage: val.userMessage || val.user_message || DEFAULT_SETTINGS.userMessage,
+          targetCountries: Array.isArray(val.targetCountries || val.target_countries)
+            ? (val.targetCountries || val.target_countries).map((c: string) => c.toUpperCase())
+            : [],
+          allCountries: Boolean(val.allCountries ?? val.all_countries),
+          email: val.email || "",
+          whatsappNumber: val.whatsappNumber || val.whatsapp_number || "",
           postPaymentInstructions:
-            data.post_payment_instructions || DEFAULT_SETTINGS.postPaymentInstructions,
-          updatedAt: data.updated_at || new Date().toISOString(),
-          updatedBy: data.updated_by || undefined,
+            val.postPaymentInstructions ||
+            val.post_payment_instructions ||
+            DEFAULT_SETTINGS.postPaymentInstructions,
+          updatedAt: val.updatedAt || val.updated_at || new Date().toISOString(),
+          updatedBy: val.updatedBy || val.updated_by || undefined,
         };
       }
     }
@@ -201,20 +206,12 @@ export async function saveAlternativePaymentSettings(
     if (isConfigured) {
       const adminClient = createAdminClient();
       await adminClient
-        .from("alternative_payment_settings")
+        .from("platform_settings")
         .upsert({
-          id: 1,
-          is_enabled: newSettings.isEnabled,
-          payment_url: newSettings.paymentUrl || null,
-          button_label: newSettings.buttonLabel,
-          user_message: newSettings.userMessage,
-          target_countries: newSettings.targetCountries,
-          all_countries: newSettings.allCountries,
-          email: newSettings.email || null,
-          whatsapp_number: newSettings.whatsappNumber || null,
-          post_payment_instructions: newSettings.postPaymentInstructions,
+          key: "alternative_payment_settings",
+          value: newSettings,
+          description: "Configuration du lien de paiement alternatif et email admin",
           updated_at: now,
-          updated_by: adminIdentifier,
         });
 
       // 3. Écriture obligatoire dans le journal d'audit (avec domaine uniquement, jamais l'URL complète)

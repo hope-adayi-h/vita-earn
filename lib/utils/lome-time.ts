@@ -11,6 +11,9 @@ export interface LomeDateInfo {
   isWeekend: boolean; // true si Samedi (6) ou Dimanche (7)
   formattedLongDate: string; // ex: "Vendredi 20 Novembre 2026"
   timeStr: string; // ex: "08:15"
+  hour: number; // ex: 21
+  minute: number; // ex: 00
+  isPast21h: boolean; // true si >= 21h00 Lomé GMT (fermeture automatique quotidienne)
 }
 
 const FRENCH_DAYS = [
@@ -50,6 +53,10 @@ export function getLomeServerTime(): LomeDateInfo {
 
   const dateStr = `${year}-${month}-${day}`;
   const timeStr = `${hour}:${minute}`;
+  const hourNum = parseInt(hour, 10) || 0;
+  const minuteNum = parseInt(minute, 10) || 0;
+  // RÈGLE COMMERCIALE ABSOLUE : à 21h00 pile (Lomé UTC+0), toutes les tâches sont automatiquement clôturées
+  const isPast21h = hourNum >= 21;
 
   // Jour de la semaine (1 = Lundi, 7 = Dimanche)
   // En UTC, la date de Lomé est identique car Lomé est UTC+0
@@ -78,6 +85,9 @@ export function getLomeServerTime(): LomeDateInfo {
     formattedLongDate:
       formattedLongDate.charAt(0).toUpperCase() + formattedLongDate.slice(1),
     timeStr,
+    hour: hourNum,
+    minute: minuteNum,
+    isPast21h,
   };
 }
 

@@ -203,6 +203,10 @@ const DEFAULT_TASKS: StoredDailyTask[] = [
   },
 ];
 
+// Cache mémoire pour optimiser la réactivité serverless
+let inMemoryTasksCache: StoredDailyTask[] | null = null;
+let lastSupabaseSyncTime = 0;
+
 function ensureTasksFile(): string {
   const filePath = getTasksFilePath();
   if (!fs.existsSync(filePath)) {
@@ -224,24 +228,137 @@ function ensureValidationsFile(): string {
 }
 
 /**
+ * Sauvegarde synchrone dans le fichier local
+ */
+function writeTasksToFile(tasks: StoredDailyTask[]): void {
+  try {
+    const filePath = ensureTasksFile();
+    fs.writeFileSync(filePath, JSON.stringify(tasks, null, 2), "utf-8");
+    inMemoryTasksCache = tasks;
+  } catch (err) {
+    console.error("Erreur écriture daily_video_tasks.json:", err);
+  }
+}
+
+/**
+ * Sauvegarde asynchrone dans la table platform_settings de Supabase
+ */
+async function syncTasksToSupabase(tasks: StoredDailyTask[]): Promise<void> {
+  try {
+    const isConfigured =
+      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+      !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+
+    if (isConfigured) {
+      const adminClient = createAdminClient();
+      await adminClient.from("platform_settings").upsert({
+        key: "daily_tasks",
+        value: tasks,
+        description: "Planning hebdomadaire des 5 tâches quotidiennes et statut d'activation",
+        updated_at: new Date().toISOString(),
+      });
+      lastSupabaseSyncTime = Date.now();
+    }
+  } catch (err) {
+    console.error("Erreur synchronisation daily_tasks dans platform_settings:", err);
+  }
+}
+
+/**
+ * Applique la règle de fermeture automatique à 21h00 Lomé GMT
+ * Si l'heure serveur >= 21h00, toutes les tâches sont automatiquement désactivées pour la soirée
+ */
+function applyNightAutoDeactivation(tasks: StoredDailyTask[]): {
+  tasks: StoredDailyTask[];
+  modified: boolean;
+} {
+  const lomeTime = getLomeServerTime();
+  if (!lomeTime.isPast21h) {
+    return { tasks, modified: false };
+  }
+
+  let modified = false;
+  const updated = tasks.map((t) => {
+    if (t.isActive) {
+      modified = true;
+      return { ...t, isActive: false, updatedAt: new Date().toISOString() };
+    }
+    return t;
+  });
+
+  return { tasks: updated, modified };
+}
+
+/**
  * Récupère toutes les tâches vidéo actives et non supprimées
+ * Synchronise avec Supabase et le fichier local
  */
 export function getAllStoredDailyTasks(): StoredDailyTask[] {
+  // 1. Lire depuis le fichier local
+  let currentTasks: StoredDailyTask[] = DEFAULT_TASKS;
   try {
     const filePath = ensureTasksFile();
     const content = fs.readFileSync(filePath, "utf-8");
-    const tasks = JSON.parse(content) as StoredDailyTask[];
-    return tasks.filter((t) => !t.isDeleted);
-  } catch {
-    return DEFAULT_TASKS;
+    const parsed = JSON.parse(content) as StoredDailyTask[];
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      currentTasks = parsed.filter((t) => !t.isDeleted);
+    }
+  } catch {}
+
+  // 2. Vérifier la clôture automatique de 21h00
+  const { tasks: verifiedTasks, modified } = applyNightAutoDeactivation(currentTasks);
+  if (modified) {
+    writeTasksToFile(verifiedTasks);
+    // Sync async vers Supabase en arrière-plan
+    syncTasksToSupabase(verifiedTasks).catch(() => {});
   }
+
+  return verifiedTasks;
+}
+
+/**
+ * Récupère les tâches avec synchronisation Supabase en temps réel (pour les Server Components et Server Actions)
+ */
+export async function fetchAndSyncDailyTasks(): Promise<StoredDailyTask[]> {
+  try {
+    const isConfigured =
+      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+      !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+
+    if (isConfigured) {
+      const adminClient = createAdminClient();
+      const { data } = await adminClient
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "daily_tasks")
+        .maybeSingle();
+
+      if (data?.value && Array.isArray(data.value) && data.value.length > 0) {
+        const dbTasks = data.value as StoredDailyTask[];
+        const filtered = dbTasks.filter((t) => !t.isDeleted);
+
+        // Appliquer la règle de 21h00
+        const { tasks: finalTasks, modified } = applyNightAutoDeactivation(filtered);
+        writeTasksToFile(finalTasks);
+        if (modified) {
+          syncTasksToSupabase(finalTasks).catch(() => {});
+        }
+        return finalTasks;
+      }
+    }
+  } catch (err) {
+    console.warn("Fallback lecture daily_tasks depuis Supabase:", err);
+  }
+
+  return getAllStoredDailyTasks();
 }
 
 /**
  * Sauvegarde ou modifie une tâche vidéo
  */
-export function saveStoredDailyTask(task: Omit<StoredDailyTask, "id" | "createdAt" | "updatedAt"> & { id?: string }): StoredDailyTask {
-  const filePath = ensureTasksFile();
+export function saveStoredDailyTask(
+  task: Omit<StoredDailyTask, "id" | "createdAt" | "updatedAt"> & { id?: string }
+): StoredDailyTask {
   const tasks = getAllStoredDailyTasks();
 
   const id = task.id || `task_${Date.now()}`;
@@ -269,20 +386,16 @@ export function saveStoredDailyTask(task: Omit<StoredDailyTask, "id" | "createdA
     tasks.push(savedTask);
   }
 
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(tasks, null, 2), "utf-8");
-  } catch (err) {
-    console.error("Erreur écriture daily_video_tasks.json:", err);
-  }
+  writeTasksToFile(tasks);
+  syncTasksToSupabase(tasks).catch(() => {});
 
   return savedTask;
 }
 
 /**
- * Active ou désactive une tâche
+ * Active ou désactive une tâche spécifique (Action en 1 clic pour l'admin)
  */
 export function toggleStoredTaskActive(id: string, isActive: boolean): boolean {
-  const filePath = ensureTasksFile();
   const tasks = getAllStoredDailyTasks();
   const task = tasks.find((t) => t.id === id);
   if (!task) return false;
@@ -290,19 +403,34 @@ export function toggleStoredTaskActive(id: string, isActive: boolean): boolean {
   task.isActive = isActive;
   task.updatedAt = new Date().toISOString();
 
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(tasks, null, 2), "utf-8");
-    return true;
-  } catch {
-    return false;
+  writeTasksToFile(tasks);
+  syncTasksToSupabase(tasks).catch(() => {});
+
+  return true;
+}
+
+/**
+ * Active ou désactive TOUTES les tâches de la semaine en un seul clic
+ */
+export function toggleAllStoredTasksActive(isActive: boolean): boolean {
+  const tasks = getAllStoredDailyTasks();
+  const now = new Date().toISOString();
+
+  for (const t of tasks) {
+    t.isActive = isActive;
+    t.updatedAt = now;
   }
+
+  writeTasksToFile(tasks);
+  syncTasksToSupabase(tasks).catch(() => {});
+
+  return true;
 }
 
 /**
  * Suppression logique (soft-delete) d'une tâche
  */
 export function deleteStoredDailyTask(id: string): boolean {
-  const filePath = ensureTasksFile();
   const tasks = getAllStoredDailyTasks();
   const task = tasks.find((t) => t.id === id);
   if (!task) return false;
@@ -311,22 +439,29 @@ export function deleteStoredDailyTask(id: string): boolean {
   task.isActive = false;
   task.updatedAt = new Date().toISOString();
 
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(tasks, null, 2), "utf-8");
-    return true;
-  } catch {
-    return false;
-  }
+  writeTasksToFile(tasks);
+  syncTasksToSupabase(tasks).catch(() => {});
+
+  return true;
 }
 
 /**
- * Trouve la tâche vidéo programmée pour aujourd'hui selon le fuseau horaire de Lomé
+ * Trouve la tâche programmée pour aujourd'hui selon le fuseau horaire de Lomé
+ * RÈGLE ABSOLUE :
+ * 1. Jamais de tâche le week-end
+ * 2. À 21h00 pile (Lomé GMT), la session se clôture automatiquement et retourne null
+ * 3. Seule une tâche marquée isActive=true par l'administrateur est retournée
  */
 export function getTodayTaskForLome(timeInfo?: LomeDateInfo): StoredDailyTask | null {
   const time = timeInfo || getLomeServerTime();
 
-  // Les tâches ne sont JAMAIS disponibles le week-end
+  // RÈGLE 1 : Week-end fermé
   if (time.isWeekend) {
+    return null;
+  }
+
+  // RÈGLE 2 : À 21h00 pile (Lomé UTC+0), fermeture automatique stricte de la journée
+  if (time.isPast21h) {
     return null;
   }
 

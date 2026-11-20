@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getCountryByCode, getAllCountries } from "@/lib/countries";
 
 export interface AutoPaymentCountrySettings {
@@ -45,6 +46,36 @@ function getStorageFilePath(): string {
  * Récupère les paramètres actuels d'activation des pays pour le paiement automatique
  */
 export async function getAutoPaymentCountrySettings(): Promise<AutoPaymentCountrySettings> {
+  // 1. Tenter depuis Supabase platform_settings
+  try {
+    const isConfigured =
+      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+      !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+
+    if (isConfigured) {
+      const adminClient = createAdminClient();
+      const { data, error } = await adminClient
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "auto_payment_countries")
+        .maybeSingle();
+
+      if (!error && data?.value) {
+        const parsed = data.value as any;
+        return {
+          suspendedCountries: Array.isArray(parsed.suspendedCountries)
+            ? parsed.suspendedCountries.map((c: string) => c.toUpperCase())
+            : [],
+          customMessage: parsed.customMessage || DEFAULT_SETTINGS.customMessage,
+          adminEmail: parsed.adminEmail || DEFAULT_SETTINGS.adminEmail,
+          updatedAt: parsed.updatedAt || new Date().toISOString(),
+          updatedBy: parsed.updatedBy || "admin",
+        };
+      }
+    }
+  } catch {}
+
+  // 2. Fichier local de secours
   try {
     const filePath = getStorageFilePath();
     if (fs.existsSync(filePath)) {
@@ -98,6 +129,23 @@ export async function saveAutoPaymentCountrySettings(
 
     const filePath = getStorageFilePath();
     fs.writeFileSync(filePath, JSON.stringify(newSettings, null, 2), "utf-8");
+
+    // Sauvegarde Supabase platform_settings
+    try {
+      const isConfigured =
+        Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+        !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+
+      if (isConfigured) {
+        const adminClient = createAdminClient();
+        await adminClient.from("platform_settings").upsert({
+          key: "auto_payment_countries",
+          value: newSettings,
+          description: "Configuration des pays actifs et suspendus pour les paiements automatiques SasPay",
+          updated_at: now,
+        });
+      }
+    } catch {}
 
     return { success: true, settings: newSettings };
   } catch (err: unknown) {

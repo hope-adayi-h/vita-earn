@@ -20,6 +20,7 @@ import {
   Image as ImageIcon,
   Eye,
   Video,
+  Moon,
 } from "lucide-react";
 import { formatFCFA } from "@/lib/utils";
 import { VideoEmbedPlayer } from "@/components/video/VideoEmbedPlayer";
@@ -282,6 +283,47 @@ export function TachesClient({
           <p className="text-xs text-amber-800 leading-relaxed max-w-md mx-auto">
             Les tâches rémunérées sont ouvertes du lundi au vendredi. Profitez de votre week-end pour recharger vos énergies ! Rendez-vous ce lundi pour le grand Questionnaire rémunéré.
           </p>
+        </div>
+      )}
+
+      {/* 2b. CLÔTURE QUOTIDIENNE STRICTE À 21H00 (LOMÉ GMT) */}
+      {!lomeTime.isWeekend && lomeTime.isPast21h && (
+        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 text-center text-white space-y-3 shadow-lg">
+          <div className="w-12 h-12 rounded-2xl bg-slate-800 text-amber-400 mx-auto flex items-center justify-center border border-slate-700">
+            <Moon className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <span className="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              Clôture quotidienne à 21h00
+            </span>
+            <h2 className="text-base font-black text-white">
+              Tâches du jour clôturées pour la soirée
+            </h2>
+          </div>
+          <p className="text-xs text-slate-300 leading-relaxed max-w-md mx-auto">
+            Toutes les activités rémunérées de Vita Earn se désactivent automatiquement à 21h00 (Heure de Lomé GMT). Rendez-vous demain matin pour la prochaine session rémunérée dès l&apos;activation par l&apos;administrateur !
+          </p>
+          <div className="pt-2 text-[11px] text-slate-400 font-medium">
+            Heure de Lomé actuelle : <strong className="text-white">{lomeTime.timeStr} (GMT)</strong> • Prochaine ouverture : dès demain matin
+          </div>
+        </div>
+      )}
+
+      {/* 2c. AUCUNE TÂCHE ACTIVÉE POUR LE MOMENT PAR L'ADMINISTRATEUR */}
+      {!lomeTime.isWeekend && !lomeTime.isPast21h && !todayTask && (
+        <div className="p-6 rounded-3xl bg-white border border-slate-200/80 text-center space-y-3 shadow-xs">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 mx-auto flex items-center justify-center border border-amber-200">
+            <Clock className="w-6 h-6" />
+          </div>
+          <h2 className="text-base font-black text-slate-900">
+            Tâche du {lomeTime.dayName} en cours de préparation
+          </h2>
+          <p className="text-xs text-slate-600 leading-relaxed max-w-md mx-auto">
+            L&apos;administrateur active les activités rémunérées chaque matinée. Dès son activation, la tâche s&apos;affichera ici instantanément.
+          </p>
+          <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 max-w-sm mx-auto">
+            Rappel : chaque jour ouvré, les tâches sont ouvertes jusqu&apos;à <strong>21h00 pile (GMT)</strong>.
+          </div>
         </div>
       )}
 

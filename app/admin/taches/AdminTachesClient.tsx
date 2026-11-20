@@ -24,6 +24,10 @@ import {
   CheckSquare,
   Square,
   Loader2,
+  Power,
+  PowerOff,
+  Moon,
+  Zap,
 } from "lucide-react";
 import { formatFCFA } from "@/lib/utils";
 import { parseUniversalVideoUrl, type ParsedVideo } from "@/lib/video/universal-embed";
@@ -33,6 +37,7 @@ import {
   saveDailyQuizTaskAction,
   saveDailyAdSenseTaskAction,
   toggleDailyVideoTaskAction,
+  toggleAllDailyTasksAction,
 } from "./actions";
 import type {
   StoredDailyTask,
@@ -409,69 +414,215 @@ export function AdminTachesClient({
     });
   };
 
+  // Bascule rapide d'activation d'une tâche (Action instantanée en 1 clic)
+  const handleToggleTaskActive = (taskId: string, targetActive: boolean) => {
+    setMessage(null);
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, isActive: targetActive } : t))
+    );
+    if (currentTask?.id === taskId) {
+      if (selectedDay === 1) setQuizIsActive(targetActive);
+      else if (selectedDay === 4) setAdIsActive(targetActive);
+      else setVideoIsActive(targetActive);
+    }
+
+    startTransition(async () => {
+      const res = await toggleDailyVideoTaskAction(taskId, targetActive);
+      if (res.success) {
+        setMessage({
+          type: "success",
+          text: `La tâche a été ${targetActive ? "activée et mise en ligne" : "désactivée"} avec succès.`,
+        });
+      } else {
+        setMessage({ type: "error", text: res.error || "Erreur de mise à jour du statut." });
+      }
+    });
+  };
+
+  // Bascule globale de toutes les tâches
+  const handleToggleAllTasks = (targetActive: boolean) => {
+    setMessage(null);
+    setTasks((prev) => prev.map((t) => ({ ...t, isActive: targetActive })));
+    setQuizIsActive(targetActive);
+    setVideoIsActive(targetActive);
+    setAdIsActive(targetActive);
+
+    startTransition(async () => {
+      const res = await toggleAllDailyTasksAction(targetActive);
+      if (res.success) {
+        setMessage({
+          type: "success",
+          text: `Toutes les tâches de la semaine ont été ${targetActive ? "activées" : "désactivées"} avec succès.`,
+        });
+      } else {
+        setMessage({ type: "error", text: res.error || "Erreur." });
+      }
+    });
+  };
+
   return (
     <div className="space-y-6">
-      {/* 1. SÉLECTEUR STRICT DES 5 JOURS ORDONNÉS */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider">
-              Ordre Hebdomadaire des Tâches (Lundi à Vendredi)
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Chaque jour possède sa catégorie dédiée fixe. Cliquez sur un jour pour gérer ses paramètres.
+      {/* 1. CENTRE DE CONTRÔLE & ACTIVATION ULTRA-VISIBLE DES TÂCHES (RÈGLE DES 21H00) */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-5">
+        {/* En-tête avec Horloge Serveur Lomé & Clôture 21h00 */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                Centre d&apos;Activation & Statut Quotidien des Tâches
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Activez les tâches chaque matinée. À <strong>21h00 pile (Heure de Lomé GMT)</strong>, toutes les tâches sont <strong>automatiquement désactivées</strong> par le système.
             </p>
           </div>
-          <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
-            Aujourd&apos;hui : {lomeTime.dayName}
-          </span>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {/* Horloge Lomé */}
+            <div className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 flex items-center gap-2 text-xs font-bold text-slate-700">
+              <Clock className="w-4 h-4 text-emerald-600" />
+              <span>Heure Lomé : <strong>{lomeTime.timeStr} (GMT)</strong></span>
+            </div>
+
+            {/* Boutons d'activation globale */}
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => handleToggleAllTasks(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>Tout Activer</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => handleToggleAllTasks(false)}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 border border-slate-200 hover:border-rose-200 font-extrabold text-xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            >
+              <PowerOff className="w-3.5 h-3.5" />
+              <span>Tout Désactiver</span>
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+        {/* Bannière Mode Nocturne si après 21h00 */}
+        {lomeTime.isPast21h && (
+          <div className="p-3.5 rounded-2xl bg-slate-900 text-white border border-slate-800 flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <Moon className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>
+                <strong>Mode nocturne actif (après 21h00) :</strong> Les tâches sont automatiquement clôturées pour la soirée sur le site des utilisateurs.
+              </span>
+            </div>
+            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 shrink-0">
+              Clôture 21h00 Active
+            </span>
+          </div>
+        )}
+
+        {/* 5 COLONNES D'ACTIVATION ULTRA-VISIBLES (LUNDI À VENDREDI) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
           {ORDERED_DAYS.map((item) => {
             const isSelected = item.day === selectedDay;
             const isToday = item.day === lomeTime.dayOfWeek && !lomeTime.isWeekend;
             const taskForDay = tasks.find((t) => t.dayOfWeek === item.day && !t.isDeleted);
+            const isActive = Boolean(taskForDay?.isActive);
+            const taskId = taskForDay?.id || `task_${item.day}`;
             const Icon = item.icon;
 
             return (
-              <button
+              <div
                 key={item.day}
-                type="button"
-                onClick={() => setSelectedDay(item.day)}
-                className={`touch-target p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                className={`p-4 rounded-3xl border flex flex-col justify-between transition-all ${
                   isSelected
-                    ? "bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-emerald-500/30"
-                    : "bg-white hover:bg-slate-50 border-slate-200 text-slate-800"
-                }`}
+                    ? "ring-2 ring-emerald-500/40 border-emerald-500 bg-emerald-50/20"
+                    : "border-slate-200 bg-white"
+                } ${isToday ? "shadow-sm" : ""}`}
               >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-black">{item.label}</span>
-                  {isToday && (
-                    <span
-                      className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md ${
-                        isSelected ? "bg-white text-emerald-700" : "bg-emerald-100 text-emerald-800"
-                      }`}
+                <div className="space-y-3">
+                  {/* Ligne 1 : Jour & Aujourd'hui */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-slate-900">{item.label}</span>
+                    {isToday && (
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-600 text-white">
+                        Aujourd&apos;hui
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Ligne 2 : Type de tâche & Récompense */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                      <Icon className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                      <span className="truncate">{item.title}</span>
+                    </div>
+                    <div className="text-[11px] font-black text-emerald-700">
+                      +{formatFCFA(taskForDay?.rewardAmount || 0)}
+                    </div>
+                  </div>
+
+                  {/* Ligne 3 : Statut Visuel Actif / Désactivé */}
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Statut d&apos;affichage
+                    </div>
+                    {isActive ? (
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
+                        <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                        <span>ACTIF (En ligne)</span>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-extrabold bg-slate-100 text-slate-600 border border-slate-300">
+                        <span className="w-2 h-2 rounded-full bg-slate-400" />
+                        <span>DÉSACTIVÉ (Caché)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* GROS BOUTONS D'ACTION (ULTRA VISIBLES & CLIQUABLES) */}
+                <div className="pt-4 space-y-2 mt-3 border-t border-slate-100">
+                  {isActive ? (
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => handleToggleTaskActive(taskId, false)}
+                      className="w-full touch-target min-h-[40px] py-2 px-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 active:scale-98 text-rose-700 border border-rose-300 font-black text-xs transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      title="Cliquez pour désactiver cette tâche immédiatement pour les utilisateurs"
                     >
-                      Aujourd&apos;hui
-                    </span>
+                      <PowerOff className="w-3.5 h-3.5" />
+                      <span>DÉSACTIVER</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => handleToggleTaskActive(taskId, true)}
+                      className="w-full touch-target min-h-[40px] py-2 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-black text-xs transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      title="Cliquez pour activer cette tâche immédiatement pour les utilisateurs"
+                    >
+                      <Power className="w-3.5 h-3.5" />
+                      <span>ACTIVER CETTE TÂCHE</span>
+                    </button>
                   )}
-                </div>
 
-                <div className="flex items-center gap-1.5 text-xs font-bold truncate">
-                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-white" : "text-slate-500"}`} />
-                  <span className="truncate">{item.title}</span>
+                  {/* Bouton pour ouvrir l'éditeur de ce jour */}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDay(item.day)}
+                    className={`w-full py-1.5 px-2 rounded-xl text-[11px] font-bold transition-all text-center cursor-pointer ${
+                      isSelected
+                        ? "bg-slate-900 text-white"
+                        : "bg-slate-50 hover:bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {isSelected ? "Éditeur ouvert ↓" : "Modifier le contenu"}
+                  </button>
                 </div>
-
-                <div className="mt-2 pt-2 border-t border-slate-100/20 flex items-center justify-between text-[10px]">
-                  <span className={isSelected ? "text-emerald-100" : "text-slate-400"}>
-                    {taskForDay?.isActive ? "Actif" : "Inactif"}
-                  </span>
-                  <span className={`font-black ${isSelected ? "text-white" : "text-emerald-600"}`}>
-                    +{taskForDay?.rewardAmount || 0} F
-                  </span>
-                </div>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -513,17 +664,29 @@ export function AdminTachesClient({
               </div>
             </div>
 
-            <label className="inline-flex items-center gap-2 cursor-pointer p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors">
-              <input
-                type="checkbox"
-                checked={quizIsActive}
-                onChange={(e) => setQuizIsActive(e.target.checked)}
-                className="rounded text-purple-600 focus:ring-purple-500"
-              />
-              <span className="text-xs font-bold text-slate-800">
-                {quizIsActive ? "Tâche active" : "Désactivée"}
-              </span>
-            </label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setQuizIsActive(!quizIsActive)}
+                className={`touch-target px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-xs cursor-pointer ${
+                  quizIsActive
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    : "bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300"
+                }`}
+              >
+                {quizIsActive ? (
+                  <>
+                    <Power className="w-3.5 h-3.5" />
+                    <span>Statut : ACTIVÉE (En ligne)</span>
+                  </>
+                ) : (
+                  <>
+                    <PowerOff className="w-3.5 h-3.5" />
+                    <span>Statut : DÉSACTIVÉE</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Titre & Consignes */}
@@ -743,17 +906,29 @@ export function AdminTachesClient({
               </div>
             </div>
 
-            <label className="inline-flex items-center gap-2 cursor-pointer p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors">
-              <input
-                type="checkbox"
-                checked={videoIsActive}
-                onChange={(e) => setVideoIsActive(e.target.checked)}
-                className="rounded text-emerald-600 focus:ring-emerald-500"
-              />
-              <span className="text-xs font-bold text-slate-800">
-                {videoIsActive ? "Tâche active" : "Désactivée"}
-              </span>
-            </label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setVideoIsActive(!videoIsActive)}
+                className={`touch-target px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-xs cursor-pointer ${
+                  videoIsActive
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    : "bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300"
+                }`}
+              >
+                {videoIsActive ? (
+                  <>
+                    <Power className="w-3.5 h-3.5" />
+                    <span>Statut : ACTIVÉE (En ligne)</span>
+                  </>
+                ) : (
+                  <>
+                    <PowerOff className="w-3.5 h-3.5" />
+                    <span>Statut : DÉSACTIVÉE</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -872,17 +1047,29 @@ export function AdminTachesClient({
               </div>
             </div>
 
-            <label className="inline-flex items-center gap-2 cursor-pointer p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors">
-              <input
-                type="checkbox"
-                checked={adIsActive}
-                onChange={(e) => setAdIsActive(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-xs font-bold text-slate-800">
-                {adIsActive ? "Publicité active" : "Désactivée"}
-              </span>
-            </label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setAdIsActive(!adIsActive)}
+                className={`touch-target px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-xs cursor-pointer ${
+                  adIsActive
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    : "bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300"
+                }`}
+              >
+                {adIsActive ? (
+                  <>
+                    <Power className="w-3.5 h-3.5" />
+                    <span>Statut : ACTIVÉE (En ligne)</span>
+                  </>
+                ) : (
+                  <>
+                    <PowerOff className="w-3.5 h-3.5" />
+                    <span>Statut : DÉSACTIVÉE</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4">

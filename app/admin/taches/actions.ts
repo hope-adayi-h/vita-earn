@@ -8,6 +8,7 @@ import { isWeekdayDate } from "@/lib/utils/lome-time";
 import {
   saveStoredDailyTask,
   toggleStoredTaskActive,
+  toggleAllStoredTasksActive,
   deleteStoredDailyTask,
   StoredDailyTask,
   QuizQuestionItem,
@@ -323,6 +324,32 @@ export async function toggleDailyVideoTaskAction(taskId: string, isActive: boole
     return {
       success: true,
       message: `Tâche ${isActive ? "activée" : "désactivée"} avec succès.`,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Erreur inattendue.";
+    return { success: false, error: msg };
+  }
+}
+
+/**
+ * Active ou désactive toutes les tâches de la semaine en 1 clic
+ */
+export async function toggleAllDailyTasksAction(isActive: boolean): Promise<ActionResult> {
+  try {
+    const { isAdmin } = await checkAdminSession();
+    if (!isAdmin) {
+      return { success: false, error: "Accès refusé : privilèges administrateur requis." };
+    }
+
+    toggleAllStoredTasksActive(isActive);
+
+    revalidatePath("/admin/taches");
+    revalidatePath("/taches");
+    revalidatePath("/");
+
+    return {
+      success: true,
+      message: `Toutes les tâches de la semaine ont été ${isActive ? "activées" : "désactivées"} avec succès.`,
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Erreur inattendue.";

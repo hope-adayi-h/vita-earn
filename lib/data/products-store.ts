@@ -186,6 +186,34 @@ function getSettingsFilePath(): string {
  * Récupère les paramètres actuels de la Marketplace
  */
 export async function getMarketplaceSettings(): Promise<MarketplaceSettings> {
+  // 1. Tenter depuis Supabase platform_settings
+  try {
+    const isConfigured =
+      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+      !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+
+    if (isConfigured) {
+      const adminClient = createAdminClient();
+      const { data, error } = await adminClient
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "marketplace_settings")
+        .maybeSingle();
+
+      if (!error && data?.value) {
+        const parsed = data.value as any;
+        return {
+          freeProductsLimit: Number(parsed.freeProductsLimit) || DEFAULT_SETTINGS.freeProductsLimit,
+          extraProductPrice: Number(parsed.extraProductPrice) || DEFAULT_SETTINGS.extraProductPrice,
+          totalExtraRevenue: Number(parsed.totalExtraRevenue) || DEFAULT_SETTINGS.totalExtraRevenue,
+          updatedAt: parsed.updatedAt || new Date().toISOString(),
+          updatedBy: parsed.updatedBy || "admin",
+        };
+      }
+    }
+  } catch {}
+
+  // 2. Fichier local de secours
   try {
     const filePath = getSettingsFilePath();
     if (fs.existsSync(filePath)) {
@@ -236,6 +264,24 @@ export async function saveMarketplaceSettings(
 
     const filePath = getSettingsFilePath();
     fs.writeFileSync(filePath, JSON.stringify(updated, null, 2), "utf-8");
+
+    // Sauvegarde Supabase platform_settings
+    try {
+      const isConfigured =
+        Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+        !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+
+      if (isConfigured) {
+        const adminClient = createAdminClient();
+        await adminClient.from("platform_settings").upsert({
+          key: "marketplace_settings",
+          value: updated,
+          description: "Quotas d'articles gratuits et tarification des articles supplémentaires",
+          updated_at: new Date().toISOString(),
+        });
+      }
+    } catch {}
+
     return { success: true, settings: updated };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erreur de sauvegarde.";

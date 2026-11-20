@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getLomeServerTime } from "@/lib/utils/lome-time";
 import {
   getTodayTaskForLome,
+  fetchAndSyncDailyTasks,
   hasUserValidatedToday,
   StoredDailyTask,
 } from "@/lib/data/tasks-store";
@@ -78,7 +79,8 @@ export default async function TachesPage() {
     } catch {}
   }
 
-  // 3. Récupération de la tâche active du jour
+  // 3. Récupération et synchronisation des tâches (Supabase platform_settings + local)
+  await fetchAndSyncDailyTasks();
   const todayRawTask: StoredDailyTask | null = getTodayTaskForLome(lomeTime);
 
   let publicTask: PublicDailyTask | null = null;
