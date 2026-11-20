@@ -21,9 +21,10 @@ import {
 
 function RegisterForm() {
   const searchParams = useSearchParams();
-  const rawUpline = searchParams.get("ref") || searchParams.get("upline");
+  const rawUpline = searchParams.get("sponsor") || searchParams.get("ref") || searchParams.get("upline");
   const hasUpline = Boolean(rawUpline && rawUpline.trim().length > 0);
-  const uplineValue = hasUpline ? rawUpline!.trim() : "Aucun";
+  const sponsorName = hasUpline ? rawUpline!.trim().replace(/^@/, "") : "";
+  const uplineValue = hasUpline ? sponsorName : "Aucun";
 
   // Par défaut sur Rien (null) selon la demande de l'utilisateur
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
@@ -222,19 +223,32 @@ function RegisterForm() {
 
           {/* 5. Parrain */}
           <div>
-            <label className="block text-xs font-bold text-vita-text uppercase tracking-wider mb-1.5">
-              Parrain
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold text-vita-text uppercase tracking-wider">
+                Parrain
+              </label>
+              {hasUpline && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  Parrainé par @{sponsorName}
+                </span>
+              )}
+            </div>
             <div className="relative">
               <input
                 type="text"
                 name="upline"
-                value={uplineValue}
+                value={hasUpline ? `@${sponsorName}` : "Aucun"}
                 readOnly
                 tabIndex={-1}
                 className="w-full touch-target rounded-xl border border-vita-border bg-gray-100/90 px-3.5 text-xs sm:text-sm text-gray-700 font-semibold cursor-not-allowed select-none focus:outline-none shadow-xs"
               />
             </div>
+            {hasUpline && (
+              <p className="text-[11px] text-emerald-700 font-medium mt-1">
+                Votre inscription sera automatiquement rattachée à votre parrain @{sponsorName}.
+              </p>
+            )}
           </div>
 
           {/* 6. Enter Password */}

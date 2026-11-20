@@ -19,8 +19,7 @@ import {
   ExternalLink,
   Eye,
   Info,
-  CheckSquare,
-  Square,
+  Check,
 } from "lucide-react";
 
 interface PaiementAlternatifClientProps {
@@ -205,12 +204,25 @@ export function PaiementAlternatifClient({
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-7 shadow-xs space-y-6">
           {/* SECTION A : INTERRUPTEUR D'ACTIVATION */}
-          <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+          <div
+            className={`flex items-center justify-between p-4 sm:p-5 rounded-2xl border-2 transition-all ${
+              isEnabled ? "bg-emerald-50/50 border-[#16A34A]" : "bg-slate-50 border-slate-200"
+            }`}
+          >
             <div>
-              <p className="font-bold text-sm text-slate-900">
-                Activer le bouton de paiement alternatif
-              </p>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <div className="flex items-center gap-2 mb-1">
+                <span
+                  className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-full ${
+                    isEnabled ? "bg-[#16A34A] text-white" : "bg-slate-200 text-slate-700"
+                  }`}
+                >
+                  {isEnabled ? "Actif sur le site" : "Désactivé"}
+                </span>
+                <p className="font-bold text-sm sm:text-base text-slate-900">
+                  Activer le bouton de paiement alternatif
+                </p>
+              </div>
+              <p className="text-xs text-slate-500">
                 {isEnabled
                   ? "Le bouton sera visible sur les écrans de paiement pour les pays éligibles."
                   : "Le bouton est actuellement masqué pour tous les utilisateurs."}
@@ -224,7 +236,7 @@ export function PaiementAlternatifClient({
                 onChange={(e) => setIsEnabled(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-13 h-7 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
+              <div className="w-14 h-8 bg-slate-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6.5 after:w-6.5 after:transition-all peer-checked:bg-[#16A34A] shadow-inner"></div>
             </label>
           </div>
 
@@ -287,7 +299,7 @@ export function PaiementAlternatifClient({
 
           {/* SECTION C : SÉLECTION DES PAYS CONCERNÉS */}
           <div className="space-y-3 pt-2 border-t border-slate-100">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
                   Pays concernés
@@ -298,21 +310,32 @@ export function PaiementAlternatifClient({
               </div>
 
               {/* Case Tous les pays */}
-              <label className="inline-flex items-center gap-2 cursor-pointer p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={allCountries}
-                  onChange={(e) => handleSelectAllCountries(e.target.checked)}
-                  className="rounded text-emerald-600 focus:ring-emerald-500"
-                />
-                <span className="text-xs font-black text-slate-800">Tous les pays</span>
-              </label>
+              <button
+                type="button"
+                onClick={() => handleSelectAllCountries(!allCountries)}
+                className={`touch-target px-3.5 py-2 rounded-xl flex items-center gap-2.5 border-2 transition-all cursor-pointer ${
+                  allCountries
+                    ? "bg-white border-[#16A34A] text-[#16A34A] font-bold shadow-xs"
+                    : "bg-slate-100 border-slate-300 text-slate-700 font-semibold"
+                }`}
+              >
+                <div
+                  className={`w-6 h-6 rounded-md flex items-center justify-center border-2 transition-all ${
+                    allCountries
+                      ? "bg-[#16A34A] border-[#16A34A] text-white shadow-xs"
+                      : "bg-white border-slate-300 text-transparent"
+                  }`}
+                >
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </div>
+                <span className="text-xs font-black">Tous les pays (sans filtre)</span>
+              </button>
             </div>
 
             {/* Grille des 25 pays */}
             {!allCountries && (
-              <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 max-h-64 overflow-y-auto">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+              <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 max-h-72 overflow-y-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                   {countriesList.map((country) => {
                     const isChecked = targetCountries.includes(country.code.toUpperCase());
                     return (
@@ -320,21 +343,30 @@ export function PaiementAlternatifClient({
                         key={country.code}
                         type="button"
                         onClick={() => toggleCountry(country.code)}
-                        className={`touch-target p-2 rounded-xl text-left text-xs flex items-center justify-between gap-2 border transition-all ${
+                        className={`touch-target p-2.5 rounded-xl text-left text-xs flex items-center justify-between gap-2 border-2 transition-all cursor-pointer ${
                           isChecked
-                            ? "bg-white border-emerald-600 shadow-2xs font-bold text-slate-900 ring-1 ring-emerald-500/30"
-                            : "bg-white/60 border-slate-200 text-slate-700 hover:bg-white"
+                            ? "bg-emerald-50/40 border-[#16A34A] shadow-xs text-slate-900 font-bold"
+                            : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
                         }`}
                       >
-                        <div className="flex items-center gap-2 truncate">
-                          <CountryFlag code={country.flagCode} className="w-4 h-3 shrink-0" />
-                          <span className="truncate">{country.name}</span>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <CountryFlag code={country.flagCode} className="w-5 h-3.5 shrink-0 rounded-xs shadow-2xs" />
+                          <div className="truncate">
+                            <span className="block truncate font-semibold">{country.name}</span>
+                            <span className="text-[10px] text-slate-400 font-mono font-normal">
+                              {country.currency}
+                            </span>
+                          </div>
                         </div>
-                        {isChecked ? (
-                          <CheckSquare className="w-4 h-4 text-emerald-600 shrink-0" />
-                        ) : (
-                          <Square className="w-4 h-4 text-slate-300 shrink-0" />
-                        )}
+                        <div
+                          className={`w-6 h-6 rounded-md shrink-0 flex items-center justify-center border-2 transition-all ${
+                            isChecked
+                              ? "bg-[#16A34A] border-[#16A34A] text-white shadow-xs"
+                              : "bg-white border-slate-300 text-transparent"
+                          }`}
+                        >
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        </div>
                       </button>
                     );
                   })}

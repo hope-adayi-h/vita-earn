@@ -21,40 +21,45 @@ import {
   ChevronDown,
   ArrowUp,
   ExternalLink,
+  ShieldAlert,
+  Mail,
 } from "lucide-react";
 
 import { AlternativePaymentButton } from "@/components/payments/AlternativePaymentButton";
 import type { AlternativePaymentUserView } from "@/lib/data/alternative-payment-store";
+import type { AutoPaymentCountrySettings } from "@/lib/data/auto-payment-countries-store";
 
 interface ActivationClientProps {
   initialData: ActivationData;
   alternativePayment?: AlternativePaymentUserView | null;
+  autoPaymentSettings?: AutoPaymentCountrySettings | null;
 }
 
 const PAYMENT_CHANNELS = [
-  { id: "tmoney_tg", name: "T-Money Togo (+228)", country: "Togo", code: "+228" },
-  { id: "flooz_tg", name: "Moov Flooz Togo (+228)", country: "Togo", code: "+228" },
-  { id: "mtn_bj", name: "MTN MoMo Bénin (+229)", country: "Bénin", code: "+229" },
-  { id: "moov_bj", name: "Moov Money Bénin (+229)", country: "Bénin", code: "+229" },
-  { id: "orange_ci", name: "Orange Money Côte d'Ivoire (+225)", country: "Côte d'Ivoire", code: "+225" },
-  { id: "mtn_ci", name: "MTN MoMo Côte d'Ivoire (+225)", country: "Côte d'Ivoire", code: "+225" },
-  { id: "wave_ci", name: "Wave Côte d'Ivoire / Sénégal (+225 / +221)", country: "UEMOA", code: "+225" },
-  { id: "orange_sn", name: "Orange Money Sénégal (+221)", country: "Sénégal", code: "+221" },
-  { id: "orange_bf", name: "Orange / Moov Burkina Faso (+226)", country: "Burkina Faso", code: "+226" },
-  { id: "airtel_ne", name: "Airtel / Moov Niger (+227)", country: "Niger", code: "+227" },
-  { id: "orange_gn", name: "Orange / MTN Guinée (+224)", country: "Guinée", code: "+224" },
-  { id: "airtel_ga", name: "Airtel / Moov Gabon (+241)", country: "Gabon", code: "+241" },
-  { id: "airtel_cg", name: "Airtel / MTN Congo (+242 / +243)", country: "Congo", code: "+242" },
-  { id: "mtn_gh", name: "MTN / Vodafone Ghana (+233)", country: "Ghana", code: "+233" },
-  { id: "mtn_zm", name: "MTN / Airtel Zambie (+260)", country: "Zambie", code: "+260" },
-  { id: "mtn_cm", name: "MTN MoMo Cameroun (+237)", country: "Cameroun", code: "+237" },
-  { id: "orange_cm", name: "Orange Money Cameroun (+237)", country: "Cameroun", code: "+237" },
-  { id: "card_all", name: "Carte Bancaire Visa / Mastercard (Tous pays)", country: "International", code: "" },
+  { id: "tmoney_tg", name: "T-Money Togo (+228)", country: "Togo", code: "+228", iso: "TG" },
+  { id: "flooz_tg", name: "Moov Flooz Togo (+228)", country: "Togo", code: "+228", iso: "TG" },
+  { id: "mtn_bj", name: "MTN MoMo Bénin (+229)", country: "Bénin", code: "+229", iso: "BJ" },
+  { id: "moov_bj", name: "Moov Money Bénin (+229)", country: "Bénin", code: "+229", iso: "BJ" },
+  { id: "orange_ci", name: "Orange Money Côte d'Ivoire (+225)", country: "Côte d'Ivoire", code: "+225", iso: "CI" },
+  { id: "mtn_ci", name: "MTN MoMo Côte d'Ivoire (+225)", country: "Côte d'Ivoire", code: "+225", iso: "CI" },
+  { id: "wave_ci", name: "Wave Côte d'Ivoire / Sénégal (+225 / +221)", country: "UEMOA", code: "+225", iso: "CI" },
+  { id: "orange_sn", name: "Orange Money Sénégal (+221)", country: "Sénégal", code: "+221", iso: "SN" },
+  { id: "orange_bf", name: "Orange / Moov Burkina Faso (+226)", country: "Burkina Faso", code: "+226", iso: "BF" },
+  { id: "airtel_ne", name: "Airtel / Moov Niger (+227)", country: "Niger", code: "+227", iso: "NE" },
+  { id: "orange_gn", name: "Orange / MTN Guinée (+224)", country: "Guinée", code: "+224", iso: "GN" },
+  { id: "airtel_ga", name: "Airtel / Moov Gabon (+241)", country: "Gabon", code: "+241", iso: "GA" },
+  { id: "airtel_cg", name: "Airtel / MTN Congo (+242 / +243)", country: "Congo", code: "+242", iso: "CG" },
+  { id: "mtn_gh", name: "MTN / Vodafone Ghana (+233)", country: "Ghana", code: "+233", iso: "GH" },
+  { id: "mtn_zm", name: "MTN / Airtel Zambie (+260)", country: "Zambie", code: "+260", iso: "ZM" },
+  { id: "mtn_cm", name: "MTN MoMo Cameroun (+237)", country: "Cameroun", code: "+237", iso: "CM" },
+  { id: "orange_cm", name: "Orange Money Cameroun (+237)", country: "Cameroun", code: "+237", iso: "CM" },
+  { id: "card_all", name: "Carte Bancaire Visa / Mastercard (Tous pays)", country: "International", code: "", iso: "" },
 ];
 
 export function ActivationClient({
   initialData,
   alternativePayment,
+  autoPaymentSettings,
 }: ActivationClientProps) {
   const router = useRouter();
   const { t } = useApp();
@@ -69,9 +74,26 @@ export function ActivationClient({
   const currency = initialData.currency || "XOF";
   const feeAmount = initialData.feeAmount || 4500;
 
+  const channelObj = PAYMENT_CHANNELS.find((c) => c.id === selectedChannel);
+  const userCountryCode = (initialData.user.country || "").toUpperCase();
+  const isCountrySuspended = Boolean(
+    autoPaymentSettings?.suspendedCountries &&
+    ((channelObj?.iso && autoPaymentSettings.suspendedCountries.includes(channelObj.iso.toUpperCase())) ||
+     (userCountryCode && autoPaymentSettings.suspendedCountries.includes(userCountryCode)))
+  );
+
   const handleStartPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    if (isCountrySuspended) {
+      setErrorMessage(
+        autoPaymentSettings?.customMessage ||
+          "Les paiements automatiques sont temporairement suspendus pour votre pays. Veuillez contacter notre administration."
+      );
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -289,34 +311,55 @@ export function ActivationClient({
             </p>
           </div>
 
-          {/* Boutons d'action : Dashboard & Payer avec SasPay */}
-          <div className="pt-2 grid grid-cols-2 gap-3">
-            <Link
-              href="/"
-              className="touch-target px-3 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <Home className="w-4 h-4" />
-              <span>{t("act.dashboard")}</span>
-            </Link>
-
-            <button
-              type="submit"
-              disabled={isProcessing}
-              className="touch-target px-3 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 shadow-md transition-colors disabled:opacity-75 disabled:cursor-wait cursor-pointer"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>Connexion SasPay...</span>
-                </>
-              ) : (
-                <>
-                  <Wallet className="w-4 h-4" />
-                  <span>Payer 4 500 FCFA</span>
-                </>
+          {/* Boutons d'action : Dashboard & Payer avec SasPay OU Alerte Pays Suspendu */}
+          {isCountrySuspended ? (
+            <div className="p-4 rounded-xl bg-white border-2 border-[#16A34A] shadow-xs space-y-3">
+              <div className="flex items-start gap-2.5">
+                <ShieldAlert className="w-5 h-5 text-[#16A34A] shrink-0 mt-0.5" />
+                <div className="text-xs text-gray-800 leading-relaxed font-medium">
+                  {autoPaymentSettings?.customMessage ||
+                    "Les paiements automatiques sont temporairement suspendus pour ce pays. Veuillez contacter notre administration."}
+                </div>
+              </div>
+              {autoPaymentSettings?.adminEmail && (
+                <a
+                  href={`mailto:${autoPaymentSettings.adminEmail}?subject=Paiement%20activation%20VitaEarn`}
+                  className="touch-target w-full py-2.5 px-3 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-[#16A34A] font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <Mail className="w-4 h-4 text-[#16A34A]" />
+                  <span>Contacter l'administrateur ({autoPaymentSettings.adminEmail})</span>
+                </a>
               )}
-            </button>
-          </div>
+            </div>
+          ) : (
+            <div className="pt-2 grid grid-cols-2 gap-3">
+              <Link
+                href="/"
+                className="touch-target px-3 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Home className="w-4 h-4" />
+                <span>{t("act.dashboard")}</span>
+              </Link>
+
+              <button
+                type="submit"
+                disabled={isProcessing}
+                className="touch-target px-3 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 shadow-md transition-colors disabled:opacity-75 disabled:cursor-wait cursor-pointer"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Connexion SasPay...</span>
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="w-4 h-4" />
+                    <span>Payer 4 500 FCFA</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
 
           {/* Bouton de paiement alternatif (affiché uniquement si éligible côté serveur) */}
           <AlternativePaymentButton

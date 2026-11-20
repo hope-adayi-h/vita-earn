@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ActivationData } from "../types";
@@ -24,11 +24,14 @@ import {
   Loader2,
   CreditCard,
   Zap,
+  ShieldAlert,
 } from "lucide-react";
+import type { AutoPaymentCountrySettings } from "@/lib/data/auto-payment-countries-store";
 
 interface PaiementClientProps {
   initialData: ActivationData;
   alternativePayment?: AlternativePaymentUserView | null;
+  autoPaymentSettings?: AutoPaymentCountrySettings | null;
 }
 
 interface Operator {
@@ -105,7 +108,11 @@ function getOperatorsForCountry(countryCode?: string): Operator[] {
   }
 }
 
-export function PaiementClient({ initialData, alternativePayment }: PaiementClientProps) {
+export function PaiementClient({
+  initialData,
+  alternativePayment,
+  autoPaymentSettings,
+}: PaiementClientProps) {
   const router = useRouter();
 
   const [fullName, setFullName] = useState(
@@ -138,6 +145,11 @@ export function PaiementClient({ initialData, alternativePayment }: PaiementClie
         }))
       : getOperatorsForCountry(selectedCountry?.code);
 
+  const isCountrySuspended = useMemo(() => {
+    if (!selectedCountry || !autoPaymentSettings?.suspendedCountries) return false;
+    return autoPaymentSettings.suspendedCountries.includes(selectedCountry.code.toUpperCase());
+  }, [selectedCountry, autoPaymentSettings?.suspendedCountries]);
+
   const handleCountryChange = (country: Country) => {
     setSelectedCountry(country);
     const countryData = getCountryByCode(country.code);
@@ -157,6 +169,14 @@ export function PaiementClient({ initialData, alternativePayment }: PaiementClie
 
     if (!selectedCountry) {
       setErrorMessage("Veuillez sélectionner votre pays de résidence.");
+      return;
+    }
+
+    if (isCountrySuspended) {
+      setErrorMessage(
+        autoPaymentSettings?.customMessage ||
+          `Les paiements automatiques sont temporairement suspendus pour votre pays (${selectedCountry.name}). Veuillez contacter notre administration.`
+      );
       return;
     }
 
@@ -410,25 +430,51 @@ export function PaiementClient({ initialData, alternativePayment }: PaiementClie
             />
           </div>
 
-          {/* Bouton de confirmation du paiement */}
+          {/* Bouton de confirmation du paiement ou Message de suspension */}
           <div className="pt-4">
-            <button
-              type="submit"
-              disabled={loading || !termsAccepted}
-              className="w-full touch-target rounded-2xl bg-gradient-to-r from-vita-deep via-vita-medium to-[#236014] hover:from-vita-medium hover:to-vita-deep text-white font-extrabold text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-xl active:translate-y-0 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 py-4"
-            >
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Traitement du paiement sécurisé...</span>
+            {isCountrySuspended ? (
+              <div className="p-5 rounded-2xl bg-white border-2 border-emerald-600 shadow-md space-y-3 text-center animate-fadeIn">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-700 mx-auto flex items-center justify-center border border-emerald-200">
+                  <ShieldAlert className="w-6 h-6 text-emerald-600" />
                 </div>
-              ) : (
-                <>
-                  <Lock className="w-4 h-4 text-vita-bright" />
-                  <span>Payer {formatFCFA(initialData.feeAmount)}</span>
-                </>
-              )}
-            </button>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-black text-slate-900">
+                    Paiement automatique suspendu ({selectedCountry?.name})
+                  </h3>
+                  <p className="text-xs text-slate-700 font-medium leading-relaxed max-w-md mx-auto">
+                    {autoPaymentSettings?.customMessage ||
+                      "Votre pays a été temporairement suspendu pour les paiements automatiques sur le site. Veuillez contacter l'administrateur."}
+                  </p>
+                </div>
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+                  <a
+                    href={`mailto:${autoPaymentSettings?.adminEmail || "admin@vitaearn.com"}?subject=${encodeURIComponent(`Assistance paiement adhésion - ${selectedCountry?.name} (@${initialData.user.username})`)}`}
+                    className="w-full sm:w-auto touch-target px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-colors cursor-pointer"
+                  >
+                    <Mail className="w-4 h-4 text-white" />
+                    <span>Contacter l&apos;administrateur : {autoPaymentSettings?.adminEmail || "admin@vitaearn.com"}</span>
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="submit"
+                disabled={loading || !termsAccepted}
+                className="w-full touch-target rounded-2xl bg-gradient-to-r from-vita-deep via-vita-medium to-[#236014] hover:from-vita-medium hover:to-vita-deep text-white font-extrabold text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-xl active:translate-y-0 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 py-4 cursor-pointer"
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Traitement du paiement sécurisé...</span>
+                  </div>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4 text-vita-bright" />
+                    <span>Payer {formatFCFA(initialData.feeAmount)}</span>
+                  </>
+                )}
+              </button>
+            )}
 
             {/* Bouton de paiement alternatif (affiché uniquement si éligible côté serveur) */}
             <AlternativePaymentButton

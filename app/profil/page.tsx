@@ -352,7 +352,7 @@ export default async function ProfilPage() {
 
         {/* 5. Bloc "Inviter des amis" réutilisé en bas de la page */}
         <div className="pt-2">
-          <ReferralSection referralCode={referralCode} appUrl={appUrl} />
+          <ReferralSection referralCode={referralCode} appUrl={appUrl} username={username} />
         </div>
 
         {/* 6. Bouton Se Déconnecter */}

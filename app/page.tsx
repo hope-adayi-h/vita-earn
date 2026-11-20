@@ -614,6 +614,7 @@ export default async function HomePage() {
         <ReferralSection
           referralCode={referralCode}
           appUrl={appUrl}
+          username={userName || referralCode}
           level1Count={level1Count}
           level2Count={level2Count}
           level3Count={level3Count}

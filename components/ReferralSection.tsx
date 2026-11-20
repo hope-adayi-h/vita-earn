@@ -14,6 +14,7 @@ interface ReferralMember {
 interface ReferralSectionProps {
   referralCode: string;
   appUrl: string;
+  username?: string;
   level1Count?: number;
   level2Count?: number;
   level3Count?: number;
@@ -26,10 +27,13 @@ interface ReferralSectionProps {
 export function ReferralSection({
   referralCode,
   appUrl,
+  username,
 }: ReferralSectionProps) {
   const [copied, setCopied] = useState(false);
 
-  const referralLink = `${appUrl}/auth/register?ref=${referralCode || "VE"}`;
+  const cleanAppUrl = (appUrl || "https://vita-earn.netlify.app").replace(/\/+$/, "");
+  const sponsorSlug = (username || referralCode || "VE").trim();
+  const referralLink = `${cleanAppUrl}/register/${encodeURIComponent(sponsorSlug)}`;
   const shareMessage = `Rejoins-moi sur Vita Earn : ${referralLink}`;
 
   const handleCopy = async () => {
