@@ -13,8 +13,6 @@ import {
   Link as LinkIcon,
   Globe,
   Mail,
-  Phone,
-  MessageSquare,
   AlertCircle,
   CheckCircle2,
   Loader2,
@@ -48,8 +46,7 @@ export function PaiementAlternatifClient({
   const [targetCountries, setTargetCountries] = useState<string[]>(
     initialSettings.targetCountries || []
   );
-  const [email, setEmail] = useState(initialSettings.email || "");
-  const [whatsappNumber, setWhatsappNumber] = useState(initialSettings.whatsappNumber || "");
+  const [email, setEmail] = useState(initialSettings.email || userEmail || "support@vitaearn.com");
   const [postPaymentInstructions, setPostPaymentInstructions] = useState(
     initialSettings.postPaymentInstructions ||
       "Après ton paiement, envoie la capture d'écran de ta transaction à l'adresse ci-dessous. Ton compte sera activé après vérification."
@@ -110,10 +107,10 @@ export function PaiementAlternatifClient({
       }
     }
 
-    if (isEnabled && !email.trim() && !whatsappNumber.trim()) {
+    if (isEnabled && !email.trim()) {
       setMessage({
         type: "error",
-        text: "Veuillez renseigner au moins une adresse e-mail ou un numéro WhatsApp pour la réception des captures d'écran.",
+        text: "Veuillez renseigner votre adresse e-mail administrateur pour la réception des captures d'écran.",
       });
       return;
     }
@@ -127,7 +124,6 @@ export function PaiementAlternatifClient({
         targetCountries,
         allCountries,
         email: email.trim(),
-        whatsappNumber: whatsappNumber.trim(),
         postPaymentInstructions,
       });
 
@@ -150,10 +146,9 @@ export function PaiementAlternatifClient({
       buttonLabel: buttonLabel || "Payer via un lien alternatif",
       userMessage,
       email: email.trim() || null,
-      whatsappNumber: whatsappNumber.trim() || null,
       postPaymentInstructions,
     };
-  }, [isEnabled, paymentUrl, buttonLabel, userMessage, email, whatsappNumber, postPaymentInstructions]);
+  }, [isEnabled, paymentUrl, buttonLabel, userMessage, email, postPaymentInstructions]);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-16">
@@ -354,36 +349,23 @@ export function PaiementAlternatifClient({
             )}
           </div>
 
-          {/* SECTION D : ADRESSE E-MAIL & NUMÉRO WHATSAPP DE RÉCEPTION DES CAPTURES */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+          {/* SECTION D : ADRESSE E-MAIL DE RÉCEPTION DES CAPTURES (MODIFIABLE PAR L'ADMINISTRATEUR) */}
+          <div className="pt-2 border-t border-slate-100 space-y-2">
             <div>
-              <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block mb-1.5">
-                Adresse e-mail de réception des captures
+              <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block mb-1">
+                Votre adresse e-mail officielle de réception des captures
               </label>
-              <div className="relative">
+              <p className="text-xs text-slate-500 mb-2">
+                Renseignez ici l&apos;adresse e-mail (votre propre e-mail administrateur ou support) sur laquelle les adhérents doivent expédier la capture de leur transaction. Vous pouvez la modifier à tout moment.
+              </p>
+              <div className="relative max-w-lg">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="support@vitaearn.com"
-                  className="w-full touch-target pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-hidden focus:border-emerald-600"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block mb-1.5">
-                Numéro WhatsApp de réception (format international)
-              </label>
-              <div className="relative">
-                <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="tel"
-                  value={whatsappNumber}
-                  onChange={(e) => setWhatsappNumber(e.target.value)}
-                  placeholder="+22890000000"
-                  className="w-full touch-target pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-mono text-slate-900 focus:outline-hidden focus:border-emerald-600"
+                  placeholder="admin@vitaearn.com ou contact@..."
+                  className="w-full touch-target pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 font-medium focus:outline-hidden focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
             </div>

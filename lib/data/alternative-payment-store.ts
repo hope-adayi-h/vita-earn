@@ -12,7 +12,7 @@ export interface AlternativePaymentSettings {
   targetCountries: string[]; // Codes ISO 2 lettres ex: ["TG", "BJ"]
   allCountries: boolean;
   email: string;
-  whatsappNumber: string;
+  whatsappNumber?: string;
   postPaymentInstructions: string;
   updatedAt: string;
   updatedBy?: string;
@@ -23,7 +23,6 @@ export interface AlternativePaymentUserView {
   buttonLabel: string;
   userMessage: string;
   email: string | null;
-  whatsappNumber: string | null;
   postPaymentInstructions: string;
 }
 
@@ -35,7 +34,7 @@ const DEFAULT_SETTINGS: AlternativePaymentSettings = {
   targetCountries: [],
   allCountries: false,
   email: "support@vitaearn.com",
-  whatsappNumber: "+22890000000",
+  whatsappNumber: "",
   postPaymentInstructions:
     "Après ton paiement, envoie la capture d'écran de ta transaction à l'adresse ci-dessous. Ton compte sera activé après vérification.",
   updatedAt: "2026-11-20T00:00:00.000Z",
@@ -153,29 +152,18 @@ export async function saveAlternativePaymentSettings(
     }
   }
 
-  // Validation : au moins un parmi Email ou WhatsApp
+  // Validation : E-mail obligatoire pour recevoir les captures
   const cleanEmail = (input.email || "").trim();
-  const cleanWhatsApp = (input.whatsappNumber || "").trim();
 
-  if (input.isEnabled && !cleanEmail && !cleanWhatsApp) {
+  if (input.isEnabled && !cleanEmail) {
     return {
       success: false,
-      error: "Veuillez renseigner au moins une adresse e-mail ou un numéro WhatsApp pour la réception des captures de paiement.",
+      error: "Veuillez renseigner votre adresse e-mail administrateur pour la réception des captures de paiement.",
     };
   }
 
   if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
     return { success: false, error: "L'adresse e-mail renseignée est invalide." };
-  }
-
-  if (cleanWhatsApp) {
-    const digitsOnly = cleanWhatsApp.replace(/[\s\-\(\)]/g, "");
-    if (!digitsOnly.startsWith("+") || digitsOnly.length < 8) {
-      return {
-        success: false,
-        error: "Le numéro WhatsApp doit être au format international débutant par '+' (ex: +22890000000).",
-      };
-    }
   }
 
   const now = new Date().toISOString();
@@ -189,7 +177,7 @@ export async function saveAlternativePaymentSettings(
       : [],
     allCountries: Boolean(input.allCountries),
     email: cleanEmail,
-    whatsappNumber: cleanWhatsApp,
+    whatsappNumber: "",
     postPaymentInstructions:
       (input.postPaymentInstructions || "").trim() || DEFAULT_SETTINGS.postPaymentInstructions,
     updatedAt: now,
@@ -251,7 +239,6 @@ export async function saveAlternativePaymentSettings(
           target_countries_count: newSettings.targetCountries.length,
           payment_domain: domainOnly,
           has_email: Boolean(cleanEmail),
-          has_whatsapp: Boolean(cleanWhatsApp),
         },
       });
     }
@@ -295,7 +282,6 @@ export async function resolveAlternativePaymentForUser(
       buttonLabel: settings.buttonLabel || DEFAULT_SETTINGS.buttonLabel,
       userMessage: settings.userMessage || DEFAULT_SETTINGS.userMessage,
       email: settings.email || null,
-      whatsappNumber: settings.whatsappNumber || null,
       postPaymentInstructions:
         settings.postPaymentInstructions || DEFAULT_SETTINGS.postPaymentInstructions,
     };
@@ -325,7 +311,6 @@ export async function resolveAlternativePaymentForUser(
     buttonLabel: settings.buttonLabel || DEFAULT_SETTINGS.buttonLabel,
     userMessage: settings.userMessage || DEFAULT_SETTINGS.userMessage,
     email: settings.email || null,
-    whatsappNumber: settings.whatsappNumber || null,
     postPaymentInstructions:
       settings.postPaymentInstructions || DEFAULT_SETTINGS.postPaymentInstructions,
   };

@@ -9,7 +9,7 @@ import { AdminNavbar } from "@/components/admin/AdminNavbar";
 import { AdminTachesClient } from "./AdminTachesClient";
 
 export const metadata = {
-  title: "Gestion des Tâches Vidéo Quotidiennes — Administration Vita Earn",
+  title: "Gestion des Tâches Quotidiennes — Administration Vita Earn",
 };
 
 export default async function AdminTasksPage() {
@@ -44,22 +44,43 @@ export default async function AdminTasksPage() {
         .order("day_of_week", { ascending: true });
 
       if (dbTasks && dbTasks.length > 0) {
-        tasks = dbTasks.map((t) => ({
-          id: t.id,
-          dayOfWeek: t.day_of_week,
-          specificDate: t.specific_date,
-          title: t.title,
-          videoUrl: t.video_url,
-          platform: t.platform,
-          embedUrl: t.embed_url,
-          videoId: t.video_id,
-          instructions: t.instructions,
-          rewardAmount: Number(t.reward_amount) || 100,
-          isActive: Boolean(t.is_active),
-          isDeleted: Boolean(t.is_deleted),
-          createdAt: t.created_at,
-          updatedAt: t.updated_at,
-        }));
+        tasks = dbTasks.map((t) => {
+          const day = t.day_of_week;
+          const taskType =
+            t.task_type ||
+            (day === 1
+              ? "quiz"
+              : day === 2
+              ? "tiktok"
+              : day === 3
+              ? "youtube"
+              : day === 4
+              ? "adsense"
+              : "instagram");
+
+          return {
+            id: t.id,
+            dayOfWeek: day,
+            specificDate: t.specific_date,
+            taskType,
+            title: t.title,
+            videoUrl: t.video_url,
+            platform: t.platform,
+            embedUrl: t.embed_url,
+            videoId: t.video_id,
+            instructions: t.instructions,
+            rewardAmount: Number(t.reward_amount) || 100,
+            isActive: Boolean(t.is_active),
+            isDeleted: Boolean(t.is_deleted),
+            quizQuestions: t.quiz_questions || undefined,
+            adImageUrl: t.ad_image_url || undefined,
+            adTargetUrl: t.ad_target_url || undefined,
+            adDurationSeconds: t.ad_duration_seconds || undefined,
+            sponsorName: t.sponsor_name || undefined,
+            createdAt: t.created_at,
+            updatedAt: t.updated_at,
+          };
+        });
       }
     } catch (err) {
       console.warn("Fallback lecture locale des tâches:", err);
@@ -80,7 +101,7 @@ export default async function AdminTasksPage() {
           <span>Retour au tableau de bord administrateur</span>
         </Link>
         <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-          Module Tâches Vidéo Quotidiennes
+          Module Tâches Hebdomadaires (5 Jours)
         </span>
       </div>
 
@@ -90,10 +111,10 @@ export default async function AdminTasksPage() {
           <span>Gestion Quotidienne des Tâches (Lundi au Vendredi)</span>
         </div>
         <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-          Espace de Gestion des Tâches Vidéo Quotidiennes
+          Espace de Gestion des Tâches Quotidiennes
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-          Programmez les vidéos à diffuser chaque jour ouvré. Collez simplement un lien TikTok, YouTube, Facebook ou Instagram dans le champ universel unique : le lecteur officiel est automatiquement configuré et intégré de manière sécurisée.
+          Configurez chaque jour selon son type dédié fixe : <strong>Lundi</strong> (Questionnaire & Quiz interactif), <strong>Mardi</strong> (Vidéo TikTok), <strong>Mercredi</strong> (Vidéo YouTube), <strong>Jeudi</strong> (Publicité AdSense Photo & Clics), et <strong>Vendredi</strong> (Vidéo Instagram).
         </p>
       </div>
 

@@ -9,6 +9,7 @@ import {
   getTodayTaskForLome,
   hasUserValidatedToday,
   recordStoredTaskValidation,
+  recordQuizSubmission,
 } from "@/lib/data/tasks-store";
 import { findUserByIdentifier } from "@/lib/auth/local-store";
 
@@ -225,6 +226,329 @@ export async function validateDailyVideoTaskAction(taskId: string): Promise<Task
     return {
       success: true,
       message: `Félicitations ! Vous avez validé la tâche vidéo du jour et reçu ${rewardAmount} FCFA sur votre solde.`,
+      reward: rewardAmount,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Erreur inattendue.";
+    return { success: false, message: msg };
+  }
+}
+
+export interface QuizSubmissionResult {
+  success: boolean;
+  message: string;
+  earnedReward: number;
+  score: number;
+  totalQuestions: number;
+  failedQuestion?: boolean;
+}
+
+/**
+ * Valide la soumission d'un questionnaire (Lundi)
+ * RÈGLE STRICTE : Une seule tentative autorisée !
+ */
+export async function submitDailyQuizAction(
+  taskId: string,
+  answers: Record<string, number>
+): Promise<QuizSubmissionResult> {
+  try {
+    const lomeTime = getLomeServerTime();
+
+    if (lomeTime.isWeekend) {
+      return {
+        success: false,
+        message: "Les tâches rémunérées ne sont pas disponibles le week-end.",
+        earnedReward: 0,
+        score: 0,
+        totalQuestions: 0,
+      };
+    }
+
+    const cookieStore = cookies();
+    const sessionUserRaw = cookieStore.get("vita_session_user")?.value;
+    const testUser = cookieStore.get("vita_test_user")?.value;
+    const isActivatedCookie = cookieStore.get("vita_is_activated")?.value === "true";
+
+    let userId = "";
+    let userEmail = "";
+    let isActivated = false;
+
+    if (sessionUserRaw) {
+      try {
+        const parsed = JSON.parse(sessionUserRaw);
+        userId = parsed.id || parsed.username || "";
+        userEmail = parsed.email || "";
+        isActivated = Boolean(parsed.isActivated || isActivatedCookie);
+      } catch {}
+    } else if (testUser) {
+      const localU = findUserByIdentifier(testUser);
+      if (localU) {
+        userId = localU.id;
+        userEmail = localU.email;
+        isActivated = Boolean(localU.isActivated);
+      } else {
+        userId = testUser;
+        isActivated = isActivatedCookie;
+      }
+    }
+
+    let supabaseAuthId = "";
+    const isConfigured =
+      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+      !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+
+    if (isConfigured) {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser();
+
+        if (authUser) {
+          supabaseAuthId = authUser.id;
+          userId = userId || authUser.id;
+          userEmail = userEmail || authUser.email || "";
+
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("is_activated")
+            .eq("id", authUser.id)
+            .maybeSingle();
+
+          if (profile) {
+            isActivated = Boolean(profile.is_activated);
+          }
+        }
+      } catch {}
+    }
+
+    if (!userId && !supabaseAuthId) {
+      return {
+        success: false,
+        message: "Veuillez vous connecter pour valider le questionnaire.",
+        earnedReward: 0,
+        score: 0,
+        totalQuestions: 0,
+      };
+    }
+
+    if (!isActivated) {
+      return {
+        success: false,
+        message:
+          "Votre compte doit être activé pour valider le questionnaire rémunéré. Veuillez activer votre compte.",
+        earnedReward: 0,
+        score: 0,
+        totalQuestions: 0,
+      };
+    }
+
+    const effectiveUserId = supabaseAuthId || userId;
+
+    if (hasUserValidatedToday(effectiveUserId, taskId, lomeTime.dateStr)) {
+      return {
+        success: false,
+        message:
+          "Vous avez déjà complété ou tenté le questionnaire d'aujourd'hui. Une seule tentative autorisée chaque lundi.",
+        earnedReward: 0,
+        score: 0,
+        totalQuestions: 0,
+      };
+    }
+
+    const quizRes = recordQuizSubmission({
+      userId: effectiveUserId,
+      taskId,
+      dateStr: lomeTime.dateStr,
+      answers,
+    });
+
+    if (!quizRes.success) {
+      return {
+        success: false,
+        message: quizRes.error || "Erreur lors du traitement du questionnaire.",
+        earnedReward: 0,
+        score: 0,
+        totalQuestions: 0,
+      };
+    }
+
+    // Mise à jour des cookies de session pour refléter immédiatement le solde
+    if (quizRes.earnedReward > 0) {
+      try {
+        if (sessionUserRaw) {
+          const sessionUser = JSON.parse(sessionUserRaw);
+          sessionUser.balance = (sessionUser.balance || 0) + quizRes.earnedReward;
+          sessionUser.profit = (sessionUser.profit || 0) + quizRes.earnedReward;
+          cookieStore.set("vita_session_user", JSON.stringify(sessionUser), {
+            path: "/",
+            maxAge: 31536000,
+            sameSite: "lax",
+          });
+        }
+      } catch {}
+    }
+
+    revalidatePath("/taches");
+    revalidatePath("/");
+    revalidatePath("/portefeuille");
+
+    const feedbackMsg =
+      quizRes.failedQuestion
+        ? `Questionnaire terminé : vous avez obtenu ${quizRes.correctCount}/${quizRes.totalQuestions} bonne(s) réponse(s). Vous avez encaissé ${quizRes.earnedReward} FCFA. Attention : c'était votre seule tentative pour ce lundi.`
+        : `Félicitations ! Sans faute : ${quizRes.correctCount}/${quizRes.totalQuestions} réponses correctes ! Vous avez encaissé ${quizRes.earnedReward} FCFA sur votre portefeuille.`;
+
+    return {
+      success: true,
+      message: feedbackMsg,
+      earnedReward: quizRes.earnedReward,
+      score: quizRes.correctCount,
+      totalQuestions: quizRes.totalQuestions,
+      failedQuestion: quizRes.failedQuestion,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Erreur inattendue.";
+    return {
+      success: false,
+      message: msg,
+      earnedReward: 0,
+      score: 0,
+      totalQuestions: 0,
+    };
+  }
+}
+
+/**
+ * Valide la publicité photo AdSense (Jeudi) après compte à rebours
+ */
+export async function validateAdSensePhotoTaskAction(
+  taskId: string,
+  elapsedSeconds: number
+): Promise<TaskValidationResult> {
+  try {
+    const lomeTime = getLomeServerTime();
+
+    if (lomeTime.isWeekend) {
+      return {
+        success: false,
+        message: "Les tâches ne sont pas disponibles le week-end.",
+      };
+    }
+
+    const cookieStore = cookies();
+    const sessionUserRaw = cookieStore.get("vita_session_user")?.value;
+    const testUser = cookieStore.get("vita_test_user")?.value;
+    const isActivatedCookie = cookieStore.get("vita_is_activated")?.value === "true";
+
+    let userId = "";
+    let isActivated = false;
+
+    if (sessionUserRaw) {
+      try {
+        const parsed = JSON.parse(sessionUserRaw);
+        userId = parsed.id || parsed.username || "";
+        isActivated = Boolean(parsed.isActivated || isActivatedCookie);
+      } catch {}
+    } else if (testUser) {
+      const localU = findUserByIdentifier(testUser);
+      if (localU) {
+        userId = localU.id;
+        isActivated = Boolean(localU.isActivated);
+      } else {
+        userId = testUser;
+        isActivated = isActivatedCookie;
+      }
+    }
+
+    let supabaseAuthId = "";
+    const isConfigured =
+      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+      !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+
+    if (isConfigured) {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser();
+        if (authUser) {
+          supabaseAuthId = authUser.id;
+          userId = userId || authUser.id;
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("is_activated")
+            .eq("id", authUser.id)
+            .maybeSingle();
+          if (profile) isActivated = Boolean(profile.is_activated);
+        }
+      } catch {}
+    }
+
+    if (!userId && !supabaseAuthId) {
+      return { success: false, message: "Veuillez vous connecter pour valider l'annonce." };
+    }
+
+    if (!isActivated) {
+      return {
+        success: false,
+        message: "Votre compte doit être activé pour participer aux annonces rémunérées.",
+      };
+    }
+
+    const todayTask = getTodayTaskForLome(lomeTime);
+    if (!todayTask || todayTask.id !== taskId || !todayTask.isActive || todayTask.isDeleted) {
+      return { success: false, message: "Cette publicité n'est pas active aujourd'hui." };
+    }
+
+    const requiredDuration = todayTask.adDurationSeconds || 15;
+    if (elapsedSeconds < requiredDuration) {
+      return {
+        success: false,
+        message: `Vous devez visualiser la publicité pendant au moins ${requiredDuration} secondes avant de pouvoir valider.`,
+      };
+    }
+
+    const effectiveUserId = supabaseAuthId || userId;
+    if (hasUserValidatedToday(effectiveUserId, taskId, lomeTime.dateStr)) {
+      return {
+        success: false,
+        message: "Vous avez déjà validé cette publicité aujourd'hui.",
+      };
+    }
+
+    const rewardAmount = Math.max(1, Math.min(todayTask.rewardAmount, 500));
+
+    const storeRes = recordStoredTaskValidation({
+      userId: effectiveUserId,
+      taskId,
+      rewardAmount,
+      dateStr: lomeTime.dateStr,
+    });
+
+    if (!storeRes.success) {
+      return { success: false, message: storeRes.error || "Erreur de validation." };
+    }
+
+    try {
+      if (sessionUserRaw) {
+        const sessionUser = JSON.parse(sessionUserRaw);
+        sessionUser.balance = (sessionUser.balance || 0) + rewardAmount;
+        sessionUser.profit = (sessionUser.profit || 0) + rewardAmount;
+        cookieStore.set("vita_session_user", JSON.stringify(sessionUser), {
+          path: "/",
+          maxAge: 31536000,
+          sameSite: "lax",
+        });
+      }
+    } catch {}
+
+    revalidatePath("/taches");
+    revalidatePath("/");
+    revalidatePath("/portefeuille");
+
+    return {
+      success: true,
+      message: `Félicitations ! Vous avez complété la publicité du jeudi et empoché ${rewardAmount} FCFA !`,
       reward: rewardAmount,
     };
   } catch (err: unknown) {

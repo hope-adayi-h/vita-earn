@@ -10,6 +10,7 @@ import {
   toggleStoredTaskActive,
   deleteStoredDailyTask,
   StoredDailyTask,
+  QuizQuestionItem,
 } from "@/lib/data/tasks-store";
 
 export interface SaveTaskInput {
@@ -17,9 +18,30 @@ export interface SaveTaskInput {
   dayOfWeek: number; // 1 = Lundi à 5 = Vendredi
   specificDate?: string | null; // "YYYY-MM-DD" ou null
   title?: string;
-  videoUrl: string; // Lien unique universel
+  videoUrl?: string; // Lien unique universel
   instructions: string;
   rewardAmount: number; // FCFA
+  isActive: boolean;
+}
+
+export interface SaveQuizInput {
+  id?: string;
+  title?: string;
+  instructions: string;
+  rewardAmount: number;
+  isActive: boolean;
+  quizQuestions: QuizQuestionItem[];
+}
+
+export interface SaveAdSenseInput {
+  id?: string;
+  title?: string;
+  instructions: string;
+  adImageUrl: string;
+  adTargetUrl?: string;
+  sponsorName?: string;
+  adDurationSeconds: number;
+  rewardAmount: number;
   isActive: boolean;
 }
 
@@ -60,7 +82,14 @@ export async function saveDailyVideoTaskAction(input: SaveTaskInput): Promise<Ac
     }
 
     // 3. Validation universelle du lien vidéo (YouTube, TikTok, Facebook, Instagram)
-    const parsed = parseUniversalVideoUrl(input.videoUrl);
+    const rawVideoUrl = (input.videoUrl || "").trim();
+    if (!rawVideoUrl) {
+      return {
+        success: false,
+        error: "Veuillez renseigner le lien de la vidéo.",
+      };
+    }
+    const parsed = parseUniversalVideoUrl(rawVideoUrl);
     if (!parsed.isValid || !parsed.platform || !parsed.embedUrl) {
       return {
         success: false,
@@ -92,8 +121,9 @@ export async function saveDailyVideoTaskAction(input: SaveTaskInput): Promise<Ac
       id: input.id,
       dayOfWeek,
       specificDate: cleanSpecificDate,
+      taskType: (dayOfWeek === 2 ? "tiktok" : dayOfWeek === 3 ? "youtube" : "instagram") as any,
       title,
-      videoUrl: input.videoUrl.trim(),
+      videoUrl: rawVideoUrl,
       platform: parsed.platform,
       embedUrl: parsed.embedUrl,
       videoId: parsed.videoId,
@@ -116,7 +146,7 @@ export async function saveDailyVideoTaskAction(input: SaveTaskInput): Promise<Ac
           day_of_week: dayOfWeek,
           specific_date: cleanSpecificDate,
           title,
-          video_url: input.videoUrl.trim(),
+          video_url: rawVideoUrl,
           platform: parsed.platform,
           embed_url: parsed.embedUrl,
           video_id: parsed.videoId,
@@ -138,6 +168,120 @@ export async function saveDailyVideoTaskAction(input: SaveTaskInput): Promise<Ac
     return {
       success: true,
       message: "La tâche vidéo quotidienne a été enregistrée avec succès.",
+      task: saved,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Erreur inattendue.";
+    return { success: false, error: msg };
+  }
+}
+
+/**
+ * Enregistre ou modifie le questionnaire du Lundi
+ */
+export async function saveDailyQuizTaskAction(input: SaveQuizInput): Promise<ActionResult> {
+  try {
+    const { isAdmin } = await checkAdminSession();
+    if (!isAdmin) {
+      return { success: false, error: "Accès refusé : privilèges administrateur requis." };
+    }
+
+    if (!input.quizQuestions || input.quizQuestions.length === 0) {
+      return { success: false, error: "Veuillez configurer au moins une question pour le questionnaire du lundi." };
+    }
+
+    // Validation de chaque question
+    for (let i = 0; i < input.quizQuestions.length; i++) {
+      const q = input.quizQuestions[i];
+      if (!q.question.trim()) {
+        return { success: false, error: `La question #${i + 1} n'a pas d'énoncé.` };
+      }
+      if (!q.options || q.options.length < 2) {
+        return { success: false, error: `La question #${i + 1} doit comporter au moins 2 options de réponse (3 ou 4 recommandées).` };
+      }
+      if (q.correctOptionIndex < 0 || q.correctOptionIndex >= q.options.length) {
+        return { success: false, error: `Veuillez sélectionner la bonne réponse pour la question #${i + 1}.` };
+      }
+      if (q.rewardAmount <= 0) {
+        return { success: false, error: `La récompense pour la question #${i + 1} doit être positive.` };
+      }
+    }
+
+    const totalReward = input.quizQuestions.reduce((sum, q) => sum + (Number(q.rewardAmount) || 0), 0);
+
+    const saved = saveStoredDailyTask({
+      id: input.id || "task_lundi",
+      dayOfWeek: 1,
+      specificDate: null,
+      taskType: "quiz",
+      title: input.title?.trim() || "Questionnaire du Lundi — Connaissances Digitales",
+      instructions:
+        input.instructions?.trim() ||
+        "Répondez avec précision aux questions ci-dessous. Vous n'avez droit qu'à une seule tentative ce lundi !",
+      rewardAmount: totalReward > 0 ? totalReward : Number(input.rewardAmount) || 300,
+      quizQuestions: input.quizQuestions,
+      isActive: Boolean(input.isActive),
+      isDeleted: false,
+    });
+
+    revalidatePath("/admin/taches");
+    revalidatePath("/taches");
+    revalidatePath("/");
+
+    return {
+      success: true,
+      message: "Le questionnaire du lundi a été enregistré avec succès.",
+      task: saved,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Erreur inattendue.";
+    return { success: false, error: msg };
+  }
+}
+
+/**
+ * Enregistre ou modifie la publicité AdSense du Jeudi
+ */
+export async function saveDailyAdSenseTaskAction(input: SaveAdSenseInput): Promise<ActionResult> {
+  try {
+    const { isAdmin } = await checkAdminSession();
+    if (!isAdmin) {
+      return { success: false, error: "Accès refusé : privilèges administrateur requis." };
+    }
+
+    const cleanImg = (input.adImageUrl || "").trim();
+    if (!cleanImg) {
+      return { success: false, error: "Veuillez renseigner le lien ou l'image de la publicité." };
+    }
+
+    const duration = Math.max(5, Number(input.adDurationSeconds) || 15);
+    const rewardAmount = Math.max(1, Number(input.rewardAmount) || 200);
+
+    const saved = saveStoredDailyTask({
+      id: input.id || "task_jeudi",
+      dayOfWeek: 4,
+      specificDate: null,
+      taskType: "adsense",
+      title: input.title?.trim() || "Publicité AdSense du Jeudi — Annonce Sponsorisée",
+      instructions:
+        input.instructions?.trim() ||
+        "Examinez attentivement cette annonce. Vous devez rester sur la publicité jusqu'à la fin complète du décompte pour percevoir votre gain.",
+      adImageUrl: cleanImg,
+      adTargetUrl: input.adTargetUrl?.trim() || "",
+      sponsorName: input.sponsorName?.trim() || "Partenaire Officiel UEMOA",
+      adDurationSeconds: duration,
+      rewardAmount,
+      isActive: Boolean(input.isActive),
+      isDeleted: false,
+    });
+
+    revalidatePath("/admin/taches");
+    revalidatePath("/taches");
+    revalidatePath("/");
+
+    return {
+      success: true,
+      message: "La publicité AdSense du jeudi a été enregistrée avec succès.",
       task: saved,
     };
   } catch (err: unknown) {

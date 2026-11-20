@@ -6,21 +6,44 @@ import { getLomeServerTime, type LomeDateInfo } from "@/lib/utils/lome-time";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAllUsers, findUserByIdentifier } from "@/lib/auth/local-store";
 
+export type DailyTaskType = "quiz" | "tiktok" | "youtube" | "adsense" | "instagram";
+
+export interface QuizQuestionItem {
+  id: string;
+  question: string;
+  options: string[]; // au moins 3 ou 4 options par question
+  correctOptionIndex: number; // index (0, 1, 2...)
+  rewardAmount: number; // Récompense en FCFA pour cette réponse
+}
+
 export interface StoredDailyTask {
   id: string;
   dayOfWeek: number; // 1 = Lundi, 2 = Mardi, 3 = Mercredi, 4 = Jeudi, 5 = Vendredi
   specificDate?: string | null; // "YYYY-MM-DD" ou null (récurrent chaque semaine)
+  taskType: DailyTaskType;
   title: string;
-  videoUrl: string; // Lien original (stocké côté serveur, jamais affiché au client)
-  platform: VideoPlatform;
-  embedUrl: string; // URL d'intégration officielle
-  videoId?: string;
   instructions: string;
   rewardAmount: number; // FCFA
   isActive: boolean;
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
+
+  // Lundi : Quiz & Questionnaires
+  quizQuestions?: QuizQuestionItem[];
+
+  // Vidéos (Mardi: TikTok, Mercredi: YouTube, Vendredi: Instagram)
+  videoUrl?: string;
+  platform?: VideoPlatform;
+  embedUrl?: string;
+  videoId?: string;
+  videoDurationSeconds?: number;
+
+  // Jeudi : Publicité photo AdSense
+  adImageUrl?: string;
+  adTargetUrl?: string;
+  adDurationSeconds?: number; // secondes à rester sur la photo
+  sponsorName?: string;
 }
 
 export interface StoredTaskValidation {
@@ -29,6 +52,9 @@ export interface StoredTaskValidation {
   taskId: string;
   validatedDate: string; // "YYYY-MM-DD" (date Lomé)
   rewardAmount: number;
+  score?: number;
+  totalQuestions?: number;
+  status?: "success" | "failed";
   createdAt: string;
 }
 
@@ -61,21 +87,42 @@ function getValidationsFilePath(): string {
   return path.join(getDataDir(), "daily_task_validations.json");
 }
 
-// 5 tâches par défaut pour chaque jour ouvrable
+// 5 tâches fixes et ordonnées pour chaque jour ouvrable (Lundi à Vendredi)
 const DEFAULT_TASKS: StoredDailyTask[] = [
   {
     id: "task_lundi",
     dayOfWeek: 1,
     specificDate: null,
-    title: "Tâche du Lundi — Découverte & Actualités Tech",
-    videoUrl: "https://www.tiktok.com/@tiktok/video/7106594312292453678",
-    platform: "tiktok",
-    embedUrl: "https://www.tiktok.com/embed/v2/7106594312292453678",
-    videoId: "7106594312292453678",
-    instructions: "Visionnez attentivement cette courte vidéo partenaire. Dès la fin du visionnage, cliquez sur Valider pour créditer votre solde.",
-    rewardAmount: 100,
+    taskType: "quiz",
+    title: "Questionnaire du Lundi — Connaissances Digitales & E-commerce",
+    instructions:
+      "Répondez avec précision aux questions ci-dessous. Attention : vous ne disposez que d'une seule tentative pour valider votre tâche du lundi !",
+    rewardAmount: 300,
     isActive: true,
     isDeleted: false,
+    quizQuestions: [
+      {
+        id: "q1",
+        question: "Quel est le moyen de paiement Mobile Money officiel le plus répandu au Togo ?",
+        options: ["T-Money & Moov Flooz", "PayPal International", "Chèque de banque", "Carte American Express"],
+        correctOptionIndex: 0,
+        rewardAmount: 100,
+      },
+      {
+        id: "q2",
+        question: "Sur Vita Earn, quel est le montant des frais fixes appliqués à chaque demande de retrait ?",
+        options: ["1 500 FCFA", "500 FCFA", "10 % du montant", "Gratuit sans frais"],
+        correctOptionIndex: 1,
+        rewardAmount: 100,
+      },
+      {
+        id: "q3",
+        question: "Quel jour de la semaine est dédié aux annonces visuelles AdSense sur Vita Earn ?",
+        options: ["Lundi", "Mercredi", "Jeudi", "Dimanche"],
+        correctOptionIndex: 2,
+        rewardAmount: 100,
+      },
+    ],
     createdAt: "2026-11-20T00:00:00.000Z",
     updatedAt: "2026-11-20T00:00:00.000Z",
   },
@@ -83,13 +130,16 @@ const DEFAULT_TASKS: StoredDailyTask[] = [
     id: "task_mardi",
     dayOfWeek: 2,
     specificDate: null,
-    title: "Tâche du Mardi — Formation Stratégies Digitales",
-    videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    platform: "youtube",
-    embedUrl: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1",
-    videoId: "dQw4w9WgXcQ",
-    instructions: "Regardez la vidéo de formation du jour pour développer vos compétences. Cliquez sur le bouton de validation pour percevoir votre gain.",
+    taskType: "tiktok",
+    title: "Tâche Vidéo TikTok du Mardi — Création de Contenu Viral",
+    videoUrl: "https://www.tiktok.com/@tiktok/video/7106594312292453678",
+    platform: "tiktok",
+    embedUrl: "https://www.tiktok.com/embed/v2/7106594312292453678",
+    videoId: "7106594312292453678",
+    instructions:
+      "Visionnez la vidéo TikTok de formation partenaire pendant au moins 30 secondes. Cliquez ensuite sur Valider pour créditer votre solde.",
     rewardAmount: 150,
+    videoDurationSeconds: 30,
     isActive: true,
     isDeleted: false,
     createdAt: "2026-11-20T00:00:00.000Z",
@@ -99,13 +149,16 @@ const DEFAULT_TASKS: StoredDailyTask[] = [
     id: "task_mercredi",
     dayOfWeek: 3,
     specificDate: null,
-    title: "Tâche du Mercredi — Opportunités & E-commerce",
-    videoUrl: "https://www.youtube.com/watch?v=L_LUpnjgPso",
+    taskType: "youtube",
+    title: "Tâche Vidéo YouTube du Mercredi — Stratégies E-Commerce Afrique",
+    videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     platform: "youtube",
-    embedUrl: "https://www.youtube-nocookie.com/embed/L_LUpnjgPso?rel=0&modestbranding=1",
-    videoId: "L_LUpnjgPso",
-    instructions: "Suivez ce tutoriel pratique sur le commerce en ligne en Afrique de l'Ouest et validez votre récompense journalière.",
-    rewardAmount: 100,
+    embedUrl: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1",
+    videoId: "dQw4w9WgXcQ",
+    instructions:
+      "Suivez ce tutoriel pratique sur YouTube pendant au moins 45 secondes pour perfectionner vos compétences commerciales et percevoir votre gain.",
+    rewardAmount: 150,
+    videoDurationSeconds: 45,
     isActive: true,
     isDeleted: false,
     createdAt: "2026-11-20T00:00:00.000Z",
@@ -115,13 +168,16 @@ const DEFAULT_TASKS: StoredDailyTask[] = [
     id: "task_jeudi",
     dayOfWeek: 4,
     specificDate: null,
-    title: "Tâche du Jeudi — Astuces Création de Contenu",
-    videoUrl: "https://www.tiktok.com/@tiktok/video/7010459312292453678",
-    platform: "tiktok",
-    embedUrl: "https://www.tiktok.com/embed/v2/7010459312292453678",
-    videoId: "7010459312292453678",
-    instructions: "Découvrez les meilleures méthodes pour optimiser votre visibilité en ligne et validez votre tâche du jour.",
-    rewardAmount: 120,
+    taskType: "adsense",
+    title: "Publicité AdSense du Jeudi — Sponsor & Partenaire Officiel",
+    instructions:
+      "Examinez attentivement l'annonce publicitaire ci-dessous. Vous devez rester sur la publicité jusqu'à la fin complète du compte à rebours pour débloquer votre gain.",
+    rewardAmount: 200,
+    adImageUrl:
+      "https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=1200&auto=format&fit=crop&q=80",
+    adTargetUrl: "https://vita-earn.netlify.app/marche",
+    sponsorName: "Vita Commerce — Boutique Sponsorisée UEMOA",
+    adDurationSeconds: 15,
     isActive: true,
     isDeleted: false,
     createdAt: "2026-11-20T00:00:00.000Z",
@@ -131,13 +187,15 @@ const DEFAULT_TASKS: StoredDailyTask[] = [
     id: "task_vendredi",
     dayOfWeek: 5,
     specificDate: null,
-    title: "Tâche du Vendredi — Synthèse & Éducation Financière",
-    videoUrl: "https://www.youtube.com/watch?v=fJ9rUzIMcZQ",
-    platform: "youtube",
-    embedUrl: "https://www.youtube-nocookie.com/embed/fJ9rUzIMcZQ?rel=0&modestbranding=1",
-    videoId: "fJ9rUzIMcZQ",
-    instructions: "Complétez votre session vidéo de fin de semaine et recevez votre récompense directement sur votre portefeuille.",
-    rewardAmount: 150,
+    taskType: "instagram",
+    title: "Tâche Vidéo Instagram du Vendredi — Clôture & Inspiration",
+    videoUrl: "https://www.instagram.com/reel/C8qFmZ0yYV_/",
+    platform: "instagram",
+    embedUrl: "https://www.instagram.com/reel/C8qFmZ0yYV_/embed",
+    instructions:
+      "Regardez cette vidéo Instagram partenaire pour vous inspirer et clôturer votre semaine d'activités, puis confirmez votre récompense journalière.",
+    rewardAmount: 200,
+    videoDurationSeconds: 30,
     isActive: true,
     isDeleted: false,
     createdAt: "2026-11-20T00:00:00.000Z",
@@ -377,4 +435,117 @@ export function recordStoredTaskValidation(params: {
   }
 
   return { success: true, reward: rewardAmount };
+}
+
+/**
+ * Valide la soumission d'un questionnaire (Lundi) avec règle stricte de tentative unique
+ */
+export function recordQuizSubmission(params: {
+  userId: string;
+  taskId: string;
+  dateStr: string;
+  answers: Record<string, number>; // questionId -> optionIndex choisi
+}): {
+  success: boolean;
+  error?: string;
+  earnedReward: number;
+  correctCount: number;
+  totalQuestions: number;
+  failedQuestion?: boolean;
+} {
+  const { userId, taskId, dateStr, answers } = params;
+
+  // 1. Idempotence : une seule tentative par utilisateur et par date
+  if (hasUserValidatedToday(userId, taskId, dateStr)) {
+    return {
+      success: false,
+      error: "Vous avez déjà tenté le questionnaire d'aujourd'hui. Une seule tentative autorisée chaque lundi.",
+      earnedReward: 0,
+      correctCount: 0,
+      totalQuestions: 0,
+    };
+  }
+
+  const tasks = getAllStoredDailyTasks();
+  const task = tasks.find((t) => t.id === taskId);
+  if (!task || !task.quizQuestions || task.quizQuestions.length === 0) {
+    return {
+      success: false,
+      error: "Questionnaire introuvable ou vide.",
+      earnedReward: 0,
+      correctCount: 0,
+      totalQuestions: 0,
+    };
+  }
+
+  const totalQuestions = task.quizQuestions.length;
+  let correctCount = 0;
+  let earnedReward = 0;
+  let failedQuestion = false;
+
+  for (const q of task.quizQuestions) {
+    const selected = answers[q.id];
+    if (selected === q.correctOptionIndex) {
+      correctCount++;
+      earnedReward += q.rewardAmount || Math.round(task.rewardAmount / totalQuestions);
+    } else {
+      failedQuestion = true;
+    }
+  }
+
+  // 2. Enregistrer la validation (empêche toute nouvelle tentative aujourd'hui)
+  const filePath = ensureValidationsFile();
+  const validations = getAllTaskValidations();
+
+  const newValidation: StoredTaskValidation = {
+    id: `val_quiz_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    userId,
+    taskId,
+    validatedDate: dateStr,
+    rewardAmount: earnedReward,
+    score: correctCount,
+    totalQuestions,
+    status: failedQuestion && correctCount === 0 ? "failed" : "success",
+    createdAt: new Date().toISOString(),
+  };
+
+  validations.push(newValidation);
+
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(validations, null, 2), "utf-8");
+  } catch (err) {
+    console.error("Erreur enregistrement validation quiz:", err);
+  }
+
+  // 3. Créditer le solde si des réponses sont correctes
+  if (earnedReward > 0) {
+    try {
+      const users = getAllUsers();
+      const cleanUser = userId.toLowerCase().trim();
+      const targetUser = users.find(
+        (u) =>
+          u.id.toLowerCase() === cleanUser ||
+          u.username.toLowerCase() === cleanUser ||
+          u.email.toLowerCase() === cleanUser
+      );
+
+      if (targetUser) {
+        targetUser.balance = (targetUser.balance || 0) + earnedReward;
+        targetUser.profit = (targetUser.profit || 0) + earnedReward;
+
+        const usersFilePath = path.join(getDataDir(), "registered_users.json");
+        fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2), "utf-8");
+      }
+    } catch (err) {
+      console.error("Erreur crédit solde utilisateur quiz:", err);
+    }
+  }
+
+  return {
+    success: true,
+    earnedReward,
+    correctCount,
+    totalQuestions,
+    failedQuestion,
+  };
 }

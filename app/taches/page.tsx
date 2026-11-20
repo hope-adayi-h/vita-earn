@@ -12,8 +12,8 @@ import { findUserByIdentifier } from "@/lib/auth/local-store";
 import { TachesClient, PublicDailyTask } from "./TachesClient";
 
 export const metadata = {
-  title: "Tâche Vidéo Quotidienne — Vita Earn",
-  description: "Visionnez la vidéo quotidienne et encaissez votre récompense en direct.",
+  title: "Tâches Quotidiennes — Vita Earn",
+  description: "Complétez votre tâche quotidienne (Quiz, Vidéos, Publicités) et encaissez votre gain en direct.",
 };
 
 export default async function TachesPage() {
@@ -85,16 +85,28 @@ export default async function TachesPage() {
   let hasValidatedToday = false;
 
   if (todayRawTask) {
-    // RÈGLE DE SÉCURITÉ ABSOLUE : on ne transmet JAMAIS le lien brut (videoUrl) au navigateur
+    // RÈGLE DE SÉCURITÉ ABSOLUE : on ne transmet JAMAIS le lien brut (videoUrl) ni la bonne réponse du quiz au client
     publicTask = {
       id: todayRawTask.id,
       dayOfWeek: todayRawTask.dayOfWeek,
+      taskType: todayRawTask.taskType,
       title: todayRawTask.title,
-      platform: todayRawTask.platform,
-      embedUrl: todayRawTask.embedUrl,
       instructions: todayRawTask.instructions,
       rewardAmount: todayRawTask.rewardAmount,
       isActive: todayRawTask.isActive,
+      quizQuestions: todayRawTask.quizQuestions?.map((q) => ({
+        id: q.id,
+        question: q.question,
+        options: q.options,
+        rewardAmount: q.rewardAmount,
+      })),
+      platform: todayRawTask.platform,
+      embedUrl: todayRawTask.embedUrl,
+      videoDurationSeconds: todayRawTask.videoDurationSeconds,
+      adImageUrl: todayRawTask.adImageUrl,
+      adTargetUrl: todayRawTask.adTargetUrl,
+      adDurationSeconds: todayRawTask.adDurationSeconds,
+      sponsorName: todayRawTask.sponsorName,
     };
 
     if (userId) {
@@ -123,11 +135,11 @@ export default async function TachesPage() {
         <div className="flex items-center gap-2">
           <Clock className="w-5 h-5 text-[#7ED321]" />
           <h1 className="text-lg sm:text-xl font-black text-white tracking-tight">
-            Tâches Vidéo Quotidiennes Rémunérées
+            Tâches Quotidiennes Rémunérées
           </h1>
         </div>
         <p className="text-xs text-emerald-100/90 leading-relaxed">
-          Chaque jour de la semaine du lundi au vendredi, regardez la vidéo sponsorisée du jour directement sur VitaEarn et validez pour recevoir votre récompense en direct sur votre solde.
+          Chaque jour ouvré du lundi au vendredi, complétez l&apos;activité sponsorisée du jour (Quiz interactif le lundi, vidéos TikTok/YouTube/Instagram, publicité photo AdSense le jeudi) et encaissez votre récompense en direct sur votre solde.
         </p>
       </div>
 

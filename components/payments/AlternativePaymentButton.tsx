@@ -7,9 +7,9 @@ import {
   Mail,
   Copy,
   Check,
-  MessageSquare,
   ShieldCheck,
   Info,
+  ArrowRight,
 } from "lucide-react";
 
 interface AlternativePaymentButtonProps {
@@ -47,16 +47,6 @@ export function AlternativePaymentButton({
     ? `mailto:${config.email}?subject=${mailtoSubject}&body=${mailtoBody}`
     : "#";
 
-  const cleanWhatsAppNumber = config.whatsappNumber
-    ? config.whatsappNumber.replace(/[\s\-\(\)]/g, "").replace("+", "")
-    : "";
-  const whatsappText = encodeURIComponent(
-    `Bonjour Vita Earn, voici ma capture d'écran de transaction suite à mon paiement sur le lien alternatif pour mon compte @${username}.`
-  );
-  const whatsappUrl = cleanWhatsAppNumber
-    ? `https://wa.me/${cleanWhatsAppNumber}?text=${whatsappText}`
-    : "#";
-
   return (
     <div className={`mt-5 pt-5 border-t border-gray-100 dark:border-[#1E2E24] space-y-3.5 ${className}`}>
       {/* 1. Bouton de paiement alternatif (ouvre dans un nouvel onglet) */}
@@ -92,47 +82,51 @@ export function AlternativePaymentButton({
             "Après ton paiement, envoie la capture d'écran de ta transaction à l'adresse ci-dessous. Ton compte sera activé après vérification."}
         </p>
 
-        {/* Canaux de réception des captures */}
-        <div className="pt-2 border-t border-gray-200 dark:border-[#1E2E24] flex flex-col sm:flex-row gap-2.5">
-          {/* E-mail */}
-          {config.email && (
-            <div className="flex-1 flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white dark:bg-[#131E17] border border-gray-200 dark:border-[#1E2E24] shadow-2xs">
-              <a
-                href={mailtoUrl}
-                className="flex items-center gap-2 text-xs font-bold text-gray-900 dark:text-gray-100 hover:text-emerald-600 truncate"
-                title="Envoyer un e-mail"
-              >
-                <Mail className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span className="truncate">{config.email}</span>
-              </a>
+        {/* Canal officiel unique : E-mail */}
+        {config.email && (
+          <div className="pt-2 border-t border-gray-200 dark:border-[#1E2E24] space-y-2">
+            <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white dark:bg-[#131E17] border border-gray-200 dark:border-[#1E2E24] shadow-2xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0">
+                  <Mail className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase font-bold text-gray-400">E-mail officiel de réception</p>
+                  <p className="text-xs sm:text-sm font-black text-gray-900 dark:text-white truncate">
+                    {config.email}
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={handleCopyEmail}
-                className="touch-target p-1.5 rounded-lg text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0 cursor-pointer"
+                className="touch-target px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
                 title="Copier l'e-mail"
               >
                 {copiedEmail ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="text-emerald-600 font-bold">Copié !</span>
+                  </>
                 ) : (
-                  <Copy className="w-3.5 h-3.5" />
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-gray-500" />
+                    <span>Copier</span>
+                  </>
                 )}
               </button>
             </div>
-          )}
 
-          {/* WhatsApp */}
-          {config.whatsappNumber && (
             <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 touch-target flex items-center justify-center gap-2 p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs transition-colors"
+              href={mailtoUrl}
+              className="w-full touch-target min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-xs sm:text-sm py-2.5 px-4 flex items-center justify-center gap-2 shadow-2xs transition-all"
             >
-              <MessageSquare className="w-4 h-4 text-white shrink-0" />
-              <span>Envoyer sur WhatsApp</span>
+              <Mail className="w-4 h-4 text-white shrink-0" />
+              <span>Envoyer ma capture à cet e-mail</span>
+              <ArrowRight className="w-4 h-4 text-white/80 shrink-0" />
             </a>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
