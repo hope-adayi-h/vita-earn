@@ -157,6 +157,15 @@ export async function middleware(request: NextRequest) {
 
   // 4. Si l'utilisateur EST déjà connecté et visite /auth/login ou /auth/register
   if (isAuthenticated && (path === "/auth/login" || path === "/auth/register")) {
+    const redirectParam = request.nextUrl.searchParams.get("redirect");
+    if (
+      redirectParam &&
+      redirectParam.startsWith("/") &&
+      redirectParam !== "/auth/login" &&
+      redirectParam !== "/auth/register"
+    ) {
+      return NextResponse.redirect(new URL(redirectParam, request.url));
+    }
     return NextResponse.redirect(new URL("/", request.url));
   }
 

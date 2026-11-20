@@ -88,17 +88,48 @@ export function VendreClient({ initialData }: VendreClientProps) {
       return;
     }
 
-    // Limiter la taille à 5MB
-    if (file.size > 5 * 1024 * 1024) {
-      setMessage({ type: "error", text: "L'image ne doit pas dépasser 5 Mo." });
+    // Accepter jusqu'à 10 Mo grâce à la compression automatique côté client
+    if (file.size > 10 * 1024 * 1024) {
+      setMessage({ type: "error", text: "L'image ne doit pas dépasser 10 Mo." });
       return;
     }
 
     const reader = new FileReader();
     reader.onload = () => {
-      const result = reader.result as string;
-      setImagePreview(result);
-      setImageUrl(result);
+      const rawData = reader.result as string;
+      const img = new window.Image();
+      img.onload = () => {
+        const maxDim = 1200;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL("image/jpeg", 0.82);
+          setImagePreview(compressed);
+          setImageUrl(compressed);
+        } else {
+          setImagePreview(rawData);
+          setImageUrl(rawData);
+        }
+      };
+      img.onerror = () => {
+        setImagePreview(rawData);
+        setImageUrl(rawData);
+      };
+      img.src = rawData;
     };
     reader.readAsDataURL(file);
   };

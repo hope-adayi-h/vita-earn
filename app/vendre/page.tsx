@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { getSellerDashboardData } from "./actions";
 import { VendreClient } from "./VendreClient";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Espace Vendeur — Publier un article | Vita Earn",
   description: "Publiez vos produits physiques, services et ressources digitales sur la marketplace Vita Earn.",

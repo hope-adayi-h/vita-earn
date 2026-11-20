@@ -3,6 +3,8 @@ import { getActiveMarketplaceProducts } from "@/lib/data/products-store";
 import { createClient } from "@/lib/supabase/server";
 import { MarketplaceClient } from "./MarketplaceClient";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Place de Marché — Vita Earn",
   description: "Découvrez et achetez des produits physiques, services et ressources digitales certifiés au Togo et en Afrique de l'Ouest.",
@@ -15,12 +17,17 @@ export default async function MarchePage() {
   if (sessionUserCookie) {
     try {
       sessionUser = JSON.parse(sessionUserCookie);
-    } catch {}
+    } catch {
+      try {
+        sessionUser = JSON.parse(decodeURIComponent(sessionUserCookie));
+      } catch {}
+    }
   }
 
+  const adminUnlocked = cookieStore.get("vita_admin_unlocked")?.value;
   const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
 
-  let isActivated = Boolean(isActivatedCookie || sessionUser?.isActivated);
+  let isActivated = Boolean(isActivatedCookie || adminUnlocked || sessionUser?.isActivated);
 
   // Vérification Supabase Auth si disponible
   if (!isActivated) {

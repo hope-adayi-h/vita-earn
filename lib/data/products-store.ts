@@ -290,9 +290,58 @@ export async function saveMarketplaceSettings(
 }
 
 /**
+ * Persiste la liste complète des produits (localement et dans Supabase platform_settings)
+ */
+async function persistProducts(products: StoredProduct[]): Promise<void> {
+  // 1. Fichier local
+  try {
+    const filePath = getProductsFilePath();
+    fs.writeFileSync(filePath, JSON.stringify(products, null, 2), "utf-8");
+  } catch {}
+
+  // 2. Supabase platform_settings (garantit le partage en temps réel entre toutes les instances Netlify)
+  try {
+    const isConfigured =
+      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+      !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+
+    if (isConfigured) {
+      const adminClient = createAdminClient();
+      await adminClient.from("platform_settings").upsert({
+        key: "marketplace_products",
+        value: products,
+        description: "Catalogue des produits, services et ressources digitales de la marketplace",
+        updated_at: new Date().toISOString(),
+      });
+    }
+  } catch {}
+}
+
+/**
  * Récupère tous les produits enregistrés
  */
 export async function getAllStoredProducts(): Promise<StoredProduct[]> {
+  // 1. Supabase platform_settings en priorité
+  try {
+    const isConfigured =
+      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+      !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+
+    if (isConfigured) {
+      const adminClient = createAdminClient();
+      const { data, error } = await adminClient
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "marketplace_products")
+        .maybeSingle();
+
+      if (!error && Array.isArray(data?.value) && data.value.length > 0) {
+        return data.value as StoredProduct[];
+      }
+    }
+  } catch {}
+
+  // 2. Fichier local de secours
   try {
     const filePath = getProductsFilePath();
     if (fs.existsSync(filePath)) {
@@ -304,10 +353,9 @@ export async function getAllStoredProducts(): Promise<StoredProduct[]> {
     }
   } catch {}
 
-  // Initialisation avec le catalogue de base
+  // 3. Initialisation avec le catalogue de base
   try {
-    const filePath = getProductsFilePath();
-    fs.writeFileSync(filePath, JSON.stringify(SEED_PRODUCTS, null, 2), "utf-8");
+    await persistProducts(SEED_PRODUCTS);
   } catch {}
 
   return SEED_PRODUCTS;
@@ -383,48 +431,7 @@ export async function createStoredProduct(
     };
 
     products.unshift(newProduct);
-
-    const filePath = getProductsFilePath();
-    fs.writeFileSync(filePath, JSON.stringify(products, null, 2), "utf-8");
-
-    // Tentative de synchronisation Supabase si disponible
-    try {
-      const isConfigured =
-        Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
-        !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
-
-      if (isConfigured) {
-        const adminClient = createAdminClient();
-        // Récupérer un shop existant ou créer
-        let shopId: string | null = null;
-        try {
-          const { data: shops } = await adminClient
-            .from("shops")
-            .select("id")
-            .limit(1)
-            .maybeSingle();
-          shopId = shops?.id || null;
-        } catch {}
-
-        if (shopId) {
-          await adminClient.from("products").insert({
-            shop_id: shopId,
-            title: newProduct.title,
-            slug:
-              newProduct.title
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, "-")
-                .slice(0, 50) +
-              "-" +
-              Date.now(),
-            description: newProduct.description,
-            price: newProduct.price,
-            product_type: newProduct.productType === "service" ? "physical" : newProduct.productType,
-            status: "pending",
-          });
-        }
-      }
-    } catch {}
+    await persistProducts(products);
 
     return { success: true, product: newProduct };
   } catch (err) {
@@ -455,26 +462,7 @@ export async function updateStoredProductStatus(
       products[idx].rejectionReason = rejectionReason;
     }
 
-    const filePath = getProductsFilePath();
-    fs.writeFileSync(filePath, JSON.stringify(products, null, 2), "utf-8");
-
-    // Mise à jour Supabase si configuré
-    try {
-      const isConfigured =
-        Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
-        !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
-
-      if (isConfigured) {
-        const adminClient = createAdminClient();
-        await adminClient
-          .from("products")
-          .update({
-            status: status === "active" ? "approved" : status,
-            rejection_reason: rejectionReason || null,
-          })
-          .eq("id", productId);
-      }
-    } catch {}
+    await persistProducts(products);
 
     return { success: true, product: products[idx] };
   } catch (err) {
@@ -491,8 +479,7 @@ export async function deleteStoredProduct(productId: string): Promise<{ success:
     const products = await getAllStoredProducts();
     const filtered = products.filter((p) => p.id !== productId);
 
-    const filePath = getProductsFilePath();
-    fs.writeFileSync(filePath, JSON.stringify(filtered, null, 2), "utf-8");
+    await persistProducts(filtered);
     return { success: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erreur lors de la suppression.";
