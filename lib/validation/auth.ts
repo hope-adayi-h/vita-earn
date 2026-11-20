@@ -36,7 +36,26 @@ export const registerSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: "Les mots de passe ne correspondent pas.",
     path: ["confirmPassword"],
-  });
+  })
+  .refine(
+    (data) => {
+      const isChad =
+        data.country.toLowerCase().includes("tchad") ||
+        data.country.toLowerCase().includes("chad") ||
+        data.country.toUpperCase() === "TD";
+      if (isChad) {
+        const digits = data.phone.replace(/\D/g, "");
+        const localDigits = digits.startsWith("235") ? digits.slice(3) : digits;
+        return localDigits.length === 8;
+      }
+      return true;
+    },
+    {
+      message:
+        "Le numéro de téléphone pour le Tchad doit comporter exactement 8 chiffres après l'indicatif +235.",
+      path: ["phone"],
+    }
+  );
 
 export const loginSchema = z.object({
   identifier: z

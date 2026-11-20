@@ -281,6 +281,20 @@ export async function startSasPayActivationAction(params: {
     const effectivePhone = params.walletNumber?.trim() || sessionUser?.phone || "";
     const effectiveCountry = sessionUser?.country || "";
 
+    // RÈGLE DE SÉCURITÉ P1 : Rejet côté serveur si le pays n'est pas supporté par SasPay (ex: Tchad)
+    const isChad =
+      effectiveCountry.toUpperCase() === "TD" ||
+      effectiveCountry.toLowerCase().includes("tchad") ||
+      params.channel === "tchad_offline" ||
+      effectivePhone.startsWith("+235");
+
+    if (isChad) {
+      return {
+        error:
+          "Le paiement en ligne n'est pas encore disponible pour le Tchad. Contactez l'administrateur pour effectuer votre paiement et activer votre compte.",
+      };
+    }
+
     // 1. Calcul du montant à débiter chez SasPay selon le pays
     const feeInfo = calculateEffectiveChargeAmount(effectiveCountry, effectivePhone);
 
@@ -714,6 +728,21 @@ export async function submitActivationPaymentAction(params: {
 
   if (!user && !sessionUser) {
     return { error: "Session expirée. Veuillez vous connecter pour finaliser votre adhésion." };
+  }
+
+  // RÈGLE DE SÉCURITÉ P1 : Rejet côté serveur si le pays n'est pas supporté par SasPay (ex: Tchad)
+  const isChad =
+    params.country?.toUpperCase() === "TD" ||
+    params.country?.toLowerCase().includes("tchad") ||
+    params.phone?.startsWith("+235") ||
+    sessionUser?.country?.toUpperCase() === "TD" ||
+    sessionUser?.country?.toLowerCase().includes("tchad");
+
+  if (isChad) {
+    return {
+      error:
+        "Le paiement en ligne n'est pas encore disponible pour le Tchad. Contactez l'administrateur pour effectuer votre paiement et activer votre compte.",
+    };
   }
 
   // Si pas d'utilisateur Supabase connecté, mise à jour session directe

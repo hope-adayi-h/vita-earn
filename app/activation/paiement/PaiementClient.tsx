@@ -145,6 +145,12 @@ export function PaiementClient({
         }))
       : getOperatorsForCountry(selectedCountry?.code);
 
+  const isSaspayUnsupported = useMemo(() => {
+    if (!selectedCountry) return false;
+    const countryData = getCountryByCode(selectedCountry.code);
+    return countryData ? countryData.saspaySupported === false : selectedCountry.code === "TD";
+  }, [selectedCountry]);
+
   const isCountrySuspended = useMemo(() => {
     if (!selectedCountry || !autoPaymentSettings?.suspendedCountries) return false;
     return autoPaymentSettings.suspendedCountries.includes(selectedCountry.code.toUpperCase());
@@ -169,6 +175,13 @@ export function PaiementClient({
 
     if (!selectedCountry) {
       setErrorMessage("Veuillez sélectionner votre pays de résidence.");
+      return;
+    }
+
+    if (isSaspayUnsupported) {
+      setErrorMessage(
+        "Le paiement en ligne n'est pas encore disponible pour le Tchad. Contactez l'administrateur pour effectuer votre paiement et activer votre compte."
+      );
       return;
     }
 
@@ -357,7 +370,7 @@ export function PaiementClient({
           </div>
 
           {/* 4. Moyen de paiement Mobile Money selon pays */}
-          {selectedCountry && (
+          {selectedCountry && !isSaspayUnsupported && operators.length > 0 && (
             <div className="pt-2 animate-fadeIn">
               <label className="block text-xs font-bold text-vita-text uppercase tracking-wider mb-2">
                 Opérateur Mobile Money disponible ({selectedCountry.name}) :
@@ -430,9 +443,32 @@ export function PaiementClient({
             />
           </div>
 
-          {/* Bouton de confirmation du paiement ou Message de suspension */}
+          {/* Bouton de confirmation du paiement ou Message Tchad / suspension */}
           <div className="pt-4">
-            {isCountrySuspended ? (
+            {isSaspayUnsupported ? (
+              <div className="p-5 rounded-2xl bg-white border-2 border-emerald-600 shadow-md space-y-3 text-center animate-fadeIn">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-700 mx-auto flex items-center justify-center border border-emerald-200">
+                  <ShieldAlert className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-black text-slate-900">
+                    Paiement en ligne non disponible ({selectedCountry?.name})
+                  </h3>
+                  <p className="text-xs text-slate-700 font-medium leading-relaxed max-w-md mx-auto">
+                    Le paiement en ligne n'est pas encore disponible pour le Tchad. Contactez l'administrateur pour effectuer votre paiement et activer votre compte.
+                  </p>
+                </div>
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+                  <a
+                    href={`mailto:${autoPaymentSettings?.adminEmail || "admin@vitaearn.com"}?subject=${encodeURIComponent(`Assistance paiement adhésion - Tchad (@${initialData.user.username || initialData.user.fullName})`)}`}
+                    className="w-full sm:w-auto touch-target px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition-colors cursor-pointer"
+                  >
+                    <Mail className="w-4 h-4 text-white" />
+                    <span>Contacter l&apos;administrateur : {autoPaymentSettings?.adminEmail || "admin@vitaearn.com"}</span>
+                  </a>
+                </div>
+              </div>
+            ) : isCountrySuspended ? (
               <div className="p-5 rounded-2xl bg-white border-2 border-emerald-600 shadow-md space-y-3 text-center animate-fadeIn">
                 <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-700 mx-auto flex items-center justify-center border border-emerald-200">
                   <ShieldAlert className="w-6 h-6 text-emerald-600" />

@@ -14,6 +14,7 @@ export interface CountryInfo {
   dialCode: string; // Indicatif téléphonique international (ex: "+228")
   currency: string; // Devise (ex: "XOF", "XAF", "USD")
   flagCode: string; // Code ISO pour le drapeau SVG
+  saspaySupported: boolean; // Support direct SasPay (true pour les pays SasPay, false pour le Tchad)
   payinOperators: CountryOperator[]; // Opérateurs pour encaissement / paiement
   payoutOperators: CountryOperator[]; // Opérateurs pour retrait Mobile Money
 }
@@ -25,6 +26,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+229",
     currency: "XOF",
     flagCode: "BJ",
+    saspaySupported: true,
     payinOperators: [
       { code: "mtn_bj", name: "MTN MoMo Bénin" },
       { code: "moov_bj", name: "Moov Money Bénin" },
@@ -42,6 +44,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+226",
     currency: "XOF",
     flagCode: "BF",
+    saspaySupported: true,
     payinOperators: [
       { code: "orange_bf", name: "Orange Money Burkina Faso" },
       { code: "moov_bf", name: "Moov Money Burkina Faso" },
@@ -57,6 +60,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+237",
     currency: "XAF",
     flagCode: "CM",
+    saspaySupported: true,
     payinOperators: [
       { code: "mtn_cm", name: "MTN MoMo Cameroun" },
       { code: "orange_cm", name: "Orange Money Cameroun" },
@@ -72,6 +76,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+242",
     currency: "XAF",
     flagCode: "CG",
+    saspaySupported: true,
     payinOperators: [
       { code: "airtel_cg", name: "Airtel Congo" },
       { code: "mtn_cg", name: "MTN Congo" },
@@ -87,6 +92,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+243",
     currency: "CDF",
     flagCode: "CD",
+    saspaySupported: true,
     payinOperators: [
       { code: "vodacom_cd", name: "Vodacom M-Pesa RDC" },
       { code: "orange_cd", name: "Orange Money RDC" },
@@ -106,6 +112,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+225",
     currency: "XOF",
     flagCode: "CI",
+    saspaySupported: true,
     payinOperators: [
       { code: "wave_ci", name: "Wave Côte d'Ivoire" },
       { code: "orange_ci", name: "Orange Money Côte d'Ivoire" },
@@ -127,6 +134,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+1",
     currency: "USD",
     flagCode: "US",
+    saspaySupported: true,
     payinOperators: [
       { code: "crypto", name: "Crypto USDT (Tether)" },
     ],
@@ -138,6 +146,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+241",
     currency: "XAF",
     flagCode: "GA",
+    saspaySupported: true,
     payinOperators: [
       { code: "airtel_ga", name: "Airtel Money Gabon" },
       { code: "moov_ga", name: "Moov Money Gabon" },
@@ -153,6 +162,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+233",
     currency: "GHS",
     flagCode: "GH",
+    saspaySupported: true,
     payinOperators: [
       { code: "mtn_gh", name: "MTN MoMo Ghana" },
       { code: "vodafone_gh", name: "Telecel / Vodafone Cash Ghana" },
@@ -170,6 +180,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+224",
     currency: "GNF",
     flagCode: "GN",
+    saspaySupported: true,
     payinOperators: [
       { code: "orange_gn", name: "Orange Money Guinée" },
     ],
@@ -183,6 +194,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+1",
     currency: "USD",
     flagCode: "UN",
+    saspaySupported: true,
     payinOperators: [
       { code: "card_usd", name: "Carte Bancaire Visa / Mastercard" },
     ],
@@ -194,6 +206,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+254",
     currency: "KES",
     flagCode: "KE",
+    saspaySupported: true,
     payinOperators: [
       { code: "mpesa_ke", name: "Safaricom M-Pesa Kenya" },
       { code: "airtel_ke", name: "Airtel Money Kenya" },
@@ -209,6 +222,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+265",
     currency: "MWK",
     flagCode: "MW",
+    saspaySupported: true,
     payinOperators: [
       { code: "airtel_mw", name: "Airtel Money Malawi" },
       { code: "tnm_mw", name: "TNM Mpamba Malawi" },
@@ -224,6 +238,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+223",
     currency: "XOF",
     flagCode: "ML",
+    saspaySupported: true,
     payinOperators: [
       { code: "orange_ml", name: "Orange Money Mali" },
       { code: "moov_ml", name: "Moov Money Malitel" },
@@ -241,6 +256,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+258",
     currency: "MZN",
     flagCode: "MZ",
+    saspaySupported: true,
     payinOperators: [
       { code: "mpesa_mz", name: "M-Pesa Mozambique" },
       { code: "emola_mz", name: "e-Mola Mozambique" },
@@ -256,6 +272,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+227",
     currency: "XOF",
     flagCode: "NE",
+    saspaySupported: true,
     payinOperators: [
       { code: "airtel_ne", name: "Airtel Money Niger" },
     ],
@@ -269,6 +286,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+234",
     currency: "NGN",
     flagCode: "NG",
+    saspaySupported: true,
     payinOperators: [
       { code: "opay_ng", name: "OPay Nigéria" },
     ],
@@ -280,6 +298,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+256",
     currency: "UGX",
     flagCode: "UG",
+    saspaySupported: true,
     payinOperators: [
       { code: "mtn_ug", name: "MTN MoMo Ouganda" },
       { code: "airtel_ug", name: "Airtel Money Ouganda" },
@@ -295,6 +314,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+243",
     currency: "USD",
     flagCode: "CD",
+    saspaySupported: true,
     payinOperators: [
       { code: "vodacom_xc", name: "Vodacom M-Pesa RDC (USD)" },
       { code: "orange_xc", name: "Orange Money RDC (USD)" },
@@ -312,6 +332,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+250",
     currency: "RWF",
     flagCode: "RW",
+    saspaySupported: true,
     payinOperators: [
       { code: "mtn_rw", name: "MTN MoMo Rwanda" },
       { code: "airtel_rw", name: "Airtel Money Rwanda" },
@@ -327,6 +348,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+221",
     currency: "XOF",
     flagCode: "SN",
+    saspaySupported: true,
     payinOperators: [
       { code: "wave_sn", name: "Wave Sénégal" },
       { code: "orange_sn", name: "Orange Money Sénégal" },
@@ -352,6 +374,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+232",
     currency: "SLE",
     flagCode: "SL",
+    saspaySupported: true,
     payinOperators: [
       { code: "orange_sl", name: "Orange Money Sierra Leone" },
     ],
@@ -365,6 +388,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+255",
     currency: "TZS",
     flagCode: "TZ",
+    saspaySupported: true,
     payinOperators: [
       { code: "mpesa_tz", name: "Vodacom M-Pesa Tanzanie" },
       { code: "tigo_tz", name: "Tigo Pesa Tanzanie" },
@@ -379,11 +403,25 @@ export const COUNTRIES: CountryInfo[] = [
     ],
   },
   {
+    code: "TD",
+    name: "Tchad",
+    dialCode: "+235",
+    currency: "XAF",
+    flagCode: "TD",
+    saspaySupported: false,
+    payinOperators: [],
+    payoutOperators: [
+      { code: "airtel_td", name: "Airtel Money Tchad" },
+      { code: "moov_td", name: "Moov Africa Tchad" },
+    ],
+  },
+  {
     code: "TG",
     name: "Togo",
     dialCode: "+228",
     currency: "XOF",
     flagCode: "TG",
+    saspaySupported: true,
     payinOperators: [
       { code: "togocel", name: "T-Money (Togocel)" },
       { code: "moov_tg", name: "Moov Flooz (Moov Money)" },
@@ -400,6 +438,7 @@ export const COUNTRIES: CountryInfo[] = [
     dialCode: "+260",
     currency: "ZMW",
     flagCode: "ZM",
+    saspaySupported: true,
     payinOperators: [
       { code: "mtn_zm", name: "MTN MoMo Zambie" },
       { code: "airtel_zm", name: "Airtel Money Zambie" },

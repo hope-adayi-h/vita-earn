@@ -52,6 +52,19 @@ function RegisterForm() {
     formData.set("country", selectedCountry.name);
     // Préfixer le numéro avec l'indicatif choisi
     const rawPhone = formData.get("phone") as string;
+
+    if (selectedCountry.code === "TD") {
+      const digits = (rawPhone || "").replace(/\D/g, "");
+      const localDigits = digits.startsWith("235") ? digits.slice(3) : digits;
+      if (localDigits.length !== 8) {
+        setState({
+          error: "Le numéro de téléphone pour le Tchad doit comporter exactement 8 chiffres après l'indicatif +235.",
+          fieldErrors: { phone: "Format invalide : 8 chiffres requis pour le Tchad (ex: 66 12 34 56)." },
+        });
+        return;
+      }
+    }
+
     const computedPhone = rawPhone && !rawPhone.startsWith("+")
       ? `${selectedCountry.dialCode} ${rawPhone.trim()}`
       : rawPhone?.trim() || "";

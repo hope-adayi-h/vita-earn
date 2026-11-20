@@ -38,6 +38,7 @@ export function CountryFlag({
   else if (raw.includes("RWANDA") || raw === "RW") isoCode = "RW";
   else if (raw.includes("TANZAN") || raw === "TZ") isoCode = "TZ";
   else if (raw.includes("ZAMBI") || raw === "ZM") isoCode = "ZM";
+  else if (raw.includes("TCHAD") || raw.includes("CHAD") || raw === "TD") isoCode = "TD";
   else if (raw.includes("MALAWI") || raw === "MW") isoCode = "MW";
   else if (raw.includes("MOZAMBIQUE") || raw === "MZ") isoCode = "MZ";
   else if (raw.includes("SIERRA") || raw === "SL") isoCode = "SL";

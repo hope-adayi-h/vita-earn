@@ -48,7 +48,8 @@ export function PaiementsAutoClient({
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const allCountriesList = useMemo(() => getAllCountries(), []);
+  // Liste des 25 pays officiels pris en charge par SasPay
+  const allCountriesList = useMemo(() => getAllCountries().filter((c) => c.saspaySupported !== false), []);
 
   // Filtrage dynamique selon la recherche
   const filteredCountries = useMemo(() => {

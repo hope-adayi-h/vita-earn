@@ -53,6 +53,7 @@ const PAYMENT_CHANNELS = [
   { id: "mtn_zm", name: "MTN / Airtel Zambie (+260)", country: "Zambie", code: "+260", iso: "ZM" },
   { id: "mtn_cm", name: "MTN MoMo Cameroun (+237)", country: "Cameroun", code: "+237", iso: "CM" },
   { id: "orange_cm", name: "Orange Money Cameroun (+237)", country: "Cameroun", code: "+237", iso: "CM" },
+  { id: "tchad_offline", name: "Tchad (+235) — Non supporté en ligne", country: "Tchad", code: "+235", iso: "TD" },
   { id: "card_all", name: "Carte Bancaire Visa / Mastercard (Tous pays)", country: "International", code: "", iso: "" },
 ];
 
@@ -76,6 +77,7 @@ export function ActivationClient({
 
   const channelObj = PAYMENT_CHANNELS.find((c) => c.id === selectedChannel);
   const userCountryCode = (initialData.user.country || "").toUpperCase();
+  const isChad = userCountryCode === "TD" || userCountryCode.includes("TCHAD") || channelObj?.iso === "TD";
   const isCountrySuspended = Boolean(
     autoPaymentSettings?.suspendedCountries &&
     ((channelObj?.iso && autoPaymentSettings.suspendedCountries.includes(channelObj.iso.toUpperCase())) ||
@@ -85,6 +87,13 @@ export function ActivationClient({
   const handleStartPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    if (isChad) {
+      setErrorMessage(
+        "Le paiement en ligne n'est pas encore disponible pour le Tchad. Contactez l'administrateur pour effectuer votre paiement et activer votre compte."
+      );
+      return;
+    }
 
     if (isCountrySuspended) {
       setErrorMessage(
@@ -311,8 +320,24 @@ export function ActivationClient({
             </p>
           </div>
 
-          {/* Boutons d'action : Dashboard & Payer avec SasPay OU Alerte Pays Suspendu */}
-          {isCountrySuspended ? (
+          {/* Boutons d'action : Dashboard & Payer avec SasPay OU Alerte Tchad / Pays Suspendu */}
+          {isChad ? (
+            <div className="p-4 rounded-xl bg-white border-2 border-[#16A34A] shadow-xs space-y-3">
+              <div className="flex items-start gap-2.5">
+                <ShieldAlert className="w-5 h-5 text-[#16A34A] shrink-0 mt-0.5" />
+                <div className="text-xs text-gray-800 leading-relaxed font-medium">
+                  Le paiement en ligne n'est pas encore disponible pour le Tchad. Contactez l'administrateur pour effectuer votre paiement et activer votre compte.
+                </div>
+              </div>
+              <a
+                href={`mailto:${autoPaymentSettings?.adminEmail || "admin@vitaearn.com"}?subject=${encodeURIComponent(`Assistance paiement adhésion - Tchad (@${displayUsername})`)}`}
+                className="touch-target w-full py-2.5 px-3 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-[#16A34A] font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                <Mail className="w-4 h-4 text-[#16A34A]" />
+                <span>Contacter l'administrateur ({autoPaymentSettings?.adminEmail || "admin@vitaearn.com"})</span>
+              </a>
+            </div>
+          ) : isCountrySuspended ? (
             <div className="p-4 rounded-xl bg-white border-2 border-[#16A34A] shadow-xs space-y-3">
               <div className="flex items-start gap-2.5">
                 <ShieldAlert className="w-5 h-5 text-[#16A34A] shrink-0 mt-0.5" />
