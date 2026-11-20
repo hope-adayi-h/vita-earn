@@ -131,19 +131,35 @@ export async function signUpAction(
             .eq("id", data.user.id);
 
           if (upline && upline !== "No One" && upline !== "Aucun") {
-            const cleanUpline = upline.trim();
-            // RÈGLE P2 : Recherche stricte par referral_code unique, ou nom d'utilisateur exact
+            const cleanUpline = upline.trim().replace(/^@/, "");
+            // RÈGLE P2 : Recherche insensible à la casse par nom d'utilisateur, nom complet ou code de parrainage
             const { data: referrer } = await adminClient
               .from("profiles")
-              .select("id")
-              .or(`referral_code.eq.${cleanUpline.toUpperCase()},full_name.eq.${cleanUpline}`)
+              .select("id, full_name, username, referral_code")
+              .or(`full_name.ilike.${cleanUpline},username.ilike.${cleanUpline},referral_code.ilike.${cleanUpline}`)
               .neq("id", data.user.id)
               .limit(1)
               .maybeSingle();
 
-            if (referrer?.id) {
+            let referrerId = referrer?.id;
+            if (
+              !referrerId &&
+              (cleanUpline.toLowerCase() === "espoir" ||
+                cleanUpline.toLowerCase() === "admin" ||
+                cleanUpline.toUpperCase() === "VE-ESPOIR")
+            ) {
+              const { data: adminProf } = await adminClient
+                .from("profiles")
+                .select("id")
+                .eq("role", "admin")
+                .limit(1)
+                .maybeSingle();
+              referrerId = adminProf?.id;
+            }
+
+            if (referrerId) {
               await adminClient.from("referrals").insert({
-                referrer_id: referrer.id,
+                referrer_id: referrerId,
                 referred_id: data.user.id,
               });
             }
@@ -168,6 +184,8 @@ export async function signUpAction(
 
   // Session utilisateur mémorisée dès l'inscription
   const finalUserId = registeredUserId || "usr_" + Math.random().toString(36).substring(2, 10);
+  const cleanUpline = upline && upline !== "No One" && upline !== "Aucun" ? upline.trim().replace(/^@/, "") : null;
+
   const userSessionData = {
     id: finalUserId,
     username: cleanUsername,
@@ -175,6 +193,7 @@ export async function signUpAction(
     email: cleanEmail,
     phone: phone,
     country: country,
+    upline: cleanUpline,
     role: "user",
     isActivated: false,
   };
@@ -187,7 +206,7 @@ export async function signUpAction(
     phone: phone,
     country: country,
     password: password,
-    upline: upline && upline !== "No One" && upline !== "Aucun" ? upline : null,
+    upline: cleanUpline,
     role: "user",
     isActivated: false,
     createdAt: new Date().toISOString(),
@@ -207,6 +226,7 @@ export async function signUpAction(
       email: cleanEmail,
       phone: phone,
       country: country,
+      upline: cleanUpline,
       role: "user",
       isActivated: false,
     };

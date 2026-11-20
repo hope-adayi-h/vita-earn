@@ -26,13 +26,74 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // 1c. Routes publiques d'authentification
+  // =========================================================================
+  // GESTION PRIORITAIRE DES LIENS DE PARRAINAGE (/register/:username ou /register)
+  // =========================================================================
+  if (path.startsWith("/register/") || path === "/register") {
+    let sponsorName = "";
+
+    if (path.startsWith("/register/")) {
+      const raw = path.replace("/register/", "").split("/")[0].trim();
+      if (raw) {
+        sponsorName = decodeURIComponent(raw).replace(/^@/, "").trim();
+      }
+    }
+
+    if (!sponsorName && path === "/register") {
+      const refParam =
+        request.nextUrl.searchParams.get("sponsor") ||
+        request.nextUrl.searchParams.get("ref") ||
+        request.nextUrl.searchParams.get("upline");
+      if (refParam) {
+        sponsorName = refParam.replace(/^@/, "").trim();
+      }
+    }
+
+    const registerUrl = new URL("/auth/register", request.url);
+    if (sponsorName) {
+      registerUrl.searchParams.set("sponsor", sponsorName);
+    }
+
+    const redirectRes = NextResponse.redirect(registerUrl);
+    if (sponsorName) {
+      redirectRes.cookies.set("vita_pending_sponsor", sponsorName, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30, // Mémorisé 30 jours
+        sameSite: "lax",
+      });
+    }
+    return redirectRes;
+  }
+
+  // 1c. Routes publiques d'authentification et d'inscription
   const isAuthPath =
-    path.startsWith("/auth/login") ||
-    path.startsWith("/auth/register") ||
-    path.startsWith("/auth/forgot-password") ||
-    path.startsWith("/auth/reset-password") ||
-    path.startsWith("/auth/callback");
+    path.startsWith("/auth/") ||
+    path.startsWith("/register");
+
+  // Rétention du parrain sur /auth/register
+  if (path === "/auth/register") {
+    const urlSponsor =
+      request.nextUrl.searchParams.get("sponsor") ||
+      request.nextUrl.searchParams.get("ref") ||
+      request.nextUrl.searchParams.get("upline");
+
+    if (urlSponsor) {
+      const clean = urlSponsor.replace(/^@/, "").trim();
+      response.cookies.set("vita_pending_sponsor", clean, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30,
+        sameSite: "lax",
+      });
+    } else {
+      // Si l'URL n'a pas de parrain mais que le cookie mémorisé existe, le réinjecter
+      const savedSponsor = request.cookies.get("vita_pending_sponsor")?.value;
+      if (savedSponsor) {
+        const withSponsorUrl = new URL("/auth/register", request.url);
+        withSponsorUrl.searchParams.set("sponsor", savedSponsor);
+        return NextResponse.redirect(withSponsorUrl);
+      }
+    }
+  }
 
   // 2. Vérification rapide et optimisée de la session utilisateur
   let isAuthenticated = false;
@@ -160,8 +221,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // 4. Si l'utilisateur EST déjà connecté et visite /auth/login ou /auth/register
-  if (isAuthenticated && (path === "/auth/login" || path === "/auth/register")) {
+  // 4. Si l'utilisateur EST déjà connecté et visite /auth/login
+  // Note : si l'utilisateur visite /auth/register avec un parrain (test d'inscription),
+  // on lui permet d'afficher la page d'inscription pour créer un nouveau compte
+  if (isAuthenticated && path === "/auth/login") {
     const redirectParam = request.nextUrl.searchParams.get("redirect");
     if (
       redirectParam &&
@@ -171,6 +234,10 @@ export async function middleware(request: NextRequest) {
     ) {
       return NextResponse.redirect(new URL(redirectParam, request.url));
     }
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (isAuthenticated && path === "/auth/register" && !request.nextUrl.searchParams.has("sponsor")) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

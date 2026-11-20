@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 interface PageProps {
   params: {
@@ -7,6 +8,16 @@ interface PageProps {
 }
 
 export default function RegisterUsernamePage({ params }: PageProps) {
-  const cleanUsername = (params.username || "").trim();
-  redirect(`/auth/register?sponsor=${encodeURIComponent(cleanUsername)}`);
+  const cleanUsername = decodeURIComponent(params.username || "").trim().replace(/^@/, "");
+  if (cleanUsername) {
+    try {
+      cookies().set("vita_pending_sponsor", cleanUsername, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30,
+        sameSite: "lax",
+      });
+    } catch {}
+    redirect(`/auth/register?sponsor=${encodeURIComponent(cleanUsername)}`);
+  }
+  redirect("/auth/register");
 }

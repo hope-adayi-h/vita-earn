@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, Suspense } from "react";
+import { useState, useEffect, useTransition, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signUpAction } from "@/app/auth/actions";
@@ -21,10 +21,44 @@ import {
 
 function RegisterForm() {
   const searchParams = useSearchParams();
-  const rawUpline = searchParams.get("sponsor") || searchParams.get("ref") || searchParams.get("upline");
-  const hasUpline = Boolean(rawUpline && rawUpline.trim().length > 0);
-  const sponsorName = hasUpline ? rawUpline!.trim().replace(/^@/, "") : "";
-  const uplineValue = hasUpline ? sponsorName : "Aucun";
+  const rawParamUpline =
+    searchParams.get("sponsor") ||
+    searchParams.get("ref") ||
+    searchParams.get("upline");
+  const initialSponsor = rawParamUpline ? rawParamUpline.trim().replace(/^@/, "") : "";
+
+  const [sponsorName, setSponsorName] = useState(initialSponsor);
+  const [hasUpline, setHasUpline] = useState(Boolean(initialSponsor));
+
+  useEffect(() => {
+    if (initialSponsor) {
+      setSponsorName(initialSponsor);
+      setHasUpline(true);
+      try {
+        localStorage.setItem("vita_pending_sponsor", initialSponsor);
+        document.cookie = `vita_pending_sponsor=${encodeURIComponent(initialSponsor)}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+      } catch {}
+    } else {
+      // Si aucun paramètre dans l'URL, vérifier dans le stockage persistant ou les cookies
+      try {
+        const stored = localStorage.getItem("vita_pending_sponsor");
+        if (stored && stored.trim().length > 0) {
+          const cleanStored = stored.trim().replace(/^@/, "");
+          setSponsorName(cleanStored);
+          setHasUpline(true);
+        } else {
+          const cookieMatch = document.cookie.match(/vita_pending_sponsor=([^;]+)/);
+          if (cookieMatch && cookieMatch[1]) {
+            const cleanCookie = decodeURIComponent(cookieMatch[1]).trim().replace(/^@/, "");
+            if (cleanCookie) {
+              setSponsorName(cleanCookie);
+              setHasUpline(true);
+            }
+          }
+        }
+      } catch {}
+    }
+  }, [initialSponsor]);
 
   // Par défaut sur Rien (null) selon la demande de l'utilisateur
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
@@ -74,7 +108,9 @@ function RegisterForm() {
         localStorage.setItem("vita_registered_phone", computedPhone);
       } catch {}
     }
-    formData.set("upline", uplineValue);
+
+    const finalUpline = (hasUpline ? sponsorName : ((formData.get("upline") as string) || "Aucun")).trim().replace(/^@/, "");
+    formData.set("upline", finalUpline || "Aucun");
     formData.set("termsAccepted", termsAccepted ? "true" : "false");
 
     startTransition(async () => {
@@ -238,12 +274,12 @@ function RegisterForm() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-bold text-vita-text uppercase tracking-wider">
-                Parrain
+                Code Parrain / Recommandé par
               </label>
-              {hasUpline && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                  Parrainé par @{sponsorName}
+              {hasUpline && sponsorName && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Parrainé par {sponsorName}</span>
                 </span>
               )}
             </div>
@@ -251,15 +287,25 @@ function RegisterForm() {
               <input
                 type="text"
                 name="upline"
-                value={hasUpline ? `@${sponsorName}` : "Aucun"}
-                readOnly
-                tabIndex={-1}
-                className="w-full touch-target rounded-xl border border-vita-border bg-gray-100/90 px-3.5 text-xs sm:text-sm text-gray-700 font-semibold cursor-not-allowed select-none focus:outline-none shadow-xs"
+                value={hasUpline ? sponsorName : undefined}
+                defaultValue={!hasUpline ? "" : undefined}
+                readOnly={hasUpline}
+                placeholder={!hasUpline ? "Nom d'utilisateur ou code du parrain (ex: Espoir)" : ""}
+                onChange={!hasUpline ? (e) => setSponsorName(e.target.value) : undefined}
+                className={`w-full touch-target rounded-xl border px-3.5 text-xs sm:text-sm font-black shadow-xs transition-all ${
+                  hasUpline
+                    ? "border-emerald-300 bg-emerald-50 text-emerald-950 cursor-not-allowed select-none"
+                    : "border-vita-border bg-vita-surface/50 text-vita-text focus:outline-none focus:border-vita-medium focus:bg-white focus:ring-2 focus:ring-vita-bright/30"
+                }`}
               />
             </div>
-            {hasUpline && (
-              <p className="text-[11px] text-emerald-700 font-medium mt-1">
-                Votre inscription sera automatiquement rattachée à votre parrain @{sponsorName}.
+            {hasUpline && sponsorName ? (
+              <p className="text-[11px] text-emerald-700 font-semibold mt-1">
+                Votre inscription est automatiquement rattachée à votre parrain <strong className="text-emerald-900 font-black">{sponsorName}</strong>.
+              </p>
+            ) : (
+              <p className="text-[11px] text-vita-muted mt-1">
+                Si vous avez été invité par un ami ou parrain, son nom apparaîtra ici automatiquement.
               </p>
             )}
           </div>

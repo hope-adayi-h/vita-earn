@@ -652,6 +652,15 @@ export function UtilisateursClient({
                           })}
                         </span>
                       </span>
+                      {u.upline ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          <span>Parrain : {u.upline}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500">
+                          <span>Sans parrain</span>
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useFormState, useFormStatus } from "react-dom";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signInAction } from "@/app/auth/actions";
 import { Logo3D } from "@/components/Logo3D";
@@ -31,9 +32,38 @@ function SubmitButton() {
   );
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const [state, formAction] = useFormState(signInAction, null);
   const [showPassword, setShowPassword] = useState(false);
+  const searchParams = useSearchParams();
+
+  const rawSponsor = searchParams.get("sponsor") || searchParams.get("ref");
+  let redirectSponsor = "";
+  const redirectParam = searchParams.get("redirect");
+  if (redirectParam && redirectParam.includes("/register/")) {
+    redirectSponsor = redirectParam.split("/register/")[1]?.split("?")[0]?.split("/")[0] || "";
+  }
+  const detectedSponsor = (rawSponsor || redirectSponsor || "").replace(/^@/, "").trim();
+
+  const [persistedSponsor, setPersistedSponsor] = useState(detectedSponsor);
+
+  useEffect(() => {
+    if (detectedSponsor) {
+      setPersistedSponsor(detectedSponsor);
+      try {
+        localStorage.setItem("vita_pending_sponsor", detectedSponsor);
+      } catch {}
+    } else {
+      try {
+        const stored = localStorage.getItem("vita_pending_sponsor");
+        if (stored) setPersistedSponsor(stored);
+      } catch {}
+    }
+  }, [detectedSponsor]);
+
+  const registerHref = persistedSponsor
+    ? `/auth/register?sponsor=${encodeURIComponent(persistedSponsor)}`
+    : "/auth/register";
 
   return (
     <div className="max-w-md mx-auto py-6 sm:py-12 px-2">
@@ -124,7 +154,7 @@ export default function LoginPage() {
           <p className="text-xs sm:text-sm text-vita-muted">
             Pas encore de compte sur la plateforme ?{" "}
             <Link
-              href="/auth/register"
+              href={registerHref}
               className="font-bold text-vita-deep hover:text-vita-medium transition-colors underline decoration-vita-medium/40 underline-offset-2"
             >
               Créer mon compte
@@ -133,5 +163,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="max-w-md mx-auto py-12 text-center text-xs text-vita-muted">Chargement...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
