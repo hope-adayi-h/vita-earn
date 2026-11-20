@@ -335,6 +335,30 @@ export function updateUserUpline(identifierOrId: string, newUpline: string): Sto
   }
 }
 
+export function updateUserCountry(identifierOrId: string, newCountry: string): StoredUser | null {
+  try {
+    const filePath = ensureDirectoryAndFile();
+    const clean = identifierOrId.toLowerCase().trim();
+    const users = getAllUsers();
+    const user = users.find(
+      (u) =>
+        u.id.toLowerCase() === clean ||
+        u.username.toLowerCase() === clean ||
+        u.email.toLowerCase() === clean
+    );
+
+    if (user) {
+      user.country = newCountry;
+      fs.writeFileSync(filePath, JSON.stringify(users, null, 2), "utf-8");
+      return user;
+    }
+    return null;
+  } catch (err) {
+    console.error("Erreur mise à jour pays user:", err);
+    return null;
+  }
+}
+
 export function deleteUser(identifierOrId: string): boolean {
   try {
     const filePath = ensureDirectoryAndFile();

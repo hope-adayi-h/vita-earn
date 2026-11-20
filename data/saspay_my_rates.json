@@ -1,0 +1,2827 @@
+﻿{
+    "success":  true,
+    "data":  [
+                 {
+                     "country_code":  "BF",
+                     "country_name":  "Burkina Faso",
+                     "currency":  "XOF",
+                     "network_code":  "moov_bf",
+                     "network_name":  "Moov Burkina Faso",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  9.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  200.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  4.2,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.2,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "BF",
+                     "country_name":  "Burkina Faso",
+                     "currency":  "XOF",
+                     "network_code":  "orange_bf",
+                     "network_name":  "Orange Burkina Faso",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  9.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  200.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  4.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  true,
+                                   "otp_instructions":  "Sur votre tÃ©lÃ©phone, composez *144*4*6*{amount}# pour obtenir votre code de paiement Ã  usage unique."
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.2,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "BJ",
+                     "country_name":  "BÃ©nin",
+                     "currency":  "XOF",
+                     "network_code":  "celtiis_bj",
+                     "network_name":  "Celtiis Cash BÃ©nin",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  7.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  200.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  3.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  80.0,
+                                                      "min_fee_basis_amount":  1000.0,
+                                                      "min_amount":  1000.0,
+                                                      "max_amount":  5000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.0,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "BJ",
+                     "country_name":  "BÃ©nin",
+                     "currency":  "XOF",
+                     "network_code":  "mtn_bj",
+                     "network_name":  "MTN MoMo Benin",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  7.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  3.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  2.2,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "BJ",
+                     "country_name":  "BÃ©nin",
+                     "currency":  "XOF",
+                     "network_code":  "moov_bj",
+                     "network_name":  "Moov Money Benin",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  7.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  200.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  3.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  2.7,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "CM",
+                     "country_name":  "Cameroun",
+                     "currency":  "XAF",
+                     "network_code":  "mtn_cm",
+                     "network_name":  "MTN MoMo Cameroon",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  10.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "XAF",
+                                                     "percent":  4.75,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  701.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XAF",
+                                                      "percent":  1.0,
+                                                      "fixed":  700.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "CM",
+                     "country_name":  "Cameroun",
+                     "currency":  "XAF",
+                     "network_code":  "orange_cm",
+                     "network_name":  "Orange Money Cameroon",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  10.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "XAF",
+                                                     "percent":  4.75,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  701.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XAF",
+                                                      "percent":  1.0,
+                                                      "fixed":  700.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "CG",
+                     "country_name":  "Congo",
+                     "currency":  "XAF",
+                     "network_code":  "airtel_cg",
+                     "network_name":  "Airtel Congo Brazzaville",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  12.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XAF",
+                                                     "percent":  5.7,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XAF",
+                                                      "percent":  2.2,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "CG",
+                     "country_name":  "Congo",
+                     "currency":  "XAF",
+                     "network_code":  "mtn_cg",
+                     "network_name":  "MTN Congo Brazzaville",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  12.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XAF",
+                                                     "percent":  5.7,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  102.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "XAF",
+                                                      "percent":  3.7,
+                                                      "fixed":  100.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "XY",
+                     "country_name":  "Crypto (USD)",
+                     "currency":  "USD",
+                     "network_code":  "crypto",
+                     "network_name":  "Crypto / Stablecoin",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  0.02,
+                                                     "min_fee_basis_amount":  0.5,
+                                                     "min_amount":  0.5,
+                                                     "max_amount":  50000.0,
+                                                     "currency":  "USD",
+                                                     "percent":  3.0,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  false,
+                                    "is_custom":  false,
+                                    "tiers":  [
+
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "CI",
+                     "country_name":  "CÃ´te d\u0027Ivoire",
+                     "currency":  "XOF",
+                     "network_code":  "djamo_ci",
+                     "network_name":  "Djamo CÃ´te d\u0027Ivoire",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  7.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  200.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  3.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  101.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  1.5,
+                                                      "fixed":  100.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "CI",
+                     "country_name":  "CÃ´te d\u0027Ivoire",
+                     "currency":  "XOF",
+                     "network_code":  "mtn_ci",
+                     "network_name":  "MTN MoMo CI",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  8.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  200.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  3.9,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.2,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "CI",
+                     "country_name":  "CÃ´te d\u0027Ivoire",
+                     "currency":  "XOF",
+                     "network_code":  "moov_ci",
+                     "network_name":  "Moov Money CI",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  8.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  200.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  3.9,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.2,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "CI",
+                     "country_name":  "CÃ´te d\u0027Ivoire",
+                     "currency":  "XOF",
+                     "network_code":  "orange_ci",
+                     "network_name":  "Orange Money CI",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  8.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  200.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  3.9,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  true,
+                                   "otp_instructions":  "Sur votre tÃ©lÃ©phone, composez #144*82# puis choisissez l\u0027option 2 pour obtenir votre code de paiement."
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.2,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "CI",
+                     "country_name":  "CÃ´te d\u0027Ivoire",
+                     "currency":  "XOF",
+                     "network_code":  "wave_ci",
+                     "network_name":  "Wave CI",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  8.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  200.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  3.9,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.2,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "GA",
+                     "country_name":  "Gabon",
+                     "currency":  "XAF",
+                     "network_code":  "airtel_ga",
+                     "network_name":  "Airtel Gabon",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  10.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "XAF",
+                                                     "percent":  4.95,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  102.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "XAF",
+                                                      "percent":  3.7,
+                                                      "fixed":  100.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "GA",
+                     "country_name":  "Gabon",
+                     "currency":  "XAF",
+                     "network_code":  "moov_ga",
+                     "network_name":  "Moov Money Gabon",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  10.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XAF",
+                                                     "percent":  5.0,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  711.0,
+                                                      "min_fee_basis_amount":  700.0,
+                                                      "min_amount":  700.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XAF",
+                                                      "percent":  1.5,
+                                                      "fixed":  700.0,
+                                                      "floor_amount":  -0.01,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "GH",
+                     "country_name":  "Ghana",
+                     "currency":  "GHS",
+                     "network_code":  "tigo_gh",
+                     "network_name":  "Airtel/Tigo Ghana",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  2.0,
+                                                     "min_fee_basis_amount":  5.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "GHS",
+                                                     "percent":  4.0,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "GHS",
+                                                      "percent":  3.0,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "GH",
+                     "country_name":  "Ghana",
+                     "currency":  "GHS",
+                     "network_code":  "mtn_gh",
+                     "network_name":  "MTN MoMo Ghana",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  2.0,
+                                                     "min_fee_basis_amount":  5.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "GHS",
+                                                     "percent":  4.0,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "GHS",
+                                                      "percent":  3.0,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "GH",
+                     "country_name":  "Ghana",
+                     "currency":  "GHS",
+                     "network_code":  "vodafone_gh",
+                     "network_name":  "Vodafone Ghana",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  2.0,
+                                                     "min_fee_basis_amount":  5.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "GHS",
+                                                     "percent":  4.0,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "GHS",
+                                                      "percent":  3.0,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "GN",
+                     "country_name":  "GuinÃ©e",
+                     "currency":  "GNF",
+                     "network_code":  "mtn_gn",
+                     "network_name":  "MTN MoMo Guinea",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  164.0,
+                                                     "min_fee_basis_amount":  3111.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "GNF",
+                                                     "percent":  5.25,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "GNF",
+                                                      "percent":  4.0,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "XX",
+                     "country_name":  "International (USD)",
+                     "currency":  "USD",
+                     "network_code":  "card",
+                     "network_name":  "Carte bancaire",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  0.55,
+                                                     "min_fee_basis_amount":  0.5,
+                                                     "min_amount":  0.5,
+                                                     "max_amount":  50000.0,
+                                                     "currency":  "USD",
+                                                     "percent":  8.0,
+                                                     "fixed":  0.5,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  false,
+                                    "is_custom":  false,
+                                    "tiers":  [
+
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "KE",
+                     "country_name":  "Kenya",
+                     "currency":  "KES",
+                     "network_code":  "airtel_ke",
+                     "network_name":  "Airtel Money Kenya",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  2.0,
+                                                     "min_fee_basis_amount":  46.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "KES",
+                                                     "percent":  3.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  152.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "KES",
+                                                      "percent":  2.5,
+                                                      "fixed":  150.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "KE",
+                     "country_name":  "Kenya",
+                     "currency":  "KES",
+                     "network_code":  "mpesa_ke",
+                     "network_name":  "M-Pesa Kenya",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  78.0,
+                                                     "min_fee_basis_amount":  46.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "KES",
+                                                     "percent":  4.5,
+                                                     "fixed":  75.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  42.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "KES",
+                                                      "percent":  3.0,
+                                                      "fixed":  40.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "MW",
+                     "country_name":  "Malawi",
+                     "currency":  "MWK",
+                     "network_code":  "airtel_mw",
+                     "network_name":  "Airtel Money Malawi",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "MW",
+                     "country_name":  "Malawi",
+                     "currency":  "MWK",
+                     "network_code":  "tnm_mw",
+                     "network_name":  "TNM Mpamba Malawi",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "ML",
+                     "country_name":  "Mali",
+                     "currency":  "XOF",
+                     "network_code":  "mobi_cash_ml",
+                     "network_name":  "Mobi Cash Mali",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  7.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  3.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.0,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "ML",
+                     "country_name":  "Mali",
+                     "currency":  "XOF",
+                     "network_code":  "moov_ml",
+                     "network_name":  "Moov Money Mali",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  8.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  200.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  4.0,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.0,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "ML",
+                     "country_name":  "Mali",
+                     "currency":  "XOF",
+                     "network_code":  "orange_ml",
+                     "network_name":  "Orange Money Mali",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  8.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  200.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  4.0,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  101.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  2.2,
+                                                      "fixed":  100.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "MZ",
+                     "country_name":  "Mozambique",
+                     "currency":  "MZN",
+                     "network_code":  "movitel_mz",
+                     "network_name":  "Movitel Mozambique",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "MZ",
+                     "country_name":  "Mozambique",
+                     "currency":  "MZN",
+                     "network_code":  "vodacom_mz",
+                     "network_name":  "Vodacom Mozambique",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "NE",
+                     "country_name":  "Niger",
+                     "currency":  "XOF",
+                     "network_code":  "airtel_ne",
+                     "network_name":  "Airtel Niger",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  11.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  5.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  691.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  4.5,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  690.0,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "NG",
+                     "country_name":  "Nigeria",
+                     "currency":  "NGN",
+                     "network_code":  "allbanks_ng",
+                     "network_name":  "Nigeria - Tous les rÃ©seaux bancaires",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  23.0,
+                                                     "min_fee_basis_amount":  467.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "NGN",
+                                                     "percent":  4.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  false,
+                                    "is_custom":  false,
+                                    "tiers":  [
+
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "UG",
+                     "country_name":  "Ouganda",
+                     "currency":  "UGX",
+                     "network_code":  "airtel_ug",
+                     "network_name":  "Airtel Uganda",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  59.0,
+                                                     "min_fee_basis_amount":  1376.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "UGX",
+                                                     "percent":  4.2,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "UGX",
+                                                      "percent":  5.0,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "UG",
+                     "country_name":  "Ouganda",
+                     "currency":  "UGX",
+                     "network_code":  "mtn_ug",
+                     "network_name":  "MTN MoMo Uganda",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  66.0,
+                                                     "min_fee_basis_amount":  1376.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "UGX",
+                                                     "percent":  4.7,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "UGX",
+                                                      "percent":  5.0,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "XC",
+                     "country_name":  "RDC (USD)",
+                     "currency":  "USD",
+                     "network_code":  "airtel_cd_usd",
+                     "network_name":  "Airtel Congo (USD)",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  0.03,
+                                                     "min_fee_basis_amount":  0.5,
+                                                     "min_amount":  0.5,
+                                                     "max_amount":  50000.0,
+                                                     "currency":  "USD",
+                                                     "percent":  4.7,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  0.03,
+                                                      "min_fee_basis_amount":  0.5,
+                                                      "min_amount":  0.5,
+                                                      "max_amount":  50000.0,
+                                                      "currency":  "USD",
+                                                      "percent":  3.2,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "XC",
+                     "country_name":  "RDC (USD)",
+                     "currency":  "USD",
+                     "network_code":  "orange_cd_usd",
+                     "network_name":  "Orange Congo (USD)",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  0.03,
+                                                     "min_fee_basis_amount":  0.5,
+                                                     "min_amount":  0.5,
+                                                     "max_amount":  50000.0,
+                                                     "currency":  "USD",
+                                                     "percent":  4.7,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  0.02,
+                                                      "min_fee_basis_amount":  0.5,
+                                                      "min_amount":  0.5,
+                                                      "max_amount":  50000.0,
+                                                      "currency":  "USD",
+                                                      "percent":  2.2,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "XC",
+                     "country_name":  "RDC (USD)",
+                     "currency":  "USD",
+                     "network_code":  "vodacom_cd_usd",
+                     "network_name":  "Vodacom Congo (USD)",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  0.03,
+                                                     "min_fee_basis_amount":  0.5,
+                                                     "min_amount":  0.5,
+                                                     "max_amount":  50000.0,
+                                                     "currency":  "USD",
+                                                     "percent":  4.2,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  0.03,
+                                                      "min_fee_basis_amount":  0.5,
+                                                      "min_amount":  0.5,
+                                                      "max_amount":  50000.0,
+                                                      "currency":  "USD",
+                                                      "percent":  3.2,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "RW",
+                     "country_name":  "Rwanda",
+                     "currency":  "RWF",
+                     "network_code":  "airtel_rw",
+                     "network_name":  "Airtel Rwanda",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  22.0,
+                                                     "min_fee_basis_amount":  518.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "RWF",
+                                                     "percent":  4.2,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "RWF",
+                                                      "percent":  2.209,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "RW",
+                     "country_name":  "Rwanda",
+                     "currency":  "RWF",
+                     "network_code":  "mtn_rw",
+                     "network_name":  "MTN MoMo Rwanda",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  25.0,
+                                                     "min_fee_basis_amount":  518.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "RWF",
+                                                     "percent":  4.7,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  112.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "RWF",
+                                                      "percent":  2.0,
+                                                      "fixed":  110.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "CD",
+                     "country_name":  "RÃ©publique DÃ©mocratique du Congo",
+                     "currency":  "CDF",
+                     "network_code":  "afrimoney_cd",
+                     "network_name":  "Afrimoney Congo",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  44.0,
+                                                     "min_fee_basis_amount":  799.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "CDF",
+                                                     "percent":  5.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "CDF",
+                                                      "percent":  3.8,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "CD",
+                     "country_name":  "RÃ©publique DÃ©mocratique du Congo",
+                     "currency":  "CDF",
+                     "network_code":  "airtel_cd",
+                     "network_name":  "Airtel Congo",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  38.0,
+                                                     "min_fee_basis_amount":  799.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "CDF",
+                                                     "percent":  4.7,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "CDF",
+                                                      "percent":  3.2,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "CD",
+                     "country_name":  "RÃ©publique DÃ©mocratique du Congo",
+                     "currency":  "CDF",
+                     "network_code":  "orange_cd",
+                     "network_name":  "Orange Congo",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  44.0,
+                                                     "min_fee_basis_amount":  799.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "CDF",
+                                                     "percent":  5.45,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "CDF",
+                                                      "percent":  2.2,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "CD",
+                     "country_name":  "RÃ©publique DÃ©mocratique du Congo",
+                     "currency":  "CDF",
+                     "network_code":  "vodacom_cd",
+                     "network_name":  "Vodacom Congo",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  34.0,
+                                                     "min_fee_basis_amount":  799.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "CDF",
+                                                     "percent":  4.2,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "CDF",
+                                                      "percent":  3.2,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "SL",
+                     "country_name":  "Sierra Leone",
+                     "currency":  "SLE",
+                     "network_code":  "orange_sl",
+                     "network_name":  "Orange Sierra Leone",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  2.0,
+                                                     "min_fee_basis_amount":  9.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "SLE",
+                                                     "percent":  5.0,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "SLE",
+                                                      "percent":  3.5,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "SN",
+                     "country_name":  "SÃ©nÃ©gal",
+                     "currency":  "XOF",
+                     "network_code":  "paydunya_sn",
+                     "network_name":  "Compte PayDunya",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "SN",
+                     "country_name":  "SÃ©nÃ©gal",
+                     "currency":  "XOF",
+                     "network_code":  "djamo_sn",
+                     "network_name":  "Djamo SÃ©nÃ©gal",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "SN",
+                     "country_name":  "SÃ©nÃ©gal",
+                     "currency":  "XOF",
+                     "network_code":  "expresso_sn",
+                     "network_name":  "Expresso SÃ©nÃ©gal",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  108.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  200.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  3.9,
+                                                     "fixed":  100.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.2,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "SN",
+                     "country_name":  "SÃ©nÃ©gal",
+                     "currency":  "XOF",
+                     "network_code":  "freemoney_sn",
+                     "network_name":  "Free Money Senegal",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  11.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  5.05,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.7,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "SN",
+                     "country_name":  "SÃ©nÃ©gal",
+                     "currency":  "XOF",
+                     "network_code":  "orange_sn",
+                     "network_name":  "Orange Money Senegal",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  11.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  5.15,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.7,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "SN",
+                     "country_name":  "SÃ©nÃ©gal",
+                     "currency":  "XOF",
+                     "network_code":  "wave_sn",
+                     "network_name":  "Wave Senegal",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  11.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  5.15,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.7,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "SN",
+                     "country_name":  "SÃ©nÃ©gal",
+                     "currency":  "XOF",
+                     "network_code":  "wizall_sn",
+                     "network_name":  "Wizall Senegal",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  7.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  3.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.0,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "TZ",
+                     "country_name":  "Tanzanie",
+                     "currency":  "TZS",
+                     "network_code":  "airtel_tz",
+                     "network_name":  "Airtel Tanzania",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  47.0,
+                                                     "min_fee_basis_amount":  926.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "TZS",
+                                                     "percent":  5.0,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "TZS",
+                                                      "percent":  6.0,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "TZ",
+                     "country_name":  "Tanzanie",
+                     "currency":  "TZS",
+                     "network_code":  "ezypesa_tz",
+                     "network_name":  "EzyPesa Tanzania",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  42.0,
+                                                     "min_fee_basis_amount":  926.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "TZS",
+                                                     "percent":  4.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "TZS",
+                                                      "percent":  6.0,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "TZ",
+                     "country_name":  "Tanzanie",
+                     "currency":  "TZS",
+                     "network_code":  "halopesa_tz",
+                     "network_name":  "Halopesa",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  47.0,
+                                                     "min_fee_basis_amount":  926.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "TZS",
+                                                     "percent":  5.0,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "TZS",
+                                                      "percent":  6.0,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "TZ",
+                     "country_name":  "Tanzanie",
+                     "currency":  "TZS",
+                     "network_code":  "ttcl_tz",
+                     "network_name":  "TTCL Tanzania",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  42.0,
+                                                     "min_fee_basis_amount":  926.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "TZS",
+                                                     "percent":  4.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "TZS",
+                                                      "percent":  6.0,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "TZ",
+                     "country_name":  "Tanzanie",
+                     "currency":  "TZS",
+                     "network_code":  "tigo_tz",
+                     "network_name":  "Tigo Tanzania",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  47.0,
+                                                     "min_fee_basis_amount":  926.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "TZS",
+                                                     "percent":  5.0,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "TZS",
+                                                      "percent":  6.0,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "TZ",
+                     "country_name":  "Tanzanie",
+                     "currency":  "TZS",
+                     "network_code":  "mpesa_tz",
+                     "network_name":  "Vodacom Tanzania",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  47.0,
+                                                     "min_fee_basis_amount":  926.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "TZS",
+                                                     "percent":  5.0,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  2.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "TZS",
+                                                      "percent":  6.0,
+                                                      "fixed":  0.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "TG",
+                     "country_name":  "Togo",
+                     "currency":  "XOF",
+                     "network_code":  "mixx_tg",
+                     "network_name":  "Mixx Togo",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  false,
+                                    "is_custom":  false,
+                                    "tiers":  [
+
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "TG",
+                     "country_name":  "Togo",
+                     "currency":  "XOF",
+                     "network_code":  "moov_tg",
+                     "network_name":  "Moov Money Togo",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  9.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  200.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  4.1,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.2,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "TG",
+                     "country_name":  "Togo",
+                     "currency":  "XOF",
+                     "network_code":  "togocel",
+                     "network_name":  "Togocel Money",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  9.0,
+                                                     "min_fee_basis_amount":  200.0,
+                                                     "min_amount":  200.0,
+                                                     "max_amount":  100000000.0,
+                                                     "currency":  "XOF",
+                                                     "percent":  4.1,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  100000000.0,
+                                                      "currency":  "XOF",
+                                                      "percent":  3.2,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "ZM",
+                     "country_name":  "Zambie",
+                     "currency":  "ZMW",
+                     "network_code":  "airtel_zm",
+                     "network_name":  "Airtel Zambia",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  2.0,
+                                                     "min_fee_basis_amount":  7.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "ZMW",
+                                                     "percent":  5.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  32.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "ZMW",
+                                                      "percent":  2.0,
+                                                      "fixed":  30.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "ZM",
+                     "country_name":  "Zambie",
+                     "currency":  "ZMW",
+                     "network_code":  "mtn_zm",
+                     "network_name":  "MTN MoMo Zambia",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  10.0,
+                                                     "min_fee_basis_amount":  7.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "ZMW",
+                                                     "percent":  3.5,
+                                                     "fixed":  8.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  27.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "ZMW",
+                                                      "percent":  4.0,
+                                                      "fixed":  25.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 },
+                 {
+                     "country_code":  "ZM",
+                     "country_name":  "Zambie",
+                     "currency":  "ZMW",
+                     "network_code":  "zamtel_zm",
+                     "network_name":  "Zamtel Kwacha",
+                     "payin":  {
+                                   "available":  true,
+                                   "is_custom":  false,
+                                   "tiers":  [
+                                                 {
+                                                     "min_fee":  2.0,
+                                                     "min_fee_basis_amount":  7.0,
+                                                     "min_amount":  0.0,
+                                                     "max_amount":  10000000.0,
+                                                     "currency":  "ZMW",
+                                                     "percent":  4.5,
+                                                     "fixed":  0.0,
+                                                     "floor_amount":  null,
+                                                     "cap_amount":  null,
+                                                     "fee_charge_mode":  "ADD_ON"
+                                                 }
+                                             ],
+                                   "otp_required":  false,
+                                   "otp_instructions":  ""
+                               },
+                     "payout":  {
+                                    "available":  true,
+                                    "is_custom":  false,
+                                    "tiers":  [
+                                                  {
+                                                      "min_fee":  52.0,
+                                                      "min_fee_basis_amount":  1.0,
+                                                      "min_amount":  0.0,
+                                                      "max_amount":  10000000.0,
+                                                      "currency":  "ZMW",
+                                                      "percent":  3.204,
+                                                      "fixed":  50.0,
+                                                      "floor_amount":  null,
+                                                      "cap_amount":  null,
+                                                      "fee_charge_mode":  "ADD_ON"
+                                                  }
+                                              ],
+                                    "otp_required":  false,
+                                    "otp_instructions":  ""
+                                }
+                 }
+             ],
+    "code":  200
+}

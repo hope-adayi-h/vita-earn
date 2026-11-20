@@ -417,7 +417,7 @@ export async function submitWithdrawalAction(formData: FormData): Promise<{
 
   return {
     success: true,
-    message: `Votre demande de retrait de ${amount.toLocaleString("fr-FR")} FCFA vers ${operator} a été enregistrée avec succès (Frais fixes : 500 FCFA, Net reçu : ${netAmount.toLocaleString("fr-FR")} FCFA). Référence : ${newRecord.reference}. Délai estimé de virement : 10 minutes à 24 heures.`,
+    message: `Votre demande de retrait a été envoyée avec succès (Montant : ${amount.toLocaleString("fr-FR")} FCFA vers ${operator}, Frais fixes : 500 FCFA, Net à recevoir : ${netAmount.toLocaleString("fr-FR")} FCFA). Référence : ${newRecord.reference}. Délai estimé de traitement : 10 minutes à 24 heures.`,
     netAmount,
     fee,
   };

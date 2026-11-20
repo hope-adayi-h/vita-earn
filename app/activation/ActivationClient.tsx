@@ -23,8 +23,12 @@ import {
   ExternalLink,
 } from "lucide-react";
 
+import { AlternativePaymentButton } from "@/components/payments/AlternativePaymentButton";
+import type { AlternativePaymentUserView } from "@/lib/data/alternative-payment-store";
+
 interface ActivationClientProps {
   initialData: ActivationData;
+  alternativePayment?: AlternativePaymentUserView | null;
 }
 
 const PAYMENT_CHANNELS = [
@@ -48,7 +52,10 @@ const PAYMENT_CHANNELS = [
   { id: "card_all", name: "Carte Bancaire Visa / Mastercard (Tous pays)", country: "International", code: "" },
 ];
 
-export function ActivationClient({ initialData }: ActivationClientProps) {
+export function ActivationClient({
+  initialData,
+  alternativePayment,
+}: ActivationClientProps) {
   const router = useRouter();
   const { t } = useApp();
   const [selectedChannel, setSelectedChannel] = useState(PAYMENT_CHANNELS[0].id);
@@ -310,6 +317,12 @@ export function ActivationClient({ initialData }: ActivationClientProps) {
               )}
             </button>
           </div>
+
+          {/* Bouton de paiement alternatif (affiché uniquement si éligible côté serveur) */}
+          <AlternativePaymentButton
+            config={alternativePayment || null}
+            username={displayUsername}
+          />
         </form>
 
         <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-center gap-1.5 text-[11px] text-gray-500">

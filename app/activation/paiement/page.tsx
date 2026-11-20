@@ -1,5 +1,8 @@
 import { getActivationData } from "../actions";
 import { PaiementClient } from "./PaiementClient";
+import { resolveAlternativePaymentForUser } from "@/lib/data/alternative-payment-store";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Paiement de l'adhésion — Vita Earn",
@@ -9,5 +12,13 @@ export const metadata = {
 export default async function PaiementPage() {
   const data = await getActivationData();
 
-  return <PaiementClient initialData={data} />;
+  // Décision strictement prise côté serveur selon le pays du profil enregistré
+  const alternativePayment = await resolveAlternativePaymentForUser(data.user.country);
+
+  return (
+    <PaiementClient
+      initialData={data}
+      alternativePayment={alternativePayment}
+    />
+  );
 }

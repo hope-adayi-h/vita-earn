@@ -43,7 +43,11 @@ import {
   changeUserUplineAction,
   updateUserPhoneAction,
   manageAdminRoleAction,
+  adminUpdateUserCountryAction,
 } from "@/app/admin/actions";
+import { CountrySelect } from "@/components/CountrySelect";
+import { CountryFlag } from "@/components/CountryFlag";
+import { getCountryByCode, type CountryInfo } from "@/lib/countries";
 
 export interface ReferralMember {
   id: string;
@@ -124,7 +128,32 @@ export function UtilisateursClient({
 
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [modalMessage, setModalMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [isEditingCountry, setIsEditingCountry] = useState(false);
+  const [selectedCountryToChange, setSelectedCountryToChange] = useState<CountryInfo | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const handleSaveCountry = () => {
+    if (!selectedUser || !selectedCountryToChange) return;
+    setModalMessage(null);
+    startTransition(async () => {
+      const res = await adminUpdateUserCountryAction({
+        userId: selectedUser.id,
+        identifier: selectedUser.email || selectedUser.username,
+        country: selectedCountryToChange.name,
+      });
+
+      if (res.error) {
+        setModalMessage({ type: "error", text: res.error });
+      } else {
+        setModalMessage({ type: "success", text: res.message || "Pays mis à jour avec succès." });
+        setSelectedUser((prev) => (prev ? { ...prev, country: selectedCountryToChange.name } : null));
+        setUsers((prev) =>
+          prev.map((u) => (u.id === selectedUser.id ? { ...u, country: selectedCountryToChange.name } : u))
+        );
+        setIsEditingCountry(false);
+      }
+    });
+  };
 
   const activatedUsersCount = users.filter((u) => u.isActivated && !u.isBanned).length;
   const pendingUsersCount = users.filter((u) => !u.isActivated && !u.isBanned).length;
@@ -805,8 +834,51 @@ export function UtilisateursClient({
                   <span className="font-bold text-slate-900">{selectedUser.phone || "Non renseigné"}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block text-xs">Pays :</span>
-                  <span className="font-bold text-slate-900">{selectedUser.country || "Togo"}</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 block text-xs">Pays :</span>
+                    {!isEditingCountry && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditingCountry(true);
+                          setSelectedCountryToChange(getCountryByCode(selectedUser.country) || null);
+                        }}
+                        className="text-[11px] text-emerald-600 hover:text-emerald-700 font-bold hover:underline"
+                      >
+                        Modifier
+                      </button>
+                    )}
+                  </div>
+                  {isEditingCountry ? (
+                    <div className="mt-1 space-y-2">
+                      <CountrySelect
+                        value={selectedCountryToChange}
+                        onChange={(c) => setSelectedCountryToChange(c)}
+                      />
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={handleSaveCountry}
+                          disabled={isPending}
+                          className="px-2.5 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold shadow-xs cursor-pointer"
+                        >
+                          Enregistrer le pays
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingCountry(false)}
+                          className="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold cursor-pointer"
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <CountryFlag country={selectedUser.country} className="w-5 h-3.5" />
+                      <span className="font-bold text-slate-900">{selectedUser.country || "Togo"}</span>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <span className="text-slate-500 block text-xs">Code Parrainage Personnel :</span>

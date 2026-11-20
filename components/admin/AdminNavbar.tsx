@@ -22,6 +22,7 @@ import {
   Lock,
   ChevronRight,
   Globe,
+  ExternalLink,
 } from "lucide-react";
 
 interface AdminNavbarProps {
@@ -78,6 +79,12 @@ export function AdminNavbar({
       label: "Paiement automatique",
       href: "/admin/paiements-auto",
       icon: Zap,
+      badge: null,
+    },
+    {
+      label: "Paiement alternatif",
+      href: "/admin/paiement-alternatif",
+      icon: ExternalLink,
       badge: null,
     },
     {

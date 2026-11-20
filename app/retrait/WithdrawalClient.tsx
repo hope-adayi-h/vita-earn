@@ -7,6 +7,8 @@ import { formatFCFA } from "@/lib/utils";
 import type { WithdrawalPageData } from "./actions";
 import { submitWithdrawalAction } from "./actions";
 import { PlatformLogo } from "@/components/PlatformLogo";
+import { CountrySelect } from "@/components/CountrySelect";
+import { detectCountryFromPhone, getCountryByCode, type CountryInfo } from "@/lib/countries";
 import {
   Wallet,
   ArrowRight,
@@ -32,16 +34,6 @@ import {
 interface WithdrawalClientProps {
   initialData: WithdrawalPageData;
 }
-
-const OPERATORS = [
-  { id: "tmoney_tg", name: "T-Money Togo (+228)", country: "Togo" },
-  { id: "flooz_tg", name: "Moov Flooz Togo (+228)", country: "Togo" },
-  { id: "mtn_bj", name: "MTN MoMo Bénin (+229)", country: "Bénin" },
-  { id: "moov_bj", name: "Moov Money Bénin (+229)", country: "Bénin" },
-  { id: "orange_ci", name: "Orange Money Côte d'Ivoire (+225)", country: "Côte d'Ivoire" },
-  { id: "wave", name: "Wave Sénégal / CI (+221 / +225)", country: "UEMOA" },
-  { id: "mtn_cm", name: "MTN MoMo Cameroun (+237)", country: "Cameroun" },
-];
 
 const WITHDRAWAL_TYPES_CONFIG: Record<
   string,
@@ -151,6 +143,51 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
 
   const registeredPhone = actualPhone || initialData.user.phone || "+228 90 00 00 00";
   const registeredName = initialData.user.fullName || initialData.user.username || "Titulaire";
+
+  // Pays de retrait Mobile Money (détecté par défaut depuis le numéro de téléphone enregistré)
+  const [selectedCountry, setSelectedCountry] = useState<CountryInfo>(() =>
+    detectCountryFromPhone(registeredPhone)
+  );
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("vita_registered_phone");
+      if (stored) {
+        setActualPhone(stored);
+        const c = detectCountryFromPhone(stored);
+        setSelectedCountry(c);
+        if (c.payoutOperators && c.payoutOperators.length > 0) {
+          setOperator(c.payoutOperators[0].name);
+        }
+      } else if (initialData.user.phone) {
+        setActualPhone(initialData.user.phone);
+        const c = detectCountryFromPhone(initialData.user.phone);
+        setSelectedCountry(c);
+        if (c.payoutOperators && c.payoutOperators.length > 0) {
+          setOperator(c.payoutOperators[0].name);
+        }
+      }
+    } catch {
+      if (initialData.user.phone) {
+        setActualPhone(initialData.user.phone);
+        const c = detectCountryFromPhone(initialData.user.phone);
+        setSelectedCountry(c);
+        if (c.payoutOperators && c.payoutOperators.length > 0) {
+          setOperator(c.payoutOperators[0].name);
+        }
+      }
+    }
+  }, [initialData.user.phone]);
+
+  const handleCountryChange = (c: CountryInfo) => {
+    setSelectedCountry(c);
+    if (c.payoutOperators && c.payoutOperators.length > 0) {
+      setOperator(c.payoutOperators[0].name);
+    } else {
+      setOperator("");
+    }
+    setErrorMsg("");
+  };
 
   const numAmount = typeof amount === "number" ? amount : 0;
   const withdrawalFee = 500; // Frais de retrait fixes : 500 FCFA pour tous les montants
@@ -295,10 +332,21 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* CHAMP 1 : SÉLECTIONNER TON MOYEN DE PAIEMENT */}
+          {/* CHAMP 1 : SÉLECTION DU PAYS DE RETRAIT */}
+          <div>
+            <label className="text-xs font-bold text-gray-800 dark:text-gray-200 mb-1.5 block">
+              Pays de retrait Mobile Money
+            </label>
+            <CountrySelect
+              value={selectedCountry}
+              onChange={handleCountryChange}
+            />
+          </div>
+
+          {/* CHAMP 2 : SÉLECTION DE L'OPÉRATEUR MOBILE MONEY */}
           <div>
             <label htmlFor="operator-select" className="text-xs font-bold text-gray-800 dark:text-gray-200 mb-1.5 block">
-              Sélectionner ton moyen de paiement
+              Opérateur Mobile Money ({selectedCountry.name})
             </label>
             <div className="relative">
               <select
@@ -313,16 +361,23 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
                 } appearance-none focus:outline-hidden focus:border-[#16A34A] pr-9`}
               >
                 <option value="" disabled className="text-gray-400">
-                  Sélectionner ton moyen de paiement
+                  {selectedCountry.payoutOperators.length > 0
+                    ? `Sélectionner ton opérateur (${selectedCountry.name})`
+                    : "Aucun opérateur de retrait direct pour ce pays"}
                 </option>
-                {OPERATORS.map((op) => (
-                  <option key={op.id} value={op.name} className="text-gray-800 dark:text-gray-100">
+                {selectedCountry.payoutOperators.map((op) => (
+                  <option key={op.code} value={op.name} className="text-gray-800 dark:text-gray-100">
                     {op.name}
                   </option>
                 ))}
               </select>
               <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
+            {selectedCountry.payoutOperators.length === 0 && (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
+                Les retraits directs se font par Mobile Money dans la zone UEMOA / CEMAC (Togo, Bénin, Côte d&apos;Ivoire, etc.).
+              </p>
+            )}
           </div>
 
           {/* CHAMP 2 : ENTRER LE MONTANT */}
@@ -380,7 +435,7 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
             </div>
           </div>
 
-          {/* BOUTON D'ACTION : PAYER ET FAIRE LE RETRAIT */}
+          {/* BOUTON D'ACTION : DEMANDER LE RETRAIT */}
           <button
             type="submit"
             disabled={isSubmitting}
@@ -389,12 +444,12 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
             {isSubmitting ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin text-white" />
-                <span>Traitement du retrait en cours...</span>
+                <span>Envoi de votre demande de retrait en cours...</span>
               </>
             ) : (
               <>
                 <ShieldCheck className="w-5 h-5 text-white" />
-                <span>Payer et faire le retrait</span>
+                <span>Demander le retrait</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -412,10 +467,10 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
 
             <div>
               <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">
-                Demande de Retrait Validée !
+                Votre demande de retrait a été envoyée !
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Votre demande de retrait de <strong className="text-emerald-600">{formatFCFA(successResult.amount)}</strong> a été transmise vers {successResult.operator}.
+                Votre demande de retrait de <strong className="text-emerald-600">{formatFCFA(successResult.amount)}</strong> a été envoyée vers {successResult.operator}.
               </p>
             </div>
 

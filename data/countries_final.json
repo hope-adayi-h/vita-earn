@@ -1,0 +1,770 @@
+[
+  {
+    "code": "BJ",
+    "name": "Bénin",
+    "dialCode": "+229",
+    "currency": "XOF",
+    "flagCode": "BJ",
+    "payinOperators": [
+      {
+        "code": "celtiis_bj",
+        "name": "Celtiis Cash BÃ©nin"
+      },
+      {
+        "code": "mtn_bj",
+        "name": "MTN MoMo Benin"
+      },
+      {
+        "code": "moov_bj",
+        "name": "Moov Money Benin"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "celtiis_bj",
+        "name": "Celtiis Cash BÃ©nin"
+      },
+      {
+        "code": "mtn_bj",
+        "name": "MTN MoMo Benin"
+      },
+      {
+        "code": "moov_bj",
+        "name": "Moov Money Benin"
+      }
+    ]
+  },
+  {
+    "code": "BF",
+    "name": "Burkina Faso",
+    "dialCode": "+226",
+    "currency": "XOF",
+    "flagCode": "BF",
+    "payinOperators": [
+      {
+        "code": "moov_bf",
+        "name": "Moov Burkina Faso"
+      },
+      {
+        "code": "orange_bf",
+        "name": "Orange Burkina Faso"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "moov_bf",
+        "name": "Moov Burkina Faso"
+      },
+      {
+        "code": "orange_bf",
+        "name": "Orange Burkina Faso"
+      }
+    ]
+  },
+  {
+    "code": "CM",
+    "name": "Cameroun",
+    "dialCode": "+237",
+    "currency": "XAF",
+    "flagCode": "CM",
+    "payinOperators": [
+      {
+        "code": "mtn_cm",
+        "name": "MTN MoMo Cameroon"
+      },
+      {
+        "code": "orange_cm",
+        "name": "Orange Money Cameroon"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "mtn_cm",
+        "name": "MTN MoMo Cameroon"
+      },
+      {
+        "code": "orange_cm",
+        "name": "Orange Money Cameroon"
+      }
+    ]
+  },
+  {
+    "code": "CG",
+    "name": "Congo-Brazzaville",
+    "dialCode": "+242",
+    "currency": "XAF",
+    "flagCode": "CG",
+    "payinOperators": [
+      {
+        "code": "airtel_cg",
+        "name": "Airtel Congo Brazzaville"
+      },
+      {
+        "code": "mtn_cg",
+        "name": "MTN Congo Brazzaville"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "airtel_cg",
+        "name": "Airtel Congo Brazzaville"
+      },
+      {
+        "code": "mtn_cg",
+        "name": "MTN Congo Brazzaville"
+      }
+    ]
+  },
+  {
+    "code": "CD",
+    "name": "Congo-Kinshasa (RDC)",
+    "dialCode": "+243",
+    "currency": "CDF",
+    "flagCode": "CD",
+    "payinOperators": [
+      {
+        "code": "afrimoney_cd",
+        "name": "Afrimoney Congo"
+      },
+      {
+        "code": "airtel_cd",
+        "name": "Airtel Congo"
+      },
+      {
+        "code": "orange_cd",
+        "name": "Orange Congo"
+      },
+      {
+        "code": "vodacom_cd",
+        "name": "Vodacom Congo"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "afrimoney_cd",
+        "name": "Afrimoney Congo"
+      },
+      {
+        "code": "airtel_cd",
+        "name": "Airtel Congo"
+      },
+      {
+        "code": "orange_cd",
+        "name": "Orange Congo"
+      },
+      {
+        "code": "vodacom_cd",
+        "name": "Vodacom Congo"
+      }
+    ]
+  },
+  {
+    "code": "CI",
+    "name": "Côte d'Ivoire",
+    "dialCode": "+225",
+    "currency": "XOF",
+    "flagCode": "CI",
+    "payinOperators": [
+      {
+        "code": "djamo_ci",
+        "name": "Djamo CÃ´te d'Ivoire"
+      },
+      {
+        "code": "mtn_ci",
+        "name": "MTN MoMo CI"
+      },
+      {
+        "code": "moov_ci",
+        "name": "Moov Money CI"
+      },
+      {
+        "code": "orange_ci",
+        "name": "Orange Money CI"
+      },
+      {
+        "code": "wave_ci",
+        "name": "Wave CI"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "djamo_ci",
+        "name": "Djamo CÃ´te d'Ivoire"
+      },
+      {
+        "code": "mtn_ci",
+        "name": "MTN MoMo CI"
+      },
+      {
+        "code": "moov_ci",
+        "name": "Moov Money CI"
+      },
+      {
+        "code": "orange_ci",
+        "name": "Orange Money CI"
+      },
+      {
+        "code": "wave_ci",
+        "name": "Wave CI"
+      }
+    ]
+  },
+  {
+    "code": "XY",
+    "name": "Crypto (USDT / Stablecoin)",
+    "dialCode": "+1",
+    "currency": "USD",
+    "flagCode": "US",
+    "payinOperators": [
+      {
+        "code": "crypto",
+        "name": "Crypto / Stablecoin"
+      }
+    ],
+    "payoutOperators": []
+  },
+  {
+    "code": "GA",
+    "name": "Gabon",
+    "dialCode": "+241",
+    "currency": "XAF",
+    "flagCode": "GA",
+    "payinOperators": [
+      {
+        "code": "airtel_ga",
+        "name": "Airtel Gabon"
+      },
+      {
+        "code": "moov_ga",
+        "name": "Moov Money Gabon"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "airtel_ga",
+        "name": "Airtel Gabon"
+      },
+      {
+        "code": "moov_ga",
+        "name": "Moov Money Gabon"
+      }
+    ]
+  },
+  {
+    "code": "GH",
+    "name": "Ghana",
+    "dialCode": "+233",
+    "currency": "GHS",
+    "flagCode": "GH",
+    "payinOperators": [
+      {
+        "code": "tigo_gh",
+        "name": "Airtel/Tigo Ghana"
+      },
+      {
+        "code": "mtn_gh",
+        "name": "MTN MoMo Ghana"
+      },
+      {
+        "code": "vodafone_gh",
+        "name": "Vodafone Ghana"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "tigo_gh",
+        "name": "Airtel/Tigo Ghana"
+      },
+      {
+        "code": "mtn_gh",
+        "name": "MTN MoMo Ghana"
+      },
+      {
+        "code": "vodafone_gh",
+        "name": "Vodafone Ghana"
+      }
+    ]
+  },
+  {
+    "code": "GN",
+    "name": "Guinée",
+    "dialCode": "+224",
+    "currency": "GNF",
+    "flagCode": "GN",
+    "payinOperators": [
+      {
+        "code": "mtn_gn",
+        "name": "MTN MoMo Guinea"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "mtn_gn",
+        "name": "MTN MoMo Guinea"
+      }
+    ]
+  },
+  {
+    "code": "XX",
+    "name": "International (Carte Bancaire)",
+    "dialCode": "+1",
+    "currency": "USD",
+    "flagCode": "UN",
+    "payinOperators": [
+      {
+        "code": "card",
+        "name": "Carte bancaire"
+      }
+    ],
+    "payoutOperators": []
+  },
+  {
+    "code": "KE",
+    "name": "Kenya",
+    "dialCode": "+254",
+    "currency": "KES",
+    "flagCode": "KE",
+    "payinOperators": [
+      {
+        "code": "airtel_ke",
+        "name": "Airtel Money Kenya"
+      },
+      {
+        "code": "mpesa_ke",
+        "name": "M-Pesa Kenya"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "airtel_ke",
+        "name": "Airtel Money Kenya"
+      },
+      {
+        "code": "mpesa_ke",
+        "name": "M-Pesa Kenya"
+      }
+    ]
+  },
+  {
+    "code": "MW",
+    "name": "Malawi",
+    "dialCode": "+265",
+    "currency": "MWK",
+    "flagCode": "MW",
+    "payinOperators": [
+      {
+        "code": "airtel_mw",
+        "name": "Airtel Money Malawi"
+      },
+      {
+        "code": "tnm_mw",
+        "name": "TNM Mpamba Malawi"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "airtel_mw",
+        "name": "Airtel Money Malawi"
+      },
+      {
+        "code": "tnm_mw",
+        "name": "TNM Mpamba Malawi"
+      }
+    ]
+  },
+  {
+    "code": "ML",
+    "name": "Mali",
+    "dialCode": "+223",
+    "currency": "XOF",
+    "flagCode": "ML",
+    "payinOperators": [
+      {
+        "code": "mobi_cash_ml",
+        "name": "Mobi Cash Mali"
+      },
+      {
+        "code": "moov_ml",
+        "name": "Moov Money Mali"
+      },
+      {
+        "code": "orange_ml",
+        "name": "Orange Money Mali"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "mobi_cash_ml",
+        "name": "Mobi Cash Mali"
+      },
+      {
+        "code": "moov_ml",
+        "name": "Moov Money Mali"
+      },
+      {
+        "code": "orange_ml",
+        "name": "Orange Money Mali"
+      }
+    ]
+  },
+  {
+    "code": "MZ",
+    "name": "Mozambique",
+    "dialCode": "+258",
+    "currency": "MZN",
+    "flagCode": "MZ",
+    "payinOperators": [
+      {
+        "code": "movitel_mz",
+        "name": "Movitel Mozambique"
+      },
+      {
+        "code": "vodacom_mz",
+        "name": "Vodacom Mozambique"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "movitel_mz",
+        "name": "Movitel Mozambique"
+      },
+      {
+        "code": "vodacom_mz",
+        "name": "Vodacom Mozambique"
+      }
+    ]
+  },
+  {
+    "code": "NE",
+    "name": "Niger",
+    "dialCode": "+227",
+    "currency": "XOF",
+    "flagCode": "NE",
+    "payinOperators": [
+      {
+        "code": "airtel_ne",
+        "name": "Airtel Niger"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "airtel_ne",
+        "name": "Airtel Niger"
+      }
+    ]
+  },
+  {
+    "code": "NG",
+    "name": "Nigéria",
+    "dialCode": "+234",
+    "currency": "NGN",
+    "flagCode": "NG",
+    "payinOperators": [
+      {
+        "code": "allbanks_ng",
+        "name": "Nigeria - Tous les rÃ©seaux bancaires"
+      }
+    ],
+    "payoutOperators": []
+  },
+  {
+    "code": "UG",
+    "name": "Ouganda",
+    "dialCode": "+256",
+    "currency": "UGX",
+    "flagCode": "UG",
+    "payinOperators": [
+      {
+        "code": "airtel_ug",
+        "name": "Airtel Uganda"
+      },
+      {
+        "code": "mtn_ug",
+        "name": "MTN MoMo Uganda"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "airtel_ug",
+        "name": "Airtel Uganda"
+      },
+      {
+        "code": "mtn_ug",
+        "name": "MTN MoMo Uganda"
+      }
+    ]
+  },
+  {
+    "code": "XC",
+    "name": "RDC (USD)",
+    "dialCode": "+243",
+    "currency": "USD",
+    "flagCode": "CD",
+    "payinOperators": [
+      {
+        "code": "airtel_cd_usd",
+        "name": "Airtel Congo (USD)"
+      },
+      {
+        "code": "orange_cd_usd",
+        "name": "Orange Congo (USD)"
+      },
+      {
+        "code": "vodacom_cd_usd",
+        "name": "Vodacom Congo (USD)"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "airtel_cd_usd",
+        "name": "Airtel Congo (USD)"
+      },
+      {
+        "code": "orange_cd_usd",
+        "name": "Orange Congo (USD)"
+      },
+      {
+        "code": "vodacom_cd_usd",
+        "name": "Vodacom Congo (USD)"
+      }
+    ]
+  },
+  {
+    "code": "RW",
+    "name": "Rwanda",
+    "dialCode": "+250",
+    "currency": "RWF",
+    "flagCode": "RW",
+    "payinOperators": [
+      {
+        "code": "airtel_rw",
+        "name": "Airtel Rwanda"
+      },
+      {
+        "code": "mtn_rw",
+        "name": "MTN MoMo Rwanda"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "airtel_rw",
+        "name": "Airtel Rwanda"
+      },
+      {
+        "code": "mtn_rw",
+        "name": "MTN MoMo Rwanda"
+      }
+    ]
+  },
+  {
+    "code": "SN",
+    "name": "Sénégal",
+    "dialCode": "+221",
+    "currency": "XOF",
+    "flagCode": "SN",
+    "payinOperators": [
+      {
+        "code": "paydunya_sn",
+        "name": "Compte PayDunya"
+      },
+      {
+        "code": "djamo_sn",
+        "name": "Djamo SÃ©nÃ©gal"
+      },
+      {
+        "code": "expresso_sn",
+        "name": "Expresso SÃ©nÃ©gal"
+      },
+      {
+        "code": "freemoney_sn",
+        "name": "Free Money Senegal"
+      },
+      {
+        "code": "orange_sn",
+        "name": "Orange Money Senegal"
+      },
+      {
+        "code": "wave_sn",
+        "name": "Wave Senegal"
+      },
+      {
+        "code": "wizall_sn",
+        "name": "Wizall Senegal"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "paydunya_sn",
+        "name": "Compte PayDunya"
+      },
+      {
+        "code": "djamo_sn",
+        "name": "Djamo SÃ©nÃ©gal"
+      },
+      {
+        "code": "expresso_sn",
+        "name": "Expresso SÃ©nÃ©gal"
+      },
+      {
+        "code": "freemoney_sn",
+        "name": "Free Money Senegal"
+      },
+      {
+        "code": "orange_sn",
+        "name": "Orange Money Senegal"
+      },
+      {
+        "code": "wave_sn",
+        "name": "Wave Senegal"
+      },
+      {
+        "code": "wizall_sn",
+        "name": "Wizall Senegal"
+      }
+    ]
+  },
+  {
+    "code": "SL",
+    "name": "Sierra Leone",
+    "dialCode": "+232",
+    "currency": "SLE",
+    "flagCode": "SL",
+    "payinOperators": [
+      {
+        "code": "orange_sl",
+        "name": "Orange Sierra Leone"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "orange_sl",
+        "name": "Orange Sierra Leone"
+      }
+    ]
+  },
+  {
+    "code": "TZ",
+    "name": "Tanzanie",
+    "dialCode": "+255",
+    "currency": "TZS",
+    "flagCode": "TZ",
+    "payinOperators": [
+      {
+        "code": "airtel_tz",
+        "name": "Airtel Tanzania"
+      },
+      {
+        "code": "ezypesa_tz",
+        "name": "EzyPesa Tanzania"
+      },
+      {
+        "code": "halopesa_tz",
+        "name": "Halopesa"
+      },
+      {
+        "code": "ttcl_tz",
+        "name": "TTCL Tanzania"
+      },
+      {
+        "code": "tigo_tz",
+        "name": "Tigo Tanzania"
+      },
+      {
+        "code": "mpesa_tz",
+        "name": "Vodacom Tanzania"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "airtel_tz",
+        "name": "Airtel Tanzania"
+      },
+      {
+        "code": "ezypesa_tz",
+        "name": "EzyPesa Tanzania"
+      },
+      {
+        "code": "halopesa_tz",
+        "name": "Halopesa"
+      },
+      {
+        "code": "ttcl_tz",
+        "name": "TTCL Tanzania"
+      },
+      {
+        "code": "tigo_tz",
+        "name": "Tigo Tanzania"
+      },
+      {
+        "code": "mpesa_tz",
+        "name": "Vodacom Tanzania"
+      }
+    ]
+  },
+  {
+    "code": "TG",
+    "name": "Togo",
+    "dialCode": "+228",
+    "currency": "XOF",
+    "flagCode": "TG",
+    "payinOperators": [
+      {
+        "code": "mixx_tg",
+        "name": "Mixx Togo"
+      },
+      {
+        "code": "moov_tg",
+        "name": "Moov Money Togo"
+      },
+      {
+        "code": "togocel",
+        "name": "Togocel Money"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "moov_tg",
+        "name": "Moov Money Togo"
+      },
+      {
+        "code": "togocel",
+        "name": "Togocel Money"
+      }
+    ]
+  },
+  {
+    "code": "ZM",
+    "name": "Zambie",
+    "dialCode": "+260",
+    "currency": "ZMW",
+    "flagCode": "ZM",
+    "payinOperators": [
+      {
+        "code": "airtel_zm",
+        "name": "Airtel Zambia"
+      },
+      {
+        "code": "mtn_zm",
+        "name": "MTN MoMo Zambia"
+      },
+      {
+        "code": "zamtel_zm",
+        "name": "Zamtel Kwacha"
+      }
+    ],
+    "payoutOperators": [
+      {
+        "code": "airtel_zm",
+        "name": "Airtel Zambia"
+      },
+      {
+        "code": "mtn_zm",
+        "name": "MTN MoMo Zambia"
+      },
+      {
+        "code": "zamtel_zm",
+        "name": "Zamtel Kwacha"
+      }
+    ]
+  }
+]

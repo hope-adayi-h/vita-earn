@@ -1,0 +1,70 @@
+SasPay for WooCommerce — Installation et configuration (version 1.0.0)
+=====================================================================
+
+PRÉREQUIS
+---------
+- WordPress 5.6 ou supérieur
+- WooCommerce 5.8 ou supérieur (installé et activé)
+- PHP 7.4 ou supérieur
+- Un site en HTTPS
+- Un compte marchand SasPay et une clé API (sk_test_... pour tester, sk_live_... en production)
+
+
+1. INSTALLER LE PLUGIN
+----------------------
+1. Dans WordPress, aller dans Extensions > Ajouter une extension > Téléverser une extension.
+2. Choisir le fichier saspay-for-woocommerce-1.0.0.zip, puis cliquer sur Installer maintenant.
+3. Cliquer sur Activer l'extension.
+
+
+2. ACTIVER LE MOYEN DE PAIEMENT
+-------------------------------
+1. Aller dans WooCommerce > Réglages > Paiements > SasPay for WooCommerce.
+2. Cocher Enable SasPay.
+3. Coller votre clé API dans le champ API Secret Key.
+   - Test : sk_test_...
+   - Production : sk_live_...
+4. Enregistrer les modifications.
+
+
+3. CONFIGURER LE WEBHOOK
+------------------------
+Le webhook permet à SasPay de prévenir votre boutique dès qu'un paiement change de statut.
+
+1. Dans les réglages du plugin, copier l'URL affichée dans le champ Webhook URL.
+   Elle ressemble à : https://votre-site.com/?wc-api=saspay_wc_webhook
+2. Copier la valeur du champ Webhook Secret, affichée dans le même écran.
+3. Dans le tableau de bord SasPay (app.saspay.me), section Développeur > Webhooks :
+   - Créer un webhook avec l'URL copiée à l'étape 1.
+   - Cocher au minimum les événements transaction.success et transaction.failed.
+   - Utiliser Changer le secret pour y coller la valeur de l'étape 2.
+
+IMPORTANT : le secret doit être identique dans WooCommerce et dans SasPay. S'il est différent,
+SasPay enverra des webhooks signés que le plugin refusera (erreur 401 dans les journaux).
+
+
+4. TESTER
+---------
+1. Garder la clé sk_test_... dans les réglages.
+2. Passer une commande de test de petit montant depuis votre boutique, puis payer avec SasPay.
+3. Vérifier que la commande passe à Terminée (ou En attente si le paiement est en cours).
+4. Dans le tableau de bord SasPay, déclencher l'événement webhook.test du webhook créé,
+   puis vérifier dans les journaux qu'il est accepté.
+
+Une fois les tests concluants, remplacer la clé sk_test_... par votre clé sk_live_... .
+
+
+5. DÉPANNAGE
+------------
+Journaux : WooCommerce > Statut > Journaux, puis choisir le fichier saspay-for-woocommerce.
+
+- "Erreur de connexion à la plateforme de paiement" : vérifier la clé API et la connexion
+  du serveur à https://api.saspay.me.
+- "SasPay is not available" : le moyen de paiement est désactivé ou la clé API est vide.
+- Webhook refusé (401) : le secret ne correspond pas à celui de SasPay, ou l'horloge du serveur
+  est décalée de plus de 5 minutes. Recopier le secret dans SasPay (Changer le secret).
+- Commande non mise à jour après paiement : vérifier que l'URL du webhook est exacte et accessible
+  depuis Internet (pas derrière une authentification ni un pare-feu).
+
+Documentation : https://docs.saspay.me/
+Support : https://app.saspay.me/dashboard/support

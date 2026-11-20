@@ -9,6 +9,9 @@ import { formatFCFA } from "@/lib/utils";
 import { CountrySelect, type Country } from "@/components/CountrySelect";
 import { OperatorLogo } from "@/components/OperatorLogo";
 import { TermsAccordion } from "@/components/TermsAccordion";
+import { AlternativePaymentButton } from "@/components/payments/AlternativePaymentButton";
+import type { AlternativePaymentUserView } from "@/lib/data/alternative-payment-store";
+import { getCountryByCode } from "@/lib/countries";
 import {
   ShieldCheck,
   ArrowLeft,
@@ -25,6 +28,7 @@ import {
 
 interface PaiementClientProps {
   initialData: ActivationData;
+  alternativePayment?: AlternativePaymentUserView | null;
 }
 
 interface Operator {
@@ -101,7 +105,7 @@ function getOperatorsForCountry(countryCode?: string): Operator[] {
   }
 }
 
-export function PaiementClient({ initialData }: PaiementClientProps) {
+export function PaiementClient({ initialData, alternativePayment }: PaiementClientProps) {
   const router = useRouter();
 
   const [fullName, setFullName] = useState(
@@ -123,14 +127,27 @@ export function PaiementClient({ initialData }: PaiementClientProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(initialData.isActivated);
 
-  // Opérateurs disponibles selon le pays choisi
-  const operators = getOperatorsForCountry(selectedCountry?.code);
+  // Opérateurs disponibles selon le pays choisi depuis la source unique lib/countries
+  const countryObj = selectedCountry ? getCountryByCode(selectedCountry.code) : null;
+  const operators: Operator[] =
+    countryObj && countryObj.payinOperators.length > 0
+      ? countryObj.payinOperators.map((op) => ({
+          id: op.code,
+          name: op.name,
+          subtitle: `${countryObj.name} (${countryObj.currency})`,
+        }))
+      : getOperatorsForCountry(selectedCountry?.code);
 
   const handleCountryChange = (country: Country) => {
     setSelectedCountry(country);
-    const countryOps = getOperatorsForCountry(country.code);
-    if (countryOps.length > 0) {
-      setPaymentMethod(countryOps[0].id);
+    const countryData = getCountryByCode(country.code);
+    if (countryData && countryData.payinOperators.length > 0) {
+      setPaymentMethod(countryData.payinOperators[0].code);
+    } else {
+      const countryOps = getOperatorsForCountry(country.code);
+      if (countryOps.length > 0) {
+        setPaymentMethod(countryOps[0].id);
+      }
     }
   };
 
@@ -412,6 +429,12 @@ export function PaiementClient({ initialData }: PaiementClientProps) {
                 </>
               )}
             </button>
+
+            {/* Bouton de paiement alternatif (affiché uniquement si éligible côté serveur) */}
+            <AlternativePaymentButton
+              config={alternativePayment || null}
+              username={initialData.user.username || initialData.user.fullName}
+            />
           </div>
         </form>
 

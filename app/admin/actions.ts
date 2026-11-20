@@ -25,6 +25,7 @@ import {
   updateUserPassword,
   updateUserPhone,
   updateUserUpline,
+  updateUserCountry,
   deleteUser,
   findUserByIdentifier,
 } from "@/lib/auth/local-store";
@@ -1173,3 +1174,90 @@ export async function updateUserPhoneAction(params: {
     return { error: message };
   }
 }
+
+/**
+ * Modifie le pays d'un utilisateur (réservé exclusivement aux administrateurs)
+ * Avec traçabilité complète dans le journal d'audit
+ */
+export async function adminUpdateUserCountryAction(params: {
+  userId: string;
+  identifier: string;
+  country: string;
+}): Promise<{ success?: boolean; error?: string; message?: string; newCountry?: string }> {
+  try {
+    const admin = await verifyAdminUser();
+    const cleanCountry = (params.country || "").trim();
+    if (!cleanCountry) {
+      return { error: "Le pays ne peut pas être vide." };
+    }
+
+    const isConfigured =
+      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+      !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+
+    if (isConfigured) {
+      const adminClient = createAdminClient();
+      await adminClient
+        .from("profiles")
+        .update({ country: cleanCountry })
+        .eq("id", params.userId);
+
+      // Enregistrement dans le journal d'audit
+      await adminClient.from("audit_logs").insert({
+        user_id: admin.user.id,
+        action: "admin_update_user_country",
+        entity_type: "profiles",
+        entity_id: params.userId,
+        payload: {
+          admin_email: admin.user.email,
+          target_user_id: params.userId,
+          target_identifier: params.identifier,
+          new_country: cleanCountry,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    }
+
+    // Mise à jour locale persistante
+    updateUserCountry(params.userId, cleanCountry);
+    updateUserCountry(params.identifier, cleanCountry);
+
+    try {
+      const cookieStore = cookies();
+      const raw = cookieStore.get("vita_accounts")?.value;
+      if (raw) {
+        const accounts = JSON.parse(raw);
+        if (Array.isArray(accounts)) {
+          const acc = accounts.find(
+            (a: any) =>
+              a.id === params.userId ||
+              a.email?.toLowerCase() === params.identifier.toLowerCase() ||
+              a.username?.toLowerCase() === params.identifier.toLowerCase()
+          );
+          if (acc) {
+            acc.country = cleanCountry;
+            cookieStore.set("vita_accounts", JSON.stringify(accounts), {
+              path: "/",
+              httpOnly: true,
+              maxAge: 60 * 60 * 24 * 365,
+            });
+          }
+        }
+      }
+    } catch {}
+
+    revalidatePath("/admin/utilisateurs");
+    revalidatePath("/admin");
+    revalidatePath("/profil");
+
+    return {
+      success: true,
+      message: `Le pays de ${params.identifier} a été mis à jour avec succès : ${cleanCountry}`,
+      newCountry: cleanCountry,
+    };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur inattendue.";
+    return { error: message };
+  }
+}
+
