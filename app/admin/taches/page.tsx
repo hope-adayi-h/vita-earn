@@ -1,13 +1,15 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { ArrowLeft, Clock, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { isAdminUnlocked, checkAdminSession } from "@/lib/security/admin-lock";
-import { AdminTaskToggleList, AdminTaskItem } from "@/components/admin/AdminTaskToggleList";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getLomeServerTime } from "@/lib/utils/lome-time";
+import { getAllStoredDailyTasks, StoredDailyTask } from "@/lib/data/tasks-store";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
-import { Clock, ArrowLeft, ShieldCheck, CheckCircle } from "lucide-react";
+import { AdminTachesClient } from "./AdminTachesClient";
 
 export const metadata = {
-  title: "Gestion des Tâches Quotidiennes — Administration Vita Earn",
+  title: "Gestion des Tâches Vidéo Quotidiennes — Administration Vita Earn",
 };
 
 export default async function AdminTasksPage() {
@@ -22,129 +24,85 @@ export default async function AdminTasksPage() {
     redirect("/admin/lock");
   }
 
-  const defaultTasks: AdminTaskItem[] = [
-    {
-      id: "trivia",
-      title: "Trivia Questions",
-      dayLabel: "Lundi",
-      time: "8:00 AM",
-      rewardAmount: 15,
-      isActive: true,
-      description: "Quiz de culture générale et questions-réponses pour les utilisateurs.",
-    },
-    {
-      id: "tiktok",
-      title: "TikTok Videos",
-      dayLabel: "Mardi",
-      time: "8:00 AM",
-      rewardAmount: 50,
-      isActive: false,
-      description: "Visionnage certifié de vidéos partenaires TikTok.",
-    },
-    {
-      id: "youtube",
-      title: "YouTube Videos",
-      dayLabel: "Mercredi",
-      time: "8:00 AM",
-      rewardAmount: 50,
-      isActive: false,
-      description: "Visionnage de vidéos de formation sur YouTube.",
-    },
-    {
-      id: "ads",
-      title: "Ads Clicking",
-      dayLabel: "Jeudi",
-      time: "8:00 AM",
-      rewardAmount: 30,
-      isActive: false,
-      description: "Visites et clics sur les annonces sponsorisées du jour.",
-    },
-    {
-      id: "instagram",
-      title: "Instagram Videos",
-      dayLabel: "Vendredi",
-      time: "8:00 AM",
-      rewardAmount: 50,
-      isActive: false,
-      description: "Interaction avec les publications et vidéos Instagram partenaires.",
-    },
-  ];
+  // 1. Calcul strict du temps officiel serveur Lomé (Africa/Lome, UTC+0)
+  const lomeTime = getLomeServerTime();
 
-  let tasks: AdminTaskItem[] = defaultTasks;
+  // 2. Récupération des tâches depuis Supabase ou fallback store local
+  let tasks: StoredDailyTask[] = getAllStoredDailyTasks();
 
   const isConfigured =
     Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
     !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
 
-  try {
-
-    if (isConfigured) {
+  if (isConfigured) {
+    try {
       const adminClient = createAdminClient();
       const { data: dbTasks } = await adminClient
-        .from("task_definitions")
+        .from("daily_video_tasks")
         .select("*")
+        .eq("is_deleted", false)
         .order("day_of_week", { ascending: true });
 
       if (dbTasks && dbTasks.length > 0) {
-        const dayMap: Record<number, string> = {
-          1: "Lundi",
-          2: "Mardi",
-          3: "Mercredi",
-          4: "Jeudi",
-          5: "Vendredi",
-        };
         tasks = dbTasks.map((t) => ({
           id: t.id,
+          dayOfWeek: t.day_of_week,
+          specificDate: t.specific_date,
           title: t.title,
-          dayLabel: dayMap[t.day_of_week] || "Quotidien",
-          time: t.scheduled_time || "8:00 AM",
-          rewardAmount: Number(t.reward_amount) || 15,
+          videoUrl: t.video_url,
+          platform: t.platform,
+          embedUrl: t.embed_url,
+          videoId: t.video_id,
+          instructions: t.instructions,
+          rewardAmount: Number(t.reward_amount) || 100,
           isActive: Boolean(t.is_active),
-          description: t.description || "",
+          isDeleted: Boolean(t.is_deleted),
+          createdAt: t.created_at,
+          updatedAt: t.updated_at,
         }));
       }
+    } catch (err) {
+      console.warn("Fallback lecture locale des tâches:", err);
     }
-  } catch {
-    // Mode démo / secours
-    tasks = defaultTasks;
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-3 sm:py-6 space-y-6">
-      <AdminNavbar
-        userEmail={userEmail}
-        isSuperAdmin={isSuperAdmin}
-      />
+    <div className="max-w-5xl mx-auto py-3 sm:py-6 space-y-6">
+      <AdminNavbar userEmail={userEmail} isSuperAdmin={isSuperAdmin} />
 
       {/* Barre retour & En-tête */}
       <div className="flex items-center justify-between">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-vita-muted hover:text-vita-deep transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Retour au tableau de bord administrateur</span>
         </Link>
         <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-          Module Tâches & Time Table
+          Module Tâches Vidéo Quotidiennes
         </span>
       </div>
 
-      <div className="bg-white rounded-3xl border border-vita-border p-6 shadow-sm space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700">
+      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-2">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
           <Clock className="w-3 h-3 text-indigo-600" />
-          <span>Contrôle Quotidien des Tâches</span>
+          <span>Gestion Quotidienne des Tâches (Lundi au Vendredi)</span>
         </div>
-        <h1 className="text-xl sm:text-2xl font-black text-vita-deep tracking-tight">
-          Activation Quotidienne des Tâches Rémunérées
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          Espace de Gestion des Tâches Vidéo Quotidiennes
         </h1>
-        <p className="text-xs sm:text-sm text-vita-muted leading-relaxed">
-          Activez ou désactivez chaque tâche selon le planning du jour. Si une tâche n'est pas activée par vos soins ici, les utilisateurs verront la mention <em>« En attente d'approbation admin »</em> et ne pourront pas encore participer.
+        <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+          Programmez les vidéos à diffuser chaque jour ouvré. Collez simplement un lien TikTok, YouTube, Facebook ou Instagram dans le champ universel unique : le lecteur officiel est automatiquement configuré et intégré de manière sécurisée.
         </p>
       </div>
 
-      {/* Liste des boutons d'activation pour l'admin */}
-      <AdminTaskToggleList initialTasks={tasks} />
+      {/* Interface d'administration interactive */}
+      <AdminTachesClient
+        initialTasks={tasks}
+        lomeTime={lomeTime}
+        isSuperAdmin={isSuperAdmin}
+      />
     </div>
   );
 }
