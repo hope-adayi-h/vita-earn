@@ -340,20 +340,21 @@ export async function startSasPayActivationAction(params: {
       };
     }
 
-    // 1. Créer la session chez SasPay
+    // 1. Créer la session chez SasPay (frais pris en charge par le compte marchand)
     const sessionRes = await saspay.createCheckoutSession({
-      amount: feeInfo.chargeAmount,
+      amount: 4500,
       currency: "XOF",
       description: "Activation de compte VitaEarn",
       customerEmail: effectiveEmail,
       customerName: effectiveName,
       customerPhone: formattedPhone,
       returnUrl,
+      feeChargeMode: "INCLUSIVE",
       metadata: {
         userId: effectiveUserId,
         purpose: "activation",
-        nominalAmount: feeInfo.nominalAmount,
-        chargeAmount: feeInfo.chargeAmount,
+        nominalAmount: 4500,
+        chargeAmount: 4500,
         country: userCountry.code,
       },
     });
@@ -367,7 +368,7 @@ export async function startSasPayActivationAction(params: {
     const slug = sessionRes.slug || sessionRes.sessionId || "";
     const chosenNetwork = params.channel || userCountry.payinOperators[0]?.code || "togocel";
 
-    // 2. Déclencher le paiement direct (STK Push sur le téléphone de l'utilisateur)
+    // 2. Déclencher le paiement direct (STK Push sur le téléphone de l'utilisateur avec frais pris sur le compte marchand)
     const directRes = await saspay.directPay({
       slug,
       country: userCountry.code,
@@ -378,6 +379,7 @@ export async function startSasPayActivationAction(params: {
         phone: formattedPhone,
       },
       otp: params.otp,
+      feeChargeMode: "INCLUSIVE",
     });
 
     // 3. Enregistrement dans les tables de suivi (payments + deposits)

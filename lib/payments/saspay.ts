@@ -14,6 +14,7 @@ export interface SasPayCheckoutParams {
   customerName: string;
   customerPhone?: string;
   returnUrl: string;
+  feeChargeMode?: "INCLUSIVE" | "ADD_ON";
   metadata?: Record<string, string | number | boolean>;
 }
 
@@ -127,10 +128,8 @@ export function detectCountryAndMethod(phoneNumber: string, methodStr: string): 
 
 /**
  * Calcule le montant à prélever chez l'agrégateur SasPay :
- * - Togo et zone standard (Bénin, Côte d'Ivoire, Sénégal, etc.) : 4 500 FCFA
- * - Pays à frais opérateurs élevés (Ghana, Gabon, Congo, Guinée, Niger, Burkina Faso / Ouaga, Zambie - 5,7%) : 4 620 FCFA
- * RÈGLE D'AFFICHAGE STRICTE : Sur l'interface VitaEarn, l'utilisateur voit TOUJOURS 4 500 FCFA.
- * C'est SasPay qui applique le débit de 4 620 FCFA directement sur le compte mobile money du payeur.
+ * RÈGLE ABSOLUE : L'utilisateur est débité STRICTEMENT de 4 500 FCFA sur son compte Mobile Money.
+ * Tous les frais de l'agrégateur sont supportés par le compte marchand (mode INCLUSIVE).
  */
 export function calculateEffectiveChargeAmount(country?: string, phone?: string): {
   nominalAmount: number;
@@ -140,32 +139,6 @@ export function calculateEffectiveChargeAmount(country?: string, phone?: string)
 } {
   const c = (country || "").toUpperCase().trim();
   const cleanPhone = (phone || "").replace(/[\s\-\(\)]/g, "");
-
-  const highFeeCountries = ["GH", "GA", "CG", "CD", "GN", "NE", "BF", "ZM"];
-  const highFeePrefixes = [
-    "+233", "233", // Ghana
-    "+241", "241", // Gabon
-    "+242", "242", // Congo Brazzaville
-    "+243", "243", // Congo RDC
-    "+224", "224", // Guinée
-    "+227", "227", // Niger
-    "+226", "226", // Burkina Faso (Ouagadougou)
-    "+260", "260", // Zambie
-  ];
-
-  const matchesPrefix = highFeePrefixes.some((prefix) => cleanPhone.startsWith(prefix));
-  const matchesCode = highFeeCountries.includes(c);
-  const matchesName =
-    c.includes("GHANA") ||
-    c.includes("GABON") ||
-    c.includes("CONGO") ||
-    c.includes("GUIN") ||
-    c.includes("NIGER") ||
-    c.includes("BURKINA") ||
-    c.includes("OUAGA") ||
-    c.includes("ZAMB");
-
-  const isHighFee = matchesPrefix || matchesCode || matchesName;
 
   // Déterminer le code pays normalisé
   let countryCode = "TG";
@@ -185,8 +158,8 @@ export function calculateEffectiveChargeAmount(country?: string, phone?: string)
 
   return {
     nominalAmount: 4500,
-    chargeAmount: isHighFee ? 4620 : 4500,
-    isHighFeeCountry: isHighFee,
+    chargeAmount: 4500,
+    isHighFeeCountry: false,
     countryCode,
   };
 }
@@ -229,6 +202,8 @@ export class SasPayClient {
       customer_email: params.customerEmail,
       customer_name: params.customerName,
       return_url: params.returnUrl,
+      // Frais pris en charge par le compte marchand SasPay (l'utilisateur paie strictement le montant sans frais)
+      fee_charge_mode: params.feeChargeMode || "INCLUSIVE",
     };
 
     if (params.customerPhone) {
@@ -309,6 +284,7 @@ export class SasPayClient {
       phone: string;
     };
     otp?: string;
+    feeChargeMode?: "INCLUSIVE" | "ADD_ON";
   }): Promise<{
     success: boolean;
     status?: string;
@@ -331,6 +307,7 @@ export class SasPayClient {
           network: params.network,
           customer: params.customer,
           otp: params.otp || "",
+          fee_charge_mode: params.feeChargeMode || "INCLUSIVE",
         }),
       });
 
