@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPaymentProvider } from "@/lib/payments";
 import { SasPayClient, calculateEffectiveChargeAmount } from "@/lib/payments/saspay";
-import { activateUser } from "@/lib/auth/local-store";
+import { activateUser, findUserByIdentifier } from "@/lib/auth/local-store";
 import { saveStoredDeposit, resolveOperatorName } from "@/lib/data/deposits-store";
 import { processSuccessfulActivation } from "@/lib/payments/activation-service";
 import { resolveUserCountry } from "@/lib/countries";
@@ -481,7 +481,37 @@ export async function checkSasPayPaymentStatusAction(params: {
         } catch {}
       }
     }
+
+    // Récupération depuis le coffre persistant vita_accounts si sessionUser manquant
+    if (!sessionUser) {
+      try {
+        const rawAccounts = cookieStore.get("vita_accounts")?.value;
+        if (rawAccounts) {
+          const accs = JSON.parse(rawAccounts);
+          if (Array.isArray(accs) && accs.length > 0) {
+            sessionUser = { ...accs[accs.length - 1] };
+          }
+        }
+      } catch {}
+    }
+
     const testUser = cookieStore.get("vita_test_user")?.value;
+    const testEmail = cookieStore.get("vita_test_email")?.value;
+
+    if (!sessionUser && testUser) {
+      const localU = findUserByIdentifier(testUser);
+      sessionUser = {
+        id: localU?.id || `usr_${testUser}`,
+        username: testUser,
+        fullName: localU?.username || testUser,
+        email: localU?.email || testEmail || `${testUser.toLowerCase()}@vitaearn.com`,
+        phone: localU?.phone || cookieStore.get("vita_registered_phone")?.value || "",
+        country: localU?.country || "TG",
+        role: localU?.role || "user",
+        isActivated: true,
+      };
+    }
+
     const effectiveUserId = sessionUser?.id || (testUser ? `usr_${testUser}` : "");
 
     // Si mode simulation
@@ -490,6 +520,18 @@ export async function checkSasPayPaymentStatusAction(params: {
       if (sessionUser) {
         sessionUser.isActivated = true;
         cookieStore.set("vita_session_user", JSON.stringify(sessionUser), ACTIVATION_COOKIE_OPTIONS);
+        cookieStore.set("vita_test_user", sessionUser.username, ACTIVATION_COOKIE_OPTIONS);
+        cookieStore.set("vita_test_role", sessionUser.role || "user", ACTIVATION_COOKIE_OPTIONS);
+        if (sessionUser.email) {
+          cookieStore.set("vita_test_email", sessionUser.email, ACTIVATION_COOKIE_OPTIONS);
+        }
+        if (sessionUser.phone) {
+          cookieStore.set("vita_registered_phone", sessionUser.phone, {
+            ...ACTIVATION_COOKIE_OPTIONS,
+            maxAge: 60 * 60 * 24 * 365,
+          });
+        }
+        activateUser(sessionUser.id || sessionUser.username || sessionUser.email);
       }
       if (effectiveUserId) {
         await processSuccessfulActivation({
@@ -515,11 +557,45 @@ export async function checkSasPayPaymentStatusAction(params: {
       if (sessionUser) {
         sessionUser.isActivated = true;
         cookieStore.set("vita_session_user", JSON.stringify(sessionUser), ACTIVATION_COOKIE_OPTIONS);
+        cookieStore.set("vita_test_user", sessionUser.username, ACTIVATION_COOKIE_OPTIONS);
+        cookieStore.set("vita_test_role", sessionUser.role || "user", ACTIVATION_COOKIE_OPTIONS);
+        if (sessionUser.email) {
+          cookieStore.set("vita_test_email", sessionUser.email, ACTIVATION_COOKIE_OPTIONS);
+        }
+        if (sessionUser.phone) {
+          cookieStore.set("vita_registered_phone", sessionUser.phone, {
+            ...ACTIVATION_COOKIE_OPTIONS,
+            maxAge: 60 * 60 * 24 * 365,
+          });
+        }
+        activateUser(sessionUser.id || sessionUser.username || sessionUser.email);
+
+        // Mettre à jour aussi vita_accounts dans le navigateur
+        try {
+          const rawAccounts = cookieStore.get("vita_accounts")?.value;
+          if (rawAccounts) {
+            const accs = JSON.parse(rawAccounts);
+            if (Array.isArray(accs)) {
+              const updated = accs.map((a: any) =>
+                a.username?.toLowerCase() === sessionUser.username?.toLowerCase() ||
+                a.email?.toLowerCase() === sessionUser.email?.toLowerCase() ||
+                a.id === sessionUser.id
+                  ? { ...a, isActivated: true }
+                  : a
+              );
+              cookieStore.set("vita_accounts", JSON.stringify(updated), {
+                ...ACTIVATION_COOKIE_OPTIONS,
+                maxAge: 60 * 60 * 24 * 365,
+              });
+            }
+          }
+        } catch {}
       }
 
-      if (effectiveUserId) {
+      const finalUserId = sessionUser?.id || effectiveUserId;
+      if (finalUserId) {
         await processSuccessfulActivation({
-          userId: effectiveUserId,
+          userId: finalUserId,
           providerRef: checkRes.transactionId || slug,
         });
       }
@@ -539,6 +615,9 @@ export async function checkSasPayPaymentStatusAction(params: {
       revalidatePath("/");
       revalidatePath("/activation");
       revalidatePath("/profil");
+      revalidatePath("/portefeuille");
+      revalidatePath("/equipe");
+      revalidatePath("/taches");
 
       return {
         success: true,

@@ -45,7 +45,7 @@ export default async function PortefeuillePage() {
       sessionUser = JSON.parse(sessionUserCookie);
     } catch {}
   }
-  const testUser = cookieStore.get("vita_test_user")?.value || sessionUser?.username;
+  let testUser = cookieStore.get("vita_test_user")?.value || sessionUser?.username;
   const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
 
   const supabase = createClient();
@@ -55,8 +55,24 @@ export default async function PortefeuillePage() {
     user = data?.user || null;
   } catch {}
 
-  // Si ni utilisateur Supabase ni utilisateur cookie/session, rediriger vers login
+  // Récupération automatique si le coffre de comptes persistant est présent
   if (!user && !sessionUser && !testUser) {
+    try {
+      const rawAccounts = cookieStore.get("vita_accounts")?.value;
+      if (rawAccounts) {
+        const accs = JSON.parse(rawAccounts);
+        if (Array.isArray(accs) && accs.length > 0) {
+          sessionUser = accs[accs.length - 1];
+          testUser = sessionUser?.username;
+        }
+      }
+    } catch {}
+  }
+
+  const testRole = cookieStore.get("vita_test_role")?.value || sessionUser?.role;
+
+  // Si ni utilisateur Supabase ni utilisateur cookie/session, rediriger vers login
+  if (!user && !sessionUser && !testUser && !testRole && !isActivatedCookie) {
     redirect("/auth/login?redirect=/portefeuille");
   }
 

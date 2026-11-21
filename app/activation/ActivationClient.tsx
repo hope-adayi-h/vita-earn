@@ -221,6 +221,9 @@ export function ActivationClient({
           if (statusRes.status === "SUCCESS") {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setPushState("success");
+            try {
+              document.cookie = "vita_account_activated=true; path=/; max-age=2592000; SameSite=Lax";
+            } catch {}
             setTimeout(() => {
               window.location.href = "/";
             }, 1800);

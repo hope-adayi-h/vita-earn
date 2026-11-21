@@ -283,6 +283,7 @@ export async function signUpAction(
   cookieStore.set("vita_test_role", "user", AUTH_COOKIE_OPTIONS);
   cookieStore.set("vita_test_user", cleanUsername, AUTH_COOKIE_OPTIONS);
   cookieStore.set("vita_test_email", cleanEmail, AUTH_COOKIE_OPTIONS);
+  cookieStore.delete("vita_logged_out");
   if (phone) {
     cookieStore.set("vita_registered_phone", phone, { ...AUTH_COOKIE_OPTIONS, maxAge: 60 * 60 * 24 * 365 });
   }
@@ -418,6 +419,10 @@ export async function signInAction(
       cookieStore.set("vita_test_role", matchedAccount.role || "user", AUTH_COOKIE_OPTIONS);
       cookieStore.set("vita_test_user", matchedAccount.username, AUTH_COOKIE_OPTIONS);
       cookieStore.set("vita_test_email", matchedAccount.email, AUTH_COOKIE_OPTIONS);
+      cookieStore.delete("vita_logged_out");
+      if (isActivated) {
+        cookieStore.set("vita_account_activated", "true", AUTH_COOKIE_OPTIONS);
+      }
       if (matchedAccount.phone) {
         cookieStore.set("vita_registered_phone", matchedAccount.phone, {
           ...AUTH_COOKIE_OPTIONS,
@@ -537,6 +542,10 @@ export async function signInAction(
       cookieStore.set("vita_test_role", profile?.role || "user", AUTH_COOKIE_OPTIONS);
       cookieStore.set("vita_test_user", displayName, AUTH_COOKIE_OPTIONS);
       cookieStore.set("vita_test_email", user.email || "", AUTH_COOKIE_OPTIONS);
+      cookieStore.delete("vita_logged_out");
+      if (isActivated) {
+        cookieStore.set("vita_account_activated", "true", AUTH_COOKIE_OPTIONS);
+      }
 
       if (!isActivated) {
         redirect("/activation");
@@ -586,6 +595,12 @@ export async function signOutAction(): Promise<void> {
   cookieStore.delete("vita_test_user");
   cookieStore.delete("vita_test_email");
   cookieStore.delete("vita_session_user");
+  cookieStore.delete("vita_account_activated");
+  cookieStore.set("vita_logged_out", "true", {
+    path: "/",
+    httpOnly: true,
+    maxAge: 60 * 60 * 24 * 7,
+  });
   try {
     const supabase = createClient();
     await supabase.auth.signOut();

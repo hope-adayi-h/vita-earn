@@ -68,7 +68,9 @@ export async function middleware(request: NextRequest) {
   // 1c. Routes publiques d'authentification et d'inscription
   const isAuthPath =
     path.startsWith("/auth/") ||
-    path.startsWith("/register");
+    path.startsWith("/register") ||
+    path === "/activation" ||
+    path.startsWith("/marche");
 
   // Rétention du parrain sur /auth/register
   if (path === "/auth/register") {
@@ -120,19 +122,64 @@ export async function middleware(request: NextRequest) {
   const testEmail = request.cookies.get("vita_test_email")?.value;
   const testRole = request.cookies.get("vita_test_role")?.value;
   const adminUnlockCookie = request.cookies.get("vita_admin_unlocked")?.value;
+  const isAccountActivated = request.cookies.get("vita_account_activated")?.value === "true";
 
-  if (testUser || testEmail || testRole || adminUnlockCookie) {
+  if (testUser || testEmail || testRole || adminUnlockCookie || isAccountActivated) {
     isAuthenticated = true;
   }
 
-  // Vérifier s'il y a un cookie de session Supabase officiel (sb-*-auth-token)
+  const isLoggedOut = request.cookies.get("vita_logged_out")?.value === "true";
+
+  // Restauration de session depuis le coffre persistant vita_accounts (365 jours) si pas de déconnexion volontaire
+  const rawAccounts = !isLoggedOut ? request.cookies.get("vita_accounts")?.value : null;
+  if (rawAccounts) {
+    try {
+      const parsedAccounts = JSON.parse(rawAccounts);
+      if (Array.isArray(parsedAccounts) && parsedAccounts.length > 0) {
+        const latest = parsedAccounts[parsedAccounts.length - 1];
+        if (latest?.id || latest?.username || latest?.email) {
+          isAuthenticated = true;
+          // Si vita_session_user est manquant, le restaurer immédiatement
+          if (!sessionUserCookie) {
+            response.cookies.set("vita_session_user", JSON.stringify(latest), {
+              path: "/",
+              httpOnly: true,
+              secure: process.env.NODE_ENV === "production",
+              sameSite: "lax",
+              maxAge: 60 * 60 * 24 * 30,
+            });
+          }
+          if (!testUser && latest.username) {
+            response.cookies.set("vita_test_user", latest.username, {
+              path: "/",
+              httpOnly: true,
+              secure: process.env.NODE_ENV === "production",
+              sameSite: "lax",
+              maxAge: 60 * 60 * 24 * 30,
+            });
+          }
+          if (!testRole && latest.role) {
+            response.cookies.set("vita_test_role", latest.role, {
+              path: "/",
+              httpOnly: true,
+              secure: process.env.NODE_ENV === "production",
+              sameSite: "lax",
+              maxAge: 60 * 60 * 24 * 30,
+            });
+          }
+        }
+      }
+    } catch {}
+  }
+
+  // Vérifier s'il y a un cookie de session Supabase officiel (sb-*-auth-token, y compris chunked .0, .1)
   const allCookies = request.cookies.getAll();
   const hasSupabaseAuthCookie = allCookies.some(
-    (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token")
+    (c) => c.name.startsWith("sb-") && c.name.includes("auth-token")
   );
 
-  // Si non encore authentifié mais qu'un cookie Supabase officiel existe, vérifier le token
-  if (!isAuthenticated && hasSupabaseAuthCookie) {
+  // Si un cookie Supabase officiel existe, synchroniser la session avec getAll/setAll
+  if (hasSupabaseAuthCookie) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -145,42 +192,21 @@ export async function middleware(request: NextRequest) {
       try {
         const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
           cookies: {
-            get(name: string) {
-              return request.cookies.get(name)?.value;
+            getAll() {
+              return request.cookies.getAll();
             },
-            set(name: string, value: string, options: CookieOptions) {
-              request.cookies.set({
-                name,
-                value,
-                ...options,
-              });
+            setAll(cookiesToSet: Array<{ name: string; value: string; options?: CookieOptions }>) {
+              cookiesToSet.forEach(({ name, value }) =>
+                request.cookies.set(name, value)
+              );
               response = NextResponse.next({
                 request: {
                   headers: request.headers,
                 },
               });
-              response.cookies.set({
-                name,
-                value,
-                ...options,
-              });
-            },
-            remove(name: string, options: CookieOptions) {
-              request.cookies.set({
-                name,
-                value: "",
-                ...options,
-              });
-              response = NextResponse.next({
-                request: {
-                  headers: request.headers,
-                },
-              });
-              response.cookies.set({
-                name,
-                value: "",
-                ...options,
-              });
+              cookiesToSet.forEach(({ name, value, options }) =>
+                response.cookies.set(name, value, options)
+              );
             },
           },
         });
@@ -191,6 +217,34 @@ export async function middleware(request: NextRequest) {
 
         if (user) {
           isAuthenticated = true;
+          if (!sessionUserCookie) {
+            const rawName =
+              (user.user_metadata?.username as string) ||
+              (user.user_metadata?.full_name as string) ||
+              (user.email ? user.email.split("@")[0] : "Membre");
+            const healedUser = {
+              id: user.id,
+              username: rawName,
+              fullName: rawName,
+              email: user.email || "",
+              role: (user.user_metadata?.role as string) || "user",
+              isActivated: true,
+            };
+            response.cookies.set("vita_session_user", JSON.stringify(healedUser), {
+              path: "/",
+              httpOnly: true,
+              secure: process.env.NODE_ENV === "production",
+              sameSite: "lax",
+              maxAge: 60 * 60 * 24 * 30,
+            });
+            response.cookies.set("vita_test_user", rawName, {
+              path: "/",
+              httpOnly: true,
+              secure: process.env.NODE_ENV === "production",
+              sameSite: "lax",
+              maxAge: 60 * 60 * 24 * 30,
+            });
+          }
         }
       } catch {
         // Échec fermé
