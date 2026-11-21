@@ -496,7 +496,7 @@ export function PaiementClient({
               <button
                 type="submit"
                 disabled={loading || !termsAccepted}
-                className="w-full touch-target rounded-2xl bg-gradient-to-r from-vita-deep via-vita-medium to-[#236014] hover:from-vita-medium hover:to-vita-deep text-white font-extrabold text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-xl active:translate-y-0 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 py-4 cursor-pointer"
+                className="w-full touch-target rounded-2xl bg-[#0084FF] hover:bg-[#0070D8] text-white font-extrabold text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-xl active:translate-y-0 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 py-4 cursor-pointer"
               >
                 {loading ? (
                   <div className="flex items-center gap-2">
@@ -505,8 +505,8 @@ export function PaiementClient({
                   </div>
                 ) : (
                   <>
-                    <Lock className="w-4 h-4 text-vita-bright" />
-                    <span>Payer {formatFCFA(initialData.feeAmount)}</span>
+                    <Lock className="w-4 h-4 text-white" />
+                    <span>Payer maintenant</span>
                   </>
                 )}
               </button>

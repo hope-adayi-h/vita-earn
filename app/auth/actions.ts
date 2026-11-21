@@ -93,31 +93,77 @@ export async function signUpAction(
 
   if (isSupabaseConfigured) {
     try {
+      const adminClient = createAdminClient();
       const supabase = createClient();
-      const { data, error } = await supabase.auth.signUp({
+      let registeredUser: any = null;
+
+      // CRÉATION PRÉ-CONFIRMÉE DIRECTE : Bypasse tout envoi d'e-mail de confirmation
+      const { data: adminCreated, error: adminErr } = await adminClient.auth.admin.createUser({
         email: cleanEmail,
         password,
-        options: {
-          data: {
-            username: cleanUsername.toLowerCase(),
-            full_name: cleanUsername,
-            country,
-            phone,
-            upline: upline && upline !== "No One" && upline !== "Aucun" ? upline : null,
-          },
-          emailRedirectTo: `${appUrl}/auth/callback`,
+        email_confirm: true,
+        user_metadata: {
+          username: cleanUsername.toLowerCase(),
+          full_name: cleanUsername,
+          country,
+          phone,
+          upline: upline && upline !== "No One" && upline !== "Aucun" ? upline : null,
         },
       });
 
-      if (error) {
-        if (error.message.includes("User already registered") || error.status === 400) {
+      if (adminErr) {
+        const errMsg = (adminErr.message || "").toLowerCase();
+        if (
+          errMsg.includes("already registered") ||
+          errMsg.includes("already exists") ||
+          adminErr.status === 422
+        ) {
           return { error: "Un compte existe déjà avec cette adresse e-mail." };
         }
-      } else if (data?.user?.id) {
-        registeredUserId = data.user.id;
+
+        // En cas d'erreur de clé admin, repli sur l'inscription standard
+        const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password,
+          options: {
+            data: {
+              username: cleanUsername.toLowerCase(),
+              full_name: cleanUsername,
+              country,
+              phone,
+              upline: upline && upline !== "No One" && upline !== "Aucun" ? upline : null,
+            },
+          },
+        });
+
+        if (signUpErr) {
+          if (signUpErr.message.toLowerCase().includes("already registered") || signUpErr.status === 400) {
+            return { error: "Un compte existe déjà avec cette adresse e-mail." };
+          }
+        } else if (signUpData?.user) {
+          registeredUser = signUpData.user;
+          try {
+            await adminClient.auth.admin.updateUserById(signUpData.user.id, {
+              email_confirm: true,
+            });
+          } catch {}
+        }
+      } else if (adminCreated?.user) {
+        registeredUser = adminCreated.user;
+      }
+
+      if (registeredUser?.id) {
+        registeredUserId = registeredUser.id;
+
+        // Connexion immédiate pour poser les cookies de session Supabase sans vérification
+        try {
+          await supabase.auth.signInWithPassword({
+            email: cleanEmail,
+            password,
+          });
+        } catch {}
 
         try {
-          const adminClient = createAdminClient();
           const userReferralCode =
             "VE" + Math.random().toString(36).substring(2, 8).toUpperCase();
 
@@ -128,7 +174,7 @@ export async function signUpAction(
               phone: phone,
               referral_code: userReferralCode,
             })
-            .eq("id", data.user.id);
+            .eq("id", registeredUser.id);
 
           if (upline && upline !== "No One" && upline !== "Aucun") {
             const cleanUpline = upline.trim().replace(/^@/, "");
@@ -137,7 +183,7 @@ export async function signUpAction(
               .from("profiles")
               .select("id, full_name, username, referral_code")
               .or(`full_name.ilike.${cleanUpline},username.ilike.${cleanUpline},referral_code.ilike.${cleanUpline}`)
-              .neq("id", data.user.id)
+              .neq("id", registeredUser.id)
               .limit(1)
               .maybeSingle();
 
@@ -160,21 +206,10 @@ export async function signUpAction(
             if (referrerId) {
               await adminClient.from("referrals").insert({
                 referrer_id: referrerId,
-                referred_id: data.user.id,
+                referred_id: registeredUser.id,
               });
             }
           }
-
-          // Confirmer automatiquement l'email si possible
-          try {
-            await adminClient.auth.admin.updateUserById(data.user.id, {
-              email_confirm: true,
-            });
-            await supabase.auth.signInWithPassword({
-              email: cleanEmail,
-              password,
-            });
-          } catch {}
         } catch {}
       }
     } catch {

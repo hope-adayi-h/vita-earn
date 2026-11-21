@@ -57,6 +57,27 @@ const PAYMENT_CHANNELS = [
   { id: "card_all", name: "Carte Bancaire Visa / Mastercard (Tous pays)", country: "International", code: "", iso: "" },
 ];
 
+export function stripCountryDialCode(rawPhone?: string | null): string {
+  if (!rawPhone) return "";
+  let p = rawPhone.trim();
+  if (p.startsWith("+")) {
+    p = p.slice(1).trim();
+  } else if (p.startsWith("00")) {
+    p = p.slice(2).trim();
+  }
+  const codes = [
+    "228", "229", "225", "221", "226", "227", "224",
+    "241", "242", "243", "233", "260", "237", "235"
+  ];
+  for (const code of codes) {
+    if (p.startsWith(code) && p.length > code.length + 4) {
+      p = p.slice(code.length).trim();
+      break;
+    }
+  }
+  return p.replace(/^[\s\-\.\(\)]+/, "").trim();
+}
+
 export function ActivationClient({
   initialData,
   alternativePayment,
@@ -66,12 +87,13 @@ export function ActivationClient({
   const { t } = useApp();
   const [selectedChannel, setSelectedChannel] = useState(PAYMENT_CHANNELS[0].id);
   const [fullName, setFullName] = useState(initialData.user.fullName || initialData.user.username || "");
-  const [walletNumber, setWalletNumber] = useState(initialData.user.phone || "");
+  const [walletNumber, setWalletNumber] = useState(stripCountryDialCode(initialData.user.phone) || "");
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const displayUsername = initialData.user.username || initialData.user.fullName || "Utilisateur";
-  const displayPhone = walletNumber || initialData.user.phone || "+228 90 00 00 00";
+  const rawInitialPhone = walletNumber || initialData.user.phone || "";
+  const displayPhone = stripCountryDialCode(rawInitialPhone) || "90 00 00 00";
   const currency = initialData.currency || "XOF";
   const feeAmount = initialData.feeAmount || 4500;
 
@@ -290,9 +312,9 @@ export function ActivationClient({
               name="walletNumber"
               type="tel"
               value={walletNumber}
-              onChange={(e) => setWalletNumber(e.target.value)}
-              placeholder="Ex: +228 90 12 34 56"
-              className="w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs sm:text-sm font-medium text-gray-800 focus:outline-hidden focus:border-[#16A34A] focus:ring-1 focus:ring-[#16A34A]"
+              onChange={(e) => setWalletNumber(stripCountryDialCode(e.target.value) || e.target.value)}
+              placeholder="Ex: 90 12 34 56"
+              className="w-full touch-target px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs sm:text-sm font-medium text-gray-800 focus:outline-hidden focus:border-[#0084FF] focus:ring-1 focus:ring-[#0084FF]"
               required
             />
           </div>
@@ -315,9 +337,6 @@ export function ActivationClient({
                 className="w-full px-3.5 py-2.5 bg-gray-50 text-xs sm:text-sm font-black text-gray-900 cursor-not-allowed select-none focus:outline-hidden"
               />
             </div>
-            <p className="text-[11px] text-gray-500 mt-1">
-              Adhésion annuelle donnant accès à toutes les formations et outils d'affiliation.
-            </p>
           </div>
 
           {/* Boutons d'action : Dashboard & Payer avec SasPay OU Alerte Tchad / Pays Suspendu */}
@@ -369,7 +388,7 @@ export function ActivationClient({
               <button
                 type="submit"
                 disabled={isProcessing}
-                className="touch-target px-3 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 shadow-md transition-colors disabled:opacity-75 disabled:cursor-wait cursor-pointer"
+                className="touch-target px-3 py-2.5 rounded-xl bg-[#0084FF] hover:bg-[#0070D8] text-white font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 shadow-md transition-colors disabled:opacity-75 disabled:cursor-wait cursor-pointer"
               >
                 {isProcessing ? (
                   <>
@@ -378,8 +397,8 @@ export function ActivationClient({
                   </>
                 ) : (
                   <>
-                    <Wallet className="w-4 h-4" />
-                    <span>Payer 4 500 FCFA</span>
+                    <Wallet className="w-4 h-4 text-white" />
+                    <span>Payer maintenant</span>
                   </>
                 )}
               </button>
@@ -392,11 +411,6 @@ export function ActivationClient({
             username={displayUsername}
           />
         </form>
-
-        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-center gap-1.5 text-[11px] text-gray-500">
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-          <span>Portail officiel sécurisé SasPay (T-Money, Flooz, Wave, MTN, Orange, Carte)</span>
-        </div>
       </div>
 
       {/* BOUTON DU BAS : Aller au tableau de bord */}
