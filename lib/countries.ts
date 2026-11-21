@@ -182,7 +182,7 @@ export const COUNTRIES: CountryInfo[] = [
     flagCode: "GN",
     saspaySupported: true,
     payinOperators: [
-      { code: "orange_gn", name: "Orange Money Guinée" },
+      { code: "mtn_gn", name: "MTN MoMo Guinée" },
     ],
     payoutOperators: [
       { code: "orange_gn", name: "Orange Money Guinée" },
@@ -425,7 +425,6 @@ export const COUNTRIES: CountryInfo[] = [
     payinOperators: [
       { code: "togocel", name: "T-Money (Togocel)" },
       { code: "moov_tg", name: "Moov Flooz (Moov Money)" },
-      { code: "mixx_tg", name: "Mixx Togo" },
     ],
     payoutOperators: [
       { code: "togocel", name: "T-Money (Togocel)" },
@@ -494,6 +493,33 @@ export function detectCountryFromPhone(phone?: string | null): CountryInfo {
     if (clean.startsWith(c.dialCode) || clean.startsWith(rawDial)) {
       return c;
     }
+  }
+
+  return getCountryByCode("TG")!;
+}
+
+/**
+ * Résout le pays d'un utilisateur à partir de son pays enregistré ou de son téléphone.
+ * Si non trouvé, retourne le Togo par défaut.
+ */
+export function resolveUserCountry(country?: string | null, phone?: string | null): CountryInfo {
+  if (country) {
+    const trimmed = country.trim();
+    // 1. Recherche directe par code ISO
+    const byCode = getCountryByCode(trimmed);
+    if (byCode) return byCode;
+
+    // 2. Recherche par nom officiel (insensible à la casse et aux accents)
+    const normalized = trimmed.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const byName = COUNTRIES.find((c) => {
+      const cNorm = c.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return cNorm === normalized || cNorm.includes(normalized) || normalized.includes(cNorm);
+    });
+    if (byName) return byName;
+  }
+
+  if (phone) {
+    return detectCountryFromPhone(phone);
   }
 
   return getCountryByCode("TG")!;

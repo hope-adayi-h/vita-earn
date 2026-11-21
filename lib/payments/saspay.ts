@@ -20,6 +20,7 @@ export interface SasPayCheckoutParams {
 export interface SasPayCheckoutResult {
   success: boolean;
   sessionId?: string;
+  slug?: string;
   checkoutUrl?: string;
   error?: string;
   raw?: unknown;
@@ -264,12 +265,13 @@ export class SasPayClient {
         };
       }
 
-      // Format SasPay : { success: true, data: { id, checkout_url, ... } }
+      // Format SasPay : { success: true, data: { id, checkout_url, slug, ... } }
       const sessionData = data?.data || data;
       const checkoutUrl = sessionData?.checkout_url;
       const sessionId = sessionData?.id;
+      const slug = sessionData?.slug;
 
-      if (!checkoutUrl) {
+      if (!checkoutUrl && !slug) {
         return {
           success: false,
           error: "URL de paiement non fournie dans la réponse SasPay.",
@@ -280,6 +282,7 @@ export class SasPayClient {
       return {
         success: true,
         sessionId,
+        slug,
         checkoutUrl,
         raw: data,
       };
@@ -289,6 +292,158 @@ export class SasPayClient {
         success: false,
         error: `Connexion à SasPay impossible : ${message}`,
       };
+    }
+  }
+
+  /**
+   * Déclenche le paiement direct Mobile Money (STK Push sur le téléphone du client)
+   * sans le faire passer par la page web hébergée de SasPay.
+   */
+  async directPay(params: {
+    slug: string;
+    country: string;
+    network: string;
+    customer: {
+      name: string;
+      email: string;
+      phone: string;
+    };
+    otp?: string;
+  }): Promise<{
+    success: boolean;
+    status?: string;
+    transactionId?: string;
+    message?: string;
+    otpRequired?: boolean;
+    instructions?: string[];
+    error?: string;
+    raw?: any;
+  }> {
+    try {
+      const res = await fetch(`${this.baseUrl}/checkout/${encodeURIComponent(params.slug)}/pay/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          country: params.country,
+          network: params.network,
+          customer: params.customer,
+          otp: params.otp || "",
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const errorMsg =
+          data?.error?.message ||
+          data?.message ||
+          `Erreur lors de l'initiation du paiement Mobile Money (${res.status})`;
+        return {
+          success: false,
+          error: errorMsg,
+          raw: data,
+        };
+      }
+
+      const resData = data?.data || data;
+      return {
+        success: true,
+        status: resData?.status || "PENDING",
+        transactionId: resData?.transaction_id,
+        message: resData?.message || "Demande de paiement envoyée sur votre téléphone.",
+        otpRequired: Boolean(resData?.otp_required),
+        instructions: Array.isArray(resData?.instructions) ? resData.instructions : [],
+        raw: data,
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erreur réseau inconnue";
+      return {
+        success: false,
+        error: `Connexion à SasPay impossible : ${message}`,
+      };
+    }
+  }
+
+  /**
+   * Vérifie le statut en direct de la session de paiement in-app
+   */
+  async getCheckoutStatus(slug: string): Promise<{
+    success: boolean;
+    status: "PENDING" | "SUCCESS" | "FAILED" | "EXPIRED" | "UNKNOWN";
+    transactionId?: string;
+    transactionReference?: string;
+    failureReason?: string;
+    raw?: any;
+  }> {
+    try {
+      const res = await fetch(`${this.baseUrl}/checkout/${encodeURIComponent(slug)}/status/`, {
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        return { success: false, status: "UNKNOWN" };
+      }
+
+      const data = await res.json().catch(() => ({}));
+      const resData = data?.data || data;
+      const st = String(resData?.status || resData?.transaction_status || "").toUpperCase();
+
+      let status: "PENDING" | "SUCCESS" | "FAILED" | "EXPIRED" | "UNKNOWN" = "PENDING";
+      if (["SUCCESS", "SUCCESSFUL", "PAID", "COMPLETED"].includes(st)) {
+        status = "SUCCESS";
+      } else if (["FAILED", "FAILURE"].includes(st)) {
+        status = "FAILED";
+      } else if (["EXPIRED", "CANCELLED", "CANCELED"].includes(st)) {
+        status = "EXPIRED";
+      }
+
+      return {
+        success: true,
+        status,
+        transactionId: resData?.transaction_id,
+        transactionReference: resData?.transaction_reference,
+        failureReason: resData?.failure_reason,
+        raw: data,
+      };
+    } catch {
+      return { success: false, status: "UNKNOWN" };
+    }
+  }
+
+  /**
+   * Confirme le code OTP saisi par le client si l'opérateur en exige un
+   */
+  async confirmCheckoutOtp(slug: string, otp: string): Promise<{
+    success: boolean;
+    status?: string;
+    error?: string;
+  }> {
+    try {
+      const res = await fetch(`${this.baseUrl}/checkout/${encodeURIComponent(slug)}/confirm-otp/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ otp }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return {
+          success: false,
+          error: data?.error?.message || data?.message || "Code OTP invalide",
+        };
+      }
+
+      return { success: true, status: data?.data?.status || "PENDING" };
+    } catch {
+      return { success: false, error: "Erreur de validation OTP" };
     }
   }
 

@@ -9,6 +9,8 @@ import { getPaymentProvider } from "@/lib/payments";
 import { SasPayClient, calculateEffectiveChargeAmount } from "@/lib/payments/saspay";
 import { activateUser } from "@/lib/auth/local-store";
 import { saveStoredDeposit, resolveOperatorName } from "@/lib/data/deposits-store";
+import { processSuccessfulActivation } from "@/lib/payments/activation-service";
+import { resolveUserCountry } from "@/lib/countries";
 import type { ActivationData } from "./types";
 
 export type { ActivationData };
@@ -238,11 +240,28 @@ export async function getActivationData(): Promise<ActivationData> {
  * - Calcule les frais exacts : 4 500 FCFA pour le Togo/standard, 4 620 FCFA pour les pays à frais élevés (Ghana, Gabon, Congo, Guinée, Niger, Ouaga/Burkina, Zambie)
  * - RÈGLE D'AFFICHAGE : L'utilisateur voit toujours 4 500 FCFA sur l'application.
  */
+/**
+ * Initialise le paiement d'activation direct avec SasPay (STK Push in-app)
+ * Déclenche la demande de débit directement sur le téléphone du client sans redirection vers un site externe
+ */
 export async function startSasPayActivationAction(params: {
   channel?: string;
   walletNumber?: string;
   fullName?: string;
-}): Promise<{ success?: boolean; error?: string; checkoutUrl?: string }> {
+  countryCode?: string;
+  otp?: string;
+}): Promise<{
+  success?: boolean;
+  error?: string;
+  directPush?: boolean;
+  slug?: string;
+  sessionId?: string;
+  transactionId?: string;
+  message?: string;
+  instructions?: string[];
+  otpRequired?: boolean;
+  checkoutUrl?: string;
+}> {
   try {
     const supabase = createClient();
     let user: any = null;
@@ -278,63 +297,90 @@ export async function startSasPayActivationAction(params: {
       testUser ||
       user?.email?.split("@")[0] ||
       "Client VitaEarn";
-    const effectivePhone = params.walletNumber?.trim() || sessionUser?.phone || "";
-    const effectiveCountry = sessionUser?.country || "";
 
-    // RÈGLE DE SÉCURITÉ P1 : Rejet côté serveur si le pays n'est pas supporté par SasPay (ex: Tchad)
-    const isChad =
-      effectiveCountry.toUpperCase() === "TD" ||
-      effectiveCountry.toLowerCase().includes("tchad") ||
-      params.channel === "tchad_offline" ||
-      effectivePhone.startsWith("+235");
+    // Détermination précise du pays de l'utilisateur
+    const userCountry = resolveUserCountry(
+      params.countryCode || sessionUser?.country,
+      params.walletNumber || sessionUser?.phone
+    );
 
-    if (isChad) {
+    // Formater le numéro de téléphone complet avec indicatif international pour SasPay
+    const rawLocalPhone = (params.walletNumber || sessionUser?.phone || "")
+      .replace(/[\s\-\(\)\.]/g, "")
+      .replace(/^(\+?228|\+?229|\+?225|\+?221|\+?226|\+?227|\+?224|\+?241|\+?242|\+?243|\+?233|\+?260|\+?237|\+?235)/, "");
+    
+    const formattedPhone = `${userCountry.dialCode}${rawLocalPhone}`;
+
+    // RÈGLE DE SÉCURITÉ : Rejet si pays non supporté par SasPay (ex: Tchad)
+    if (!userCountry.saspaySupported || userCountry.code === "TD") {
       return {
         error:
           "Le paiement en ligne n'est pas encore disponible pour le Tchad. Contactez l'administrateur pour effectuer votre paiement et activer votre compte.",
       };
     }
 
-    // 1. Calcul du montant à débiter chez SasPay selon le pays
-    const feeInfo = calculateEffectiveChargeAmount(effectiveCountry, effectivePhone);
+    // Calcul du montant selon les règles SasPay
+    const feeInfo = calculateEffectiveChargeAmount(userCountry.code, formattedPhone);
 
-    // 2. Initialiser auprès de SasPay
     const saspay = new SasPayClient();
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://vita-earn.netlify.app").replace(/\/+$/, "");
     const returnUrl = `${appUrl}/activation/callback`;
 
-    // Si pas de clés SasPay en dev/test local, simulation élégante
+    // Si SasPay non configuré, simulation immédiate
     if (!saspay.isConfigured()) {
       return {
         success: true,
-        checkoutUrl: `/activation/callback?session_id=sim_${Date.now()}`,
+        directPush: true,
+        slug: `sim_${Date.now()}`,
+        sessionId: `sim_sess_${Date.now()}`,
+        transactionId: `sim_tx_${Date.now()}`,
+        message: "Demande de paiement envoyée sur votre téléphone (Simulation).",
+        instructions: ["Merci de finaliser le paiement sur votre téléphone."],
+        otpRequired: false,
       };
     }
 
-    const res = await saspay.createCheckoutSession({
+    // 1. Créer la session chez SasPay
+    const sessionRes = await saspay.createCheckoutSession({
       amount: feeInfo.chargeAmount,
       currency: "XOF",
       description: "Activation de compte VitaEarn",
       customerEmail: effectiveEmail,
       customerName: effectiveName,
-      customerPhone: effectivePhone,
+      customerPhone: formattedPhone,
       returnUrl,
       metadata: {
         userId: effectiveUserId,
         purpose: "activation",
         nominalAmount: feeInfo.nominalAmount,
         chargeAmount: feeInfo.chargeAmount,
-        country: feeInfo.countryCode,
+        country: userCountry.code,
       },
     });
 
-    if (!res.success || !res.checkoutUrl) {
+    if (!sessionRes.success || (!sessionRes.slug && !sessionRes.sessionId)) {
       return {
-        error: res.error || "Impossible de générer le lien de paiement SasPay.",
+        error: sessionRes.error || "Impossible d'initialiser le paiement avec SasPay.",
       };
     }
 
-    // 3. Enregistrer l'intention de paiement dans Supabase si connecté
+    const slug = sessionRes.slug || sessionRes.sessionId || "";
+    const chosenNetwork = params.channel || userCountry.payinOperators[0]?.code || "togocel";
+
+    // 2. Déclencher le paiement direct (STK Push sur le téléphone de l'utilisateur)
+    const directRes = await saspay.directPay({
+      slug,
+      country: userCountry.code,
+      network: chosenNetwork,
+      customer: {
+        name: effectiveName,
+        email: effectiveEmail,
+        phone: formattedPhone,
+      },
+      otp: params.otp,
+    });
+
+    // 3. Enregistrement dans les tables de suivi (payments + deposits)
     if (user) {
       try {
         await supabase.from("payments").insert({
@@ -344,49 +390,196 @@ export async function startSasPayActivationAction(params: {
           purpose: "activation",
           status: "pending",
           provider: "saspay",
-          provider_ref: res.sessionId || res.checkoutUrl,
+          provider_ref: directRes.transactionId || slug,
           idempotency_key: `act_${user.id}_${Date.now()}`,
           metadata: {
+            slug,
             charge_amount: feeInfo.chargeAmount,
             nominal_amount: feeInfo.nominalAmount,
-            country: feeInfo.countryCode,
-            phone: effectivePhone,
+            country: userCountry.code,
+            phone: formattedPhone,
+            network: chosenNetwork,
             initiated_at: new Date().toISOString(),
           },
         });
       } catch {}
     }
 
-    // 4. Enregistrement direct dans le registre local des dépôts Mobile Money (Admin)
     try {
-      const operatorName = resolveOperatorName(params.channel, effectivePhone);
+      const operatorName = resolveOperatorName(chosenNetwork, formattedPhone);
       saveStoredDeposit({
-        id: res.sessionId || `dep_${Date.now()}`,
+        id: directRes.transactionId || slug,
         userId: effectiveUserId,
         username: sessionUser?.username || testUser || effectiveName,
         fullName: effectiveName,
         email: effectiveEmail,
-        phone: effectivePhone || "+228 90 00 00 00",
+        phone: formattedPhone,
         operator: operatorName,
         amount: 4500,
         currency: "XOF",
         purpose: "Activation de compte",
         status: "pending",
         provider: "saspay",
-        providerRef: res.sessionId || res.checkoutUrl || "",
-        confirmationSource: "En attente de règlement SasPay",
+        providerRef: directRes.transactionId || slug,
+        confirmationSource: "Demande Push USSD envoyée",
         createdAt: new Date().toISOString(),
         confirmedAt: null,
       });
     } catch {}
 
+    if (!directRes.success) {
+      return {
+        error: directRes.error || "Échec lors de l'envoi de la demande Mobile Money.",
+      };
+    }
+
     return {
       success: true,
-      checkoutUrl: res.checkoutUrl,
+      directPush: true,
+      slug,
+      sessionId: sessionRes.sessionId,
+      transactionId: directRes.transactionId,
+      message: directRes.message || "Demande de paiement envoyée sur votre téléphone.",
+      instructions: directRes.instructions,
+      otpRequired: directRes.otpRequired,
+      checkoutUrl: sessionRes.checkoutUrl,
     };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Erreur inattendue.";
     return { error: message };
+  }
+}
+
+/**
+ * Vérifie le statut du paiement en temps réel (interrogé toutes les 2-3 secondes par la page)
+ */
+export async function checkSasPayPaymentStatusAction(params: {
+  slug?: string;
+  transactionId?: string;
+}): Promise<{
+  success: boolean;
+  status: "PENDING" | "SUCCESS" | "FAILED" | "EXPIRED" | "UNKNOWN";
+  error?: string;
+  message?: string;
+}> {
+  try {
+    const { slug, transactionId } = params;
+    if (!slug) {
+      return { success: false, status: "UNKNOWN", error: "Identifiant manquant" };
+    }
+
+    const cookieStore = cookies();
+    const sessionUserCookie = cookieStore.get("vita_session_user")?.value;
+    let sessionUser: any = null;
+    if (sessionUserCookie) {
+      try {
+        sessionUser = JSON.parse(sessionUserCookie);
+      } catch {
+        try {
+          sessionUser = JSON.parse(decodeURIComponent(sessionUserCookie));
+        } catch {}
+      }
+    }
+    const testUser = cookieStore.get("vita_test_user")?.value;
+    const effectiveUserId = sessionUser?.id || (testUser ? `usr_${testUser}` : "");
+
+    // Si mode simulation
+    if (slug.startsWith("sim_")) {
+      cookieStore.set("vita_account_activated", "true", ACTIVATION_COOKIE_OPTIONS);
+      if (sessionUser) {
+        sessionUser.isActivated = true;
+        cookieStore.set("vita_session_user", JSON.stringify(sessionUser), ACTIVATION_COOKIE_OPTIONS);
+      }
+      if (effectiveUserId) {
+        await processSuccessfulActivation({
+          userId: effectiveUserId,
+          providerRef: slug,
+        });
+      }
+      revalidatePath("/");
+      revalidatePath("/activation");
+      return {
+        success: true,
+        status: "SUCCESS",
+        message: "Paiement validé avec succès !",
+      };
+    }
+
+    const saspay = new SasPayClient();
+    const checkRes = await saspay.getCheckoutStatus(slug);
+
+    if (checkRes.status === "SUCCESS") {
+      // Activer immédiatement le compte et distribuer les commissions
+      cookieStore.set("vita_account_activated", "true", ACTIVATION_COOKIE_OPTIONS);
+      if (sessionUser) {
+        sessionUser.isActivated = true;
+        cookieStore.set("vita_session_user", JSON.stringify(sessionUser), ACTIVATION_COOKIE_OPTIONS);
+      }
+
+      if (effectiveUserId) {
+        await processSuccessfulActivation({
+          userId: effectiveUserId,
+          providerRef: checkRes.transactionId || slug,
+        });
+      }
+
+      try {
+        const supabase = createClient();
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData?.user) {
+          const adminClient = createAdminClient();
+          await adminClient
+            .from("profiles")
+            .update({ is_activated: true, updated_at: new Date().toISOString() })
+            .eq("id", authData.user.id);
+        }
+      } catch {}
+
+      revalidatePath("/");
+      revalidatePath("/activation");
+      revalidatePath("/profil");
+
+      return {
+        success: true,
+        status: "SUCCESS",
+        message: "Paiement validé avec succès ! Votre compte est activé.",
+      };
+    }
+
+    if (checkRes.status === "FAILED") {
+      return {
+        success: false,
+        status: "FAILED",
+        error: checkRes.failureReason || "Paiement refusé ou annulé.",
+      };
+    }
+
+    return {
+      success: true,
+      status: checkRes.status,
+    };
+  } catch {
+    return { success: false, status: "UNKNOWN" };
+  }
+}
+
+/**
+ * Valide le code OTP si l'opérateur en exige un
+ */
+export async function confirmSasPayOtpAction(params: {
+  slug: string;
+  otp: string;
+}): Promise<{
+  success: boolean;
+  status?: string;
+  error?: string;
+}> {
+  try {
+    const saspay = new SasPayClient();
+    return await saspay.confirmCheckoutOtp(params.slug, params.otp);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Erreur de validation OTP";
+    return { success: false, error: msg };
   }
 }
 
