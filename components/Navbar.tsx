@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -172,20 +172,73 @@ export function Navbar({ user }: NavbarProps) {
     },
   ];
 
-  const isActivationPage = pathname.startsWith("/activation");
   const isAuthPage = pathname.startsWith("/auth");
   const isAdminPage = pathname.startsWith("/admin");
 
-  // RÈGLE ABSOLUE : Masquer intégralement le header public sur l'administration (qui possède son propre univers et menu dédié), les pages d'auth, d'activation, ou tant que le compte n'est pas activé
-  if (isAdminPage || isAuthPage || isActivationPage || !user?.isActivated) {
+  // Synchronisation dynamique avec les cookies de session pour une réactivité instantanée
+  const [clientUser, setClientUser] = useState(user);
+
+  useEffect(() => {
+    if (user) {
+      setClientUser(user);
+      return;
+    }
+
+    try {
+      const match = document.cookie.match(/vita_session_user=([^;]+)/);
+      if (match) {
+        const parsed = JSON.parse(decodeURIComponent(match[1]));
+        const isAct =
+          document.cookie.includes("vita_account_activated=true") ||
+          Boolean(parsed.isActivated);
+        setClientUser({
+          email: parsed.email,
+          name: parsed.username || parsed.fullName || parsed.name,
+          isActivated: isAct,
+          role: parsed.role || "user",
+        });
+        return;
+      }
+
+      const rawAccounts = document.cookie.match(/vita_accounts=([^;]+)/);
+      if (rawAccounts) {
+        const accs = JSON.parse(decodeURIComponent(rawAccounts[1]));
+        if (Array.isArray(accs) && accs.length > 0) {
+          const lastAcc =
+            [...accs].reverse().find(
+              (a) =>
+                a.username &&
+                a.username.toLowerCase() !== "membre" &&
+                a.username.toLowerCase() !== "admin"
+            ) || accs[accs.length - 1];
+          if (lastAcc) {
+            setClientUser({
+              email: lastAcc.email,
+              name: lastAcc.username,
+              isActivated: Boolean(
+                lastAcc.isActivated ||
+                document.cookie.includes("vita_account_activated=true")
+              ),
+              role: lastAcc.role || "user",
+            });
+          }
+        }
+      }
+    } catch {}
+  }, [user]);
+
+  // RÈGLE PERMANENTE : Le header, le menu ☰ et le profil restent TOUJOURS visibles partout sur le site.
+  // Seul l'espace d'administration (qui possède son propre univers et barre dédiée) et les pages de login/register pures sont exclus.
+  if (isAdminPage || isAuthPage) {
     return null;
   }
 
   // Définition de l'utilisateur actif
-  const isLoggedIn = Boolean(user);
-  const userDisplayName = user?.name || (user?.email ? user.email.split("@")[0] : "");
+  const activeUser = clientUser || user;
+  const isLoggedIn = Boolean(activeUser);
+  const userDisplayName = activeUser?.name || (activeUser?.email ? activeUser.email.split("@")[0] : "");
   const userInitial = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : "U";
-  const isActivated = Boolean(user?.isActivated);
+  const isActivated = Boolean(activeUser?.isActivated);
 
   // Gestion du téléversement de la photo de profil
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -212,7 +265,7 @@ export function Navbar({ user }: NavbarProps) {
     { label: t("nav.profile"), href: "/profil", icon: User },
   ];
 
-  const isAdminUser = user?.role === "admin" || user?.email === "adayiespoir60@gmail.com";
+  const isAdminUser = activeUser?.role === "admin" || activeUser?.email === "adayiespoir60@gmail.com";
 
   if (isAdminUser) {
     navLinks.push({ label: t("nav.admin") || "Administration", href: "/admin", icon: ShieldCheck });
@@ -258,7 +311,7 @@ export function Navbar({ user }: NavbarProps) {
           {/* ========================================================================= */}
           {/* 1. ZONE GAUCHE : Bouton Menu ☰ (avec marge confortable et tactile)       */}
           {/* ========================================================================= */}
-          <div className="flex items-center shrink-0 w-20 sm:w-28 justify-start">
+          <div className="flex items-center shrink-0 w-20 sm:w-36 justify-start">
             <button
               type="button"
               onClick={() => {
@@ -306,7 +359,7 @@ export function Navbar({ user }: NavbarProps) {
           {/* ========================================================================= */}
           {/* 3. ZONE DROITE : Bouton thème (lune/soleil) + Avatar avec point vert en ligne */}
           {/* ========================================================================= */}
-          <div className="flex items-center justify-end shrink-0 w-20 sm:w-28 gap-2 sm:gap-3 relative">
+          <div className="flex items-center justify-end shrink-0 w-20 sm:w-36 gap-2 sm:gap-3 relative">
             {/* Bouton Mode Sombre / Clair (Lune / Soleil) */}
             <button
               type="button"
@@ -322,7 +375,7 @@ export function Navbar({ user }: NavbarProps) {
               )}
             </button>
 
-            {/* Avatar de profil (petite tête avec point vert en ligne en haut) */}
+            {/* Avatar de profil (petite tête avec point vert en ligne en haut et nom sur grand écran) */}
             <div className="relative">
               <button
                 type="button"
@@ -330,20 +383,27 @@ export function Navbar({ user }: NavbarProps) {
                   setProfileDropdownOpen(!profileDropdownOpen);
                   setSidebarOpen(false);
                 }}
-                className="relative rounded-full focus:outline-hidden p-0.5 border border-transparent hover:border-emerald-400 transition-colors block cursor-pointer"
+                className="flex items-center gap-1.5 p-1 rounded-2xl hover:bg-vita-surface/80 dark:hover:bg-slate-800/80 transition-all cursor-pointer focus:outline-hidden"
                 aria-label="Profil et options"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={avatar}
-                  alt={userDisplayName || "Avatar"}
-                  className="w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 rounded-full object-cover border border-emerald-500/40 shadow-xs"
-                />
-                {/* Point vert en haut montrant le statut en ligne */}
-                <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-[#16A34A] border-2 border-white dark:border-[#131E17]"></span>
-                </span>
+                <div className="relative shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={avatar}
+                    alt={userDisplayName || "Avatar"}
+                    className="w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 rounded-full object-cover border border-emerald-500/40 shadow-xs"
+                  />
+                  {/* Point vert en haut montrant le statut en ligne */}
+                  <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-[#16A34A] border-2 border-white dark:border-[#131E17]"></span>
+                  </span>
+                </div>
+                {userDisplayName && (
+                  <span className="hidden sm:inline-block text-xs font-bold text-gray-800 dark:text-gray-100 max-w-[85px] truncate">
+                    {userDisplayName}
+                  </span>
+                )}
               </button>
 
               {/* Menu Pop-up sous l'avatar */}
@@ -375,7 +435,7 @@ export function Navbar({ user }: NavbarProps) {
                             {userDisplayName || t("prof.myAccount")}
                           </p>
                           <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
-                            {user?.email || "membre@vitaearn.com"}
+                            {activeUser?.email || "membre@vitaearn.com"}
                           </p>
                           <div className="mt-1">
                             {isActivated ? (
@@ -854,7 +914,7 @@ export function Navbar({ user }: NavbarProps) {
       <SupportModal
         isOpen={supportModalOpen}
         onClose={() => setSupportModalOpen(false)}
-        userEmail={user?.email}
+        userEmail={activeUser?.email}
         userName={userDisplayName}
       />
 
