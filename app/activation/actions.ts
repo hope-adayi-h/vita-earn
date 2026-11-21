@@ -349,7 +349,7 @@ export async function startSasPayActivationAction(params: {
       customerName: effectiveName,
       customerPhone: formattedPhone,
       returnUrl,
-      feeChargeMode: "INCLUSIVE",
+      feeChargeMode: "DEDUCTED",
       metadata: {
         userId: effectiveUserId,
         purpose: "activation",
@@ -368,7 +368,7 @@ export async function startSasPayActivationAction(params: {
     const slug = sessionRes.slug || sessionRes.sessionId || "";
     const chosenNetwork = params.channel || userCountry.payinOperators[0]?.code || "togocel";
 
-    // 2. Déclencher le paiement direct (STK Push sur le téléphone de l'utilisateur avec frais pris sur le compte marchand)
+    // 2. Déclencher le paiement direct (STK Push sur le téléphone de l'utilisateur)
     const directRes = await saspay.directPay({
       slug,
       country: userCountry.code,
@@ -379,7 +379,6 @@ export async function startSasPayActivationAction(params: {
         phone: formattedPhone,
       },
       otp: params.otp,
-      feeChargeMode: "INCLUSIVE",
     });
 
     // 3. Enregistrement dans les tables de suivi (payments + deposits)

@@ -40,7 +40,7 @@ export class SasPayPaymentProvider implements PaymentProvider {
       customerName: params.customerName || "Client VitaEarn",
       customerPhone: params.customerPhone,
       returnUrl,
-      feeChargeMode: "INCLUSIVE",
+      feeChargeMode: "DEDUCTED",
       metadata: {
         userId: params.userId,
         purpose: params.purpose,

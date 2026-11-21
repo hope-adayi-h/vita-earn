@@ -14,7 +14,7 @@ export interface SasPayCheckoutParams {
   customerName: string;
   customerPhone?: string;
   returnUrl: string;
-  feeChargeMode?: "INCLUSIVE" | "ADD_ON";
+  feeChargeMode?: "DEDUCTED" | "ADD_ON";
   metadata?: Record<string, string | number | boolean>;
 }
 
@@ -203,7 +203,7 @@ export class SasPayClient {
       customer_name: params.customerName,
       return_url: params.returnUrl,
       // Frais pris en charge par le compte marchand SasPay (l'utilisateur paie strictement le montant sans frais)
-      fee_charge_mode: params.feeChargeMode || "INCLUSIVE",
+      fee_charge_mode: params.feeChargeMode || "DEDUCTED",
     };
 
     if (params.customerPhone) {
@@ -229,10 +229,15 @@ export class SasPayClient {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        const errorMsg =
-          data?.error?.message ||
-          data?.message ||
-          `Erreur HTTP ${res.status} lors de l'appel SasPay`;
+        let errorMsg = data?.error?.message || data?.message;
+        if (!errorMsg && data?.error && typeof data.error === "object") {
+          const firstKey = Object.keys(data.error)[0];
+          const val = data.error[firstKey];
+          errorMsg = Array.isArray(val) ? val.join(", ") : String(val);
+        }
+        if (!errorMsg) {
+          errorMsg = `Erreur HTTP ${res.status} lors de l'appel SasPay`;
+        }
         return {
           success: false,
           error: errorMsg,
@@ -284,7 +289,6 @@ export class SasPayClient {
       phone: string;
     };
     otp?: string;
-    feeChargeMode?: "INCLUSIVE" | "ADD_ON";
   }): Promise<{
     success: boolean;
     status?: string;
@@ -307,17 +311,21 @@ export class SasPayClient {
           network: params.network,
           customer: params.customer,
           otp: params.otp || "",
-          fee_charge_mode: params.feeChargeMode || "INCLUSIVE",
         }),
       });
 
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        const errorMsg =
-          data?.error?.message ||
-          data?.message ||
-          `Erreur lors de l'initiation du paiement Mobile Money (${res.status})`;
+        let errorMsg = data?.error?.message || data?.message;
+        if (!errorMsg && data?.error && typeof data.error === "object") {
+          const firstKey = Object.keys(data.error)[0];
+          const val = data.error[firstKey];
+          errorMsg = Array.isArray(val) ? val.join(", ") : String(val);
+        }
+        if (!errorMsg) {
+          errorMsg = `Erreur lors de l'initiation du paiement Mobile Money (${res.status})`;
+        }
         return {
           success: false,
           error: errorMsg,
