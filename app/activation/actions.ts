@@ -46,10 +46,12 @@ export async function quickActivateAction(): Promise<void> {
 
   cookieStore.set("vita_account_activated", "true", ACTIVATION_COOKIE_OPTIONS);
 
+  let targetUserId = "";
   if (sessionUser) {
     sessionUser.isActivated = true;
     cookieStore.set("vita_session_user", JSON.stringify(sessionUser), ACTIVATION_COOKIE_OPTIONS);
     activateUser(sessionUser.id || sessionUser.username || sessionUser.email);
+    targetUserId = sessionUser.id || sessionUser.username;
   } else if (testUser) {
     activateUser(testUser);
     const newSession = {
@@ -61,12 +63,14 @@ export async function quickActivateAction(): Promise<void> {
       isActivated: true,
     };
     cookieStore.set("vita_session_user", JSON.stringify(newSession), ACTIVATION_COOKIE_OPTIONS);
+    targetUserId = testUser;
   }
 
   try {
     const supabase = createClient();
     const { data } = await supabase.auth.getUser();
     if (data?.user) {
+      targetUserId = data.user.id;
       const adminClient = createAdminClient();
       await adminClient
         .from("profiles")
@@ -74,6 +78,15 @@ export async function quickActivateAction(): Promise<void> {
         .eq("id", data.user.id);
     }
   } catch {}
+
+  if (targetUserId) {
+    try {
+      await processSuccessfulActivation({
+        userId: targetUserId,
+        providerRef: "quick_act_" + Date.now(),
+      });
+    } catch {}
+  }
 
   revalidatePath("/");
   revalidatePath("/activation");
@@ -387,21 +400,11 @@ export async function startSasPayActivationAction(params: {
         await supabase.from("payments").insert({
           user_id: user.id,
           amount: 4500,
-          currency: "XOF",
           purpose: "activation",
           status: "pending",
           provider: "saspay",
           provider_ref: directRes.transactionId || slug,
           idempotency_key: `act_${user.id}_${Date.now()}`,
-          metadata: {
-            slug,
-            charge_amount: feeInfo.chargeAmount,
-            nominal_amount: feeInfo.nominalAmount,
-            country: userCountry.code,
-            phone: formattedPhone,
-            network: chosenNetwork,
-            initiated_at: new Date().toISOString(),
-          },
         });
       } catch {}
     }
@@ -721,15 +724,11 @@ export async function initiateActivationPayment(formData?: FormData) {
     .insert({
       user_id: user.id,
       amount: feeAmount,
-      currency,
       purpose: "activation",
       status: "pending",
       provider: provider.name,
       provider_ref: paymentResult.providerRef,
       idempotency_key: idempotencyKey,
-      metadata: {
-        initiated_at: new Date().toISOString(),
-      },
     })
     .select("id, provider_ref")
     .single();
@@ -789,38 +788,12 @@ export async function confirmMockPayment(paymentId: string) {
     return { error: "La validation du paiement auprès du fournisseur a échoué." };
   }
 
-  // 3. Mettre à jour le paiement en succeeded
-  const { error: updateError } = await supabase
-    .from("payments")
-    .update({
-      status: "succeeded",
-      updated_at: new Date().toISOString(),
-      metadata: {
-        verified_at: new Date().toISOString(),
-        verified_by: "MockProvider",
-      },
-    })
-    .eq("id", paymentId);
-
-  if (updateError) {
-    return { error: "Erreur lors de la mise à jour du statut de paiement." };
-  }
-
-  // 4. Appel sécurisé à la fonction SQL activate_account avec service_role
-  // RÈGLE ABSOLUE 2 : service_role uniquement
-  try {
-    const adminClient = createAdminClient();
-    const { data: rpcResult, error: rpcError } = await adminClient.rpc("activate_account", {
-      p_user_id: user.id,
-      p_payment_id: paymentId,
-    });
-
-    if (rpcError) {
-      await distributeCommissionsFallback(user.id, paymentId);
-    }
-  } catch (err) {
-    await distributeCommissionsFallback(user.id, paymentId);
-  }
+  // 3. Mettre à jour le paiement et activer le compte via le Grand Livre
+  await processSuccessfulActivation({
+    userId: user.id,
+    paymentId,
+    providerRef: payment.provider_ref || undefined,
+  });
 
   revalidatePath("/activation");
   revalidatePath("/profil");
@@ -1071,19 +1044,11 @@ export async function submitActivationPaymentAction(params: {
     .insert({
       user_id: user.id,
       amount: feeAmount,
-      currency,
       purpose: "activation",
       status: "pending",
       provider: provider.name,
       provider_ref: paymentResult.providerRef,
       idempotency_key: idempotencyKey,
-      metadata: {
-        customer_name: params.fullName,
-        country: params.country,
-        phone: params.phone,
-        payment_method: params.paymentMethod,
-        initiated_at: new Date().toISOString(),
-      },
     })
     .select("id")
     .single();

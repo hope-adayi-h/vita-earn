@@ -65,7 +65,7 @@ export default async function AdminUtilisateursPage({
       const [{ data: profiles }, { data: referrals }, { data: wallets }] = await Promise.all([
         adminClient
           .from("profiles")
-          .select("id, full_name, email, phone, role, is_activated, referral_code, created_at, kyc_status")
+          .select("id, full_name, username, phone, country, role, is_activated, referral_code, created_at, kyc_status")
           .order("created_at", { ascending: false }),
         adminClient
           .from("referrals")
@@ -84,23 +84,27 @@ export default async function AdminUtilisateursPage({
             ? profiles.find((pr) => pr.id === refRecord.referrer_id)
             : null;
 
-          const username = (p.full_name || p.email?.split("@")[0] || "user").toLowerCase().replace(/\s+/g, "");
+          const username = p.username || (p.full_name || "user").toLowerCase().replace(/\s+/g, "");
           const wb = walletMap.get(p.id);
           const realBalance = Number(wb?.available_balance ?? wb?.balance ?? 0);
           const realProfit = Number(wb?.total_earned ?? 0);
 
+          const matchingLocal = localUsers.find(
+            (lu) => lu.id === p.id || lu.username?.toLowerCase() === username.toLowerCase()
+          );
+
           rawUsersMap.set(p.id, {
             id: p.id,
-            name: p.full_name || p.email?.split("@")[0] || "Membre",
+            name: p.full_name || matchingLocal?.username || "Membre",
             username,
-            email: p.email || "",
-            phone: p.phone || "",
-            country: "TG",
-            role: p.role || "user",
+            email: matchingLocal?.email || `${username}@gmail.com`,
+            phone: p.phone || matchingLocal?.phone || "",
+            country: p.country || matchingLocal?.country || "TG",
+            role: p.role || matchingLocal?.role || "user",
             isActivated: Boolean(p.is_activated),
             isBanned: p.kyc_status === "rejected",
             referralCode: p.referral_code || "VE-" + p.id.slice(0, 6).toUpperCase(),
-            upline: uplineProfile?.full_name || uplineProfile?.email || null,
+            upline: uplineProfile?.full_name || uplineProfile?.username || matchingLocal?.upline || null,
             balance: realBalance,
             profit: realProfit,
             createdAt: p.created_at,

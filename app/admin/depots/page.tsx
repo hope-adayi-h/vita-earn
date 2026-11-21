@@ -41,56 +41,49 @@ export default async function AdminDepotsPage() {
       // Lire les 50 derniers paiements
       const { data: payments } = await adminClient
         .from("payments")
-        .select("id, user_id, amount, currency, purpose, status, provider, provider_ref, metadata, created_at, updated_at")
+        .select("id, user_id, amount, purpose, status, provider, provider_ref, created_at, updated_at")
         .order("created_at", { ascending: false })
         .limit(50);
 
       // Lire les profils pour enrichir avec les noms et numéros
       const { data: profiles } = await adminClient
         .from("profiles")
-        .select("id, full_name, email, phone, country");
+        .select("id, full_name, username, phone, country");
 
       const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
 
       if (payments && payments.length > 0) {
         for (const p of payments) {
           const prof = profileMap.get(p.user_id);
-          const meta = (p.metadata as any) || {};
 
           const foundLocalUser = registeredUsers.find(
             (u) =>
               u.id === p.user_id ||
-              (prof?.email && u.email.toLowerCase() === prof.email.toLowerCase()) ||
-              (meta?.email && u.email.toLowerCase() === meta.email.toLowerCase())
+              (prof?.username && u.username?.toLowerCase() === prof.username.toLowerCase())
           );
 
           const username =
             foundLocalUser?.username ||
+            prof?.username ||
             prof?.full_name?.toLowerCase().replace(/\s+/g, "") ||
-            meta?.username ||
-            meta?.customer_name?.toLowerCase().replace(/\s+/g, "") ||
             "utilisateur";
 
           const fullName =
             (foundLocalUser as any)?.fullName ||
             foundLocalUser?.username ||
             prof?.full_name ||
-            meta?.customer_name ||
             "Client VitaEarn";
 
           const email =
             foundLocalUser?.email ||
-            prof?.email ||
-            meta?.customer_email ||
-            "client@vitaearn.com";
+            `${username}@gmail.com`;
 
           const phone =
-            meta?.phone ||
             foundLocalUser?.phone ||
             prof?.phone ||
             "+228 90 00 00 00";
 
-          const operator = resolveOperatorName(meta?.payment_method || meta?.channel || p.provider, phone);
+          const operator = resolveOperatorName(p.provider, phone);
 
           const isSasPay = (p.provider || "").toLowerCase().includes("saspay");
           let confirmationSource = "Paiement automatique confirmé par SasPay";
@@ -117,7 +110,7 @@ export default async function AdminDepotsPage() {
             phone,
             operator,
             amount: Number(p.amount) || 4500,
-            currency: p.currency || "XOF",
+            currency: "XOF",
             purpose: p.purpose === "activation" ? "Activation de compte" : "Recharge portefeuille",
             status: p.status as any,
             provider: p.provider as any,

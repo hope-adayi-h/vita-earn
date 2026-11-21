@@ -27,12 +27,14 @@ export default async function AdminArbrePage() {
 
   let treeNodes: TreeUserNode[] = [];
 
+  const localUsers = getAllUsers();
+
   if (isConfigured) {
     try {
       const adminClient = createAdminClient();
       const { data: profiles } = await adminClient
         .from("profiles")
-        .select("id, full_name, email, phone, is_activated");
+        .select("id, full_name, username, phone, is_activated");
 
       const { data: refs } = await adminClient
         .from("referrals")
@@ -56,11 +58,15 @@ export default async function AdminArbrePage() {
           .filter((r) => l2Ids.includes(r.referrer_id))
           .map((r) => r.referred_id);
 
+        const matchingLocal = localUsers.find(
+          (lu) => lu.id === p.id || lu.username?.toLowerCase() === (p.username || p.full_name)?.toLowerCase()
+        );
+
         return {
           id: p.id,
-          name: p.full_name || p.email?.split("@")[0] || "Membre",
-          email: p.email || "",
-          phone: p.phone || "",
+          name: p.full_name || p.username || "Membre",
+          email: matchingLocal?.email || (p.username ? `${p.username.toLowerCase()}@gmail.com` : ""),
+          phone: p.phone || matchingLocal?.phone || "",
           isActivated: Boolean(p.is_activated),
           l1: l1Ids.map((id) => {
             const m = profileMap.get(id);

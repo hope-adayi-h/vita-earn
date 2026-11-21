@@ -39,7 +39,7 @@ export default async function AdminJournalPage() {
         const userIds = Array.from(new Set(rawLogs.map((l) => l.user_id).filter(Boolean)));
         const { data: profiles } = await adminClient
           .from("profiles")
-          .select("id, full_name, email")
+          .select("id, full_name, username")
           .in("id", userIds);
 
         const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
@@ -49,8 +49,8 @@ export default async function AdminJournalPage() {
           return {
             id: l.id,
             action: l.action,
-            userName: p?.full_name || "Admin",
-            userEmail: p?.email || SUPER_ADMIN_EMAIL,
+            userName: p?.full_name || p?.username || "Admin",
+            userEmail: SUPER_ADMIN_EMAIL,
             entityType: l.entity_type,
             createdAt: l.created_at,
           };

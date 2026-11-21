@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Gift, Link2, Copy, Check } from "lucide-react";
+import Link from "next/link";
+import { Gift, Link2, Copy, Check, Users, ArrowRight } from "lucide-react";
 
 interface ReferralMember {
   id: string;
@@ -28,6 +29,13 @@ export function ReferralSection({
   referralCode,
   appUrl,
   username,
+  level1Count = 0,
+  level2Count = 0,
+  level3Count = 0,
+  level1Earned = 0,
+  level2Earned = 0,
+  level3Earned = 0,
+  referrals = [],
 }: ReferralSectionProps) {
   const [copied, setCopied] = useState(false);
 
@@ -171,6 +179,32 @@ export function ReferralSection({
               <span>Facebook</span>
             </a>
           </div>
+        </div>
+
+        {/* Résumé de l'équipe et des filleuls directs */}
+        <div className="pt-3 border-t border-white/20 relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white/90">Filleuls directs (Niveau 1)</p>
+              <p className="text-sm font-black text-white">
+                {level1Count} membre{level1Count > 1 ? "s" : ""}{" "}
+                <span className="text-[11px] font-semibold text-emerald-100">
+                  ({referrals.filter((r) => r.isActivated).length} actif{referrals.filter((r) => r.isActivated).length > 1 ? "s" : ""}, {referrals.filter((r) => !r.isActivated).length} en attente)
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/equipe"
+            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-white hover:bg-gray-50 text-[#14500C] text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all"
+          >
+            <span>Voir mon équipe</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
       </div>
     </div>

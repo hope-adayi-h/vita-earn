@@ -455,8 +455,8 @@ export async function manageAdminRoleAction(params: {
       const adminClient = createAdminClient();
       const { data: targetProfile } = await adminClient
         .from("profiles")
-        .select("id, email, full_name")
-        .or(`email.eq.${targetId},full_name.eq.${targetId}`)
+        .select("id, full_name, username")
+        .or(`id.eq.${targetId},full_name.eq.${targetId},username.eq.${targetId}`)
         .maybeSingle();
 
       if (targetProfile?.id) {
@@ -645,7 +645,7 @@ export async function activateUserAction(params: {
       const adminClient = createAdminClient();
       await adminClient
         .from("profiles")
-        .update({ is_activated: true, updated_at: new Date().toISOString() })
+        .update({ is_activated: true, activated_at: new Date().toISOString() })
         .eq("id", params.userId);
 
       const { data: existingPayment } = await adminClient
@@ -660,13 +660,21 @@ export async function activateUserAction(params: {
         await adminClient.from("payments").insert({
           user_id: params.userId,
           amount: 4500,
-          currency: "XOF",
           provider: "MANUAL_ADMIN",
           status: "succeeded",
           purpose: "activation",
           idempotency_key: `manual_act_${params.userId}_${Date.now()}`,
         });
       }
+
+      // Distribuer les commissions d'affiliation au parrain
+      try {
+        const { processSuccessfulActivation } = await import("@/lib/payments/activation-service");
+        await processSuccessfulActivation({
+          userId: params.userId,
+          providerRef: "manual_admin",
+        });
+      } catch {}
 
       await adminClient.from("audit_logs").insert({
         user_id: user.id,
@@ -1049,12 +1057,12 @@ export async function changeUserUplineAction(params: {
       const adminClient = createAdminClient();
       const { data: refProfile } = await adminClient
         .from("profiles")
-        .select("id, full_name, email, referral_code")
-        .or(`email.eq.${targetUpline.toLowerCase()},full_name.ilike.%${targetUpline}%,referral_code.eq.${targetUpline.toUpperCase()}`)
+        .select("id, full_name, username, referral_code")
+        .or(`username.ilike.${targetUpline},full_name.ilike.%${targetUpline}%,referral_code.eq.${targetUpline.toUpperCase()}`)
         .maybeSingle();
 
       if (refProfile) {
-        foundUplineName = refProfile.full_name || refProfile.email || foundUplineName;
+        foundUplineName = refProfile.full_name || refProfile.username || foundUplineName;
         foundUplineId = refProfile.id;
 
         const { data: existingRef } = await adminClient

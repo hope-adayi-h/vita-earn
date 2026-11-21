@@ -66,7 +66,7 @@ export function EquipeView({
       return referrals.filter((r) => !r.isActivated);
     }
     const numLevel = Number(activeTab) as 1 | 2 | 3;
-    return referrals.filter((r) => r.level === numLevel && r.isActivated);
+    return referrals.filter((r) => r.level === numLevel);
   }, [activeTab, referrals]);
 
   const filteredMembers = useMemo(() => {
@@ -175,6 +175,50 @@ export function EquipeView({
             <span>Commission par membre : {tabConfig.commissionRate}</span>
           </div>
         )}
+      </div>
+
+      {/* Onglets de navigation entre Niveaux & Inactifs */}
+      <div className="flex items-center gap-2 p-1.5 bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] rounded-2xl overflow-x-auto shadow-2xs">
+        <Link
+          href="/equipe?level=1"
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+            activeTab === "1"
+              ? "bg-[#16A34A] text-white shadow-xs"
+              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+          }`}
+        >
+          Niveau 1 ({referrals.filter((r) => r.level === 1).length})
+        </Link>
+        <Link
+          href="/equipe?level=2"
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+            activeTab === "2"
+              ? "bg-[#16A34A] text-white shadow-xs"
+              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+          }`}
+        >
+          Niveau 2 ({referrals.filter((r) => r.level === 2).length})
+        </Link>
+        <Link
+          href="/equipe?level=3"
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+            activeTab === "3"
+              ? "bg-[#16A34A] text-white shadow-xs"
+              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+          }`}
+        >
+          Niveau 3 ({referrals.filter((r) => r.level === 3).length})
+        </Link>
+        <Link
+          href="/equipe?level=inactifs"
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+            activeTab === "inactifs"
+              ? "bg-amber-600 text-white shadow-xs"
+              : "text-amber-700 dark:text-amber-400 hover:text-amber-800"
+          }`}
+        >
+          Inactifs ({inactifsCount})
+        </Link>
       </div>
 
       {/* 2. CARTES STATISTIQUES EN HAUT */}

@@ -235,14 +235,14 @@ export default async function AdminDashboardPage() {
       // 7. Administrateurs
       const { data: dbAdmins } = await adminClient
         .from("profiles")
-        .select("id, email, full_name")
+        .select("id, full_name, username")
         .eq("role", "admin");
 
       if (dbAdmins && dbAdmins.length > 0) {
         currentAdmins = dbAdmins.map((a) => ({
           id: a.id,
-          email: a.email || "",
-          name: a.full_name || a.email?.split("@")[0] || "Admin",
+          email: SUPER_ADMIN_EMAIL,
+          name: a.full_name || a.username || "Admin",
         }));
       }
     } catch {
