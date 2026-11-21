@@ -391,7 +391,10 @@ export function Navbar({ user }: NavbarProps) {
                   <img
                     src={avatar}
                     alt={userDisplayName || "Avatar"}
-                    className="w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 rounded-full object-cover border border-emerald-500/40 shadow-xs"
+                    width={36}
+                    height={36}
+                    style={{ width: "36px", height: "36px" }}
+                    className="w-9 h-9 rounded-full object-cover border border-emerald-500/40 shadow-xs shrink-0"
                   />
                   {/* Point vert en haut montrant le statut en ligne */}
                   <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
