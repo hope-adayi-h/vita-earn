@@ -130,7 +130,8 @@ export async function getActivationData(): Promise<ActivationData> {
     fullName = sessionUser.fullName || sessionUser.username || "Utilisateur";
     phone = sessionUser.phone;
     country = sessionUser.country;
-    isActivated = Boolean(sessionUser.isActivated || activatedCookie);
+    // Règle 4 : Source de vérité stricte, sessionUser.isActivated prime
+    isActivated = Boolean(sessionUser.isActivated);
   } else if (testUser) {
     username = testUser;
     fullName = testUser;
@@ -165,7 +166,7 @@ export async function getActivationData(): Promise<ActivationData> {
           fullName = lastAcc.username || "Utilisateur";
           phone = lastAcc.phone;
           country = lastAcc.country;
-          isActivated = Boolean(lastAcc.isActivated || activatedCookie);
+          isActivated = Boolean(lastAcc.isActivated);
         }
       }
     }
@@ -179,7 +180,8 @@ export async function getActivationData(): Promise<ActivationData> {
       .maybeSingle();
 
     if (profile) {
-      isActivated = Boolean(profile.is_activated || sessionUser?.isActivated || activatedCookie);
+      // Source de vérité serveur absolue : public.profiles.is_activated
+      isActivated = Boolean(profile.is_activated);
       fullName = profile.full_name || sessionUser?.fullName || user.email || "Utilisateur";
       username = sessionUser?.username || profile.full_name || user.email?.split("@")[0] || "Utilisateur";
       phone = profile.phone || sessionUser?.phone;

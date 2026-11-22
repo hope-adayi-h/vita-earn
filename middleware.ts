@@ -271,10 +271,15 @@ export async function middleware(request: NextRequest) {
     testUser?.toLowerCase() === "espoir";
 
   // Détection du statut d'activation effectif
-  const isUserActivated =
-    isAccountActivated ||
-    Boolean(sessionUserObj?.isActivated) ||
-    isAdminUser;
+  let isUserActivated = false;
+  if (isAdminUser) {
+    isUserActivated = true;
+  } else if (sessionUserObj) {
+    // Si une session utilisateur existe, son statut d'activation fait foi
+    isUserActivated = Boolean(sessionUserObj.isActivated);
+  } else {
+    isUserActivated = isAccountActivated;
+  }
 
   // RÈGLE P0 : Sas de déverrouillage Administrateur obligatoire (Face ID / Code Secret)
   // Le sas /admin/lock reste accessible pour la saisie du code secret maître

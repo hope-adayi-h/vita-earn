@@ -357,23 +357,25 @@ export function ActivationClient({
         </div>
       </div>
 
-      {/* CARTE 3 : Actions Rapides */}
-      <div className="bg-white rounded-2xl border border-gray-200/80 p-5 shadow-xs">
-        <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
-          <h2 className="text-sm font-bold text-gray-900">{t("act.quickActions")}</h2>
-          <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600 border border-sky-100">
-            <ArrowLeftRight className="w-4 h-4" />
+      {/* CARTE 3 : Actions Rapides (Accessible uniquement lorsque le compte est activé) */}
+      {initialData.isActivated && (
+        <div className="bg-white rounded-2xl border border-gray-200/80 p-5 shadow-xs">
+          <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
+            <h2 className="text-sm font-bold text-gray-900">{t("act.quickActions")}</h2>
+            <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600 border border-sky-100">
+              <ArrowLeftRight className="w-4 h-4" />
+            </div>
           </div>
-        </div>
 
-        <Link
-          href="/"
-          className="w-full touch-target rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-sm py-3 px-4 flex items-center justify-center gap-2 shadow-xs transition-colors"
-        >
-          <Home className="w-4 h-4 text-white" />
-          <span>{t("act.dashboard")}</span>
-        </Link>
-      </div>
+          <Link
+            href="/"
+            className="w-full touch-target rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-sm py-3 px-4 flex items-center justify-center gap-2 shadow-xs transition-colors"
+          >
+            <Home className="w-4 h-4 text-white" />
+            <span>{t("act.dashboard")}</span>
+          </Link>
+        </div>
+      )}
 
       {/* CARTE 4 : Paiement Mobile Money Direct (STK Push In-App) */}
       <div className="bg-white rounded-2xl border border-gray-200/80 p-5 shadow-xs relative overflow-hidden">

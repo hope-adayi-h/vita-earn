@@ -284,6 +284,8 @@ export async function signUpAction(
   cookieStore.set("vita_test_user", cleanUsername, AUTH_COOKIE_OPTIONS);
   cookieStore.set("vita_test_email", cleanEmail, AUTH_COOKIE_OPTIONS);
   cookieStore.delete("vita_logged_out");
+  cookieStore.delete("vita_account_activated");
+  cookieStore.delete("vita_admin_unlocked");
   if (phone) {
     cookieStore.set("vita_registered_phone", phone, { ...AUTH_COOKIE_OPTIONS, maxAge: 60 * 60 * 24 * 365 });
   }

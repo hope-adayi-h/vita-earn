@@ -194,7 +194,13 @@ export default async function HomePage() {
       ]);
 
       const profile = profileRes.data;
-      isActivated = Boolean(profile?.is_activated || sessionUser?.isActivated || isActivatedCookie);
+      if (profile) {
+        isActivated = Boolean(profile.is_activated);
+      } else if (sessionUser) {
+        isActivated = Boolean(sessionUser.isActivated);
+      } else {
+        isActivated = Boolean(isActivatedCookie);
+      }
       welcomeBonusClaimed = Boolean(profile?.welcome_bonus_claimed);
 
       const rawName =
