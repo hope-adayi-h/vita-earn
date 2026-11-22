@@ -127,39 +127,79 @@ export function detectCountryAndMethod(phoneNumber: string, methodStr: string): 
 }
 
 /**
- * Calcule le montant à prélever chez l'agrégateur SasPay :
+ * Calcule le montant de base envoyé à SasPay selon l'Option 2 validée par le client :
  * RÈGLE ABSOLUE : L'utilisateur est débité STRICTEMENT de 4 500 FCFA sur son compte Mobile Money.
- * Tous les frais de l'agrégateur sont supportés par le compte marchand (mode INCLUSIVE).
+ * Comme l'opérateur SasPay applique un surcoût ADD_ON au montant transmis (ex: 4.1% pour Togo),
+ * on envoie le montant net inversé (ex: 4 323 FCFA pour le Togo).
+ * SasPay calcule alors 177 FCFA de frais et le débit total sur le téléphone du client
+ * est EXACTEMENT de 4 500 FCFA (4 323 + 177 = 4 500 FCFA).
+ * L'administrateur absorbe ainsi les frais de transaction sur sa marge plateforme.
  */
 export function calculateEffectiveChargeAmount(country?: string, phone?: string): {
   nominalAmount: number;
+  baseAmountForSasPay: number;
   chargeAmount: number;
-  isHighFeeCountry: boolean;
+  estimatedFee: number;
   countryCode: string;
 } {
   const c = (country || "").toUpperCase().trim();
   const cleanPhone = (phone || "").replace(/[\s\-\(\)]/g, "");
 
-  // Déterminer le code pays normalisé
+  // Déterminer le code pays normalisé et le pourcentage de frais de l'opérateur SasPay
   let countryCode = "TG";
-  if (cleanPhone.startsWith("+233") || cleanPhone.startsWith("233") || c.includes("GH")) countryCode = "GH";
-  else if (cleanPhone.startsWith("+241") || cleanPhone.startsWith("241") || c.includes("GA")) countryCode = "GA";
-  else if (cleanPhone.startsWith("+242") || cleanPhone.startsWith("242") || c.includes("CG")) countryCode = "CG";
-  else if (cleanPhone.startsWith("+243") || cleanPhone.startsWith("243") || c.includes("CD")) countryCode = "CD";
-  else if (cleanPhone.startsWith("+224") || cleanPhone.startsWith("224") || c.includes("GN")) countryCode = "GN";
-  else if (cleanPhone.startsWith("+227") || cleanPhone.startsWith("227") || c.includes("NE")) countryCode = "NE";
-  else if (cleanPhone.startsWith("+226") || cleanPhone.startsWith("226") || c.includes("BF") || c.includes("OUAGA")) countryCode = "BF";
-  else if (cleanPhone.startsWith("+260") || cleanPhone.startsWith("260") || c.includes("ZM")) countryCode = "ZM";
-  else if (cleanPhone.startsWith("+225") || cleanPhone.startsWith("225") || c.includes("CI")) countryCode = "CI";
-  else if (cleanPhone.startsWith("+229") || cleanPhone.startsWith("229") || c.includes("BJ")) countryCode = "BJ";
-  else if (cleanPhone.startsWith("+221") || cleanPhone.startsWith("221") || c.includes("SN")) countryCode = "SN";
-  else if (cleanPhone.startsWith("+237") || cleanPhone.startsWith("237") || c.includes("CM")) countryCode = "CM";
-  else if (cleanPhone.startsWith("+223") || cleanPhone.startsWith("223") || c.includes("ML")) countryCode = "ML";
+  let feeRatePercent = 4.1; // Par défaut Togo (T-Money & Moov Togo : 4.1%)
+
+  if (cleanPhone.startsWith("+228") || cleanPhone.startsWith("228") || c === "TG") {
+    countryCode = "TG";
+    feeRatePercent = 4.1;
+  } else if (cleanPhone.startsWith("+229") || cleanPhone.startsWith("229") || c === "BJ") {
+    countryCode = "BJ";
+    feeRatePercent = 3.5;
+  } else if (cleanPhone.startsWith("+225") || cleanPhone.startsWith("225") || c === "CI") {
+    countryCode = "CI";
+    feeRatePercent = 3.9;
+  } else if (cleanPhone.startsWith("+226") || cleanPhone.startsWith("226") || c === "BF") {
+    countryCode = "BF";
+    feeRatePercent = 4.2;
+  } else if (cleanPhone.startsWith("+221") || cleanPhone.startsWith("221") || c === "SN") {
+    countryCode = "SN";
+    feeRatePercent = 5.15;
+  } else if (cleanPhone.startsWith("+223") || cleanPhone.startsWith("223") || c === "ML") {
+    countryCode = "ML";
+    feeRatePercent = 4.0;
+  } else if (cleanPhone.startsWith("+237") || cleanPhone.startsWith("237") || c === "CM") {
+    countryCode = "CM";
+    feeRatePercent = 4.75;
+  } else if (cleanPhone.startsWith("+241") || cleanPhone.startsWith("241") || c === "GA") {
+    countryCode = "GA";
+    feeRatePercent = 5.0;
+  } else if (cleanPhone.startsWith("+242") || cleanPhone.startsWith("242") || c === "CG") {
+    countryCode = "CG";
+    feeRatePercent = 5.7;
+  } else if (cleanPhone.startsWith("+224") || cleanPhone.startsWith("224") || c === "GN") {
+    countryCode = "GN";
+    feeRatePercent = 5.25;
+  } else if (cleanPhone.startsWith("+227") || cleanPhone.startsWith("227") || c === "NE") {
+    countryCode = "NE";
+    feeRatePercent = 5.5;
+  } else if (cleanPhone.startsWith("+233") || cleanPhone.startsWith("233") || c === "GH") {
+    countryCode = "GH";
+    feeRatePercent = 4.0;
+  } else if (cleanPhone.startsWith("+243") || cleanPhone.startsWith("243") || c === "CD") {
+    countryCode = "CD";
+    feeRatePercent = 4.7;
+  }
+
+  const nominalAmount = 4500;
+  // Calcul inverse pour que : baseAmount + (baseAmount * feeRatePercent / 100) = 4500 FCFA
+  const baseAmountForSasPay = Math.round(nominalAmount / (1 + feeRatePercent / 100));
+  const estimatedFee = nominalAmount - baseAmountForSasPay;
 
   return {
-    nominalAmount: 4500,
-    chargeAmount: 4500,
-    isHighFeeCountry: false,
+    nominalAmount,
+    baseAmountForSasPay,
+    chargeAmount: nominalAmount, // Le client est débité de 4 500 FCFA
+    estimatedFee,
     countryCode,
   };
 }

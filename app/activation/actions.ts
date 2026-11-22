@@ -355,21 +355,22 @@ export async function startSasPayActivationAction(params: {
       };
     }
 
-    // 1. Créer la session chez SasPay (frais pris en charge par le compte marchand)
+    // 1. Créer la session chez SasPay (Option 2 : calcul inverse pour que le débit sur le téléphone du client soit strictement 4 500 FCFA)
     const sessionRes = await saspay.createCheckoutSession({
-      amount: 4500,
+      amount: feeInfo.baseAmountForSasPay,
       currency: "XOF",
       description: "Activation de compte VitaEarn",
       customerEmail: effectiveEmail,
       customerName: effectiveName,
       customerPhone: formattedPhone,
       returnUrl,
-      feeChargeMode: "DEDUCTED",
       metadata: {
         userId: effectiveUserId,
         purpose: "activation",
-        nominalAmount: 4500,
-        chargeAmount: 4500,
+        nominalAmount: feeInfo.nominalAmount,
+        chargeAmount: feeInfo.chargeAmount,
+        baseAmountForSasPay: feeInfo.baseAmountForSasPay,
+        estimatedFee: feeInfo.estimatedFee,
         country: userCountry.code,
       },
     });

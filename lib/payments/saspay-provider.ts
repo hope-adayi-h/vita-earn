@@ -30,23 +30,23 @@ export class SasPayPaymentProvider implements PaymentProvider {
       (params.metadata?.country as string) || (params.metadata?.countryCode as string),
       params.customerPhone
     );
-    const chargeAmount = feeInfo.chargeAmount;
 
     const res = await this.client.createCheckoutSession({
-      amount: chargeAmount,
+      amount: feeInfo.baseAmountForSasPay,
       currency: params.currency || "XOF",
       description: `Activation compte VitaEarn #${params.userId.substring(0, 8)}`,
       customerEmail: params.customerEmail || "client@vitaearn.com",
       customerName: params.customerName || "Client VitaEarn",
       customerPhone: params.customerPhone,
       returnUrl,
-      feeChargeMode: "DEDUCTED",
       metadata: {
         userId: params.userId,
         purpose: params.purpose,
         idempotencyKey: params.idempotencyKey,
         nominalAmount: feeInfo.nominalAmount,
         chargeAmount: feeInfo.chargeAmount,
+        baseAmountForSasPay: feeInfo.baseAmountForSasPay,
+        estimatedFee: feeInfo.estimatedFee,
         country: feeInfo.countryCode,
       },
     });
