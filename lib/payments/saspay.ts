@@ -191,8 +191,12 @@ export function calculateEffectiveChargeAmount(country?: string, phone?: string)
   }
 
   const nominalAmount = 4500;
-  // Calcul inverse pour que : baseAmount + (baseAmount * feeRatePercent / 100) = 4500 FCFA
-  const baseAmountForSasPay = Math.round(nominalAmount / (1 + feeRatePercent / 100));
+  // Calcul inverse exact : baseAmount + Math.ceil(baseAmount * feeRatePercent / 100) = 4500 FCFA
+  // Prévient le décalage de +1 FCFA causé par l'arrondi supérieur bancaire de SasPay
+  let baseAmountForSasPay = Math.floor(nominalAmount / (1 + feeRatePercent / 100));
+  while (baseAmountForSasPay + Math.ceil(baseAmountForSasPay * (feeRatePercent / 100)) > nominalAmount) {
+    baseAmountForSasPay--;
+  }
   const estimatedFee = nominalAmount - baseAmountForSasPay;
 
   return {
