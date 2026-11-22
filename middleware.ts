@@ -321,7 +321,8 @@ export async function middleware(request: NextRequest) {
   // 4. Si l'utilisateur EST déjà connecté et visite /auth/login
   if (isAuthenticated && path === "/auth/login") {
     if (!isUserActivated && !isAdminUser) {
-      return NextResponse.redirect(new URL("/activation", request.url));
+      // Permettre d'accéder au formulaire de connexion pour pouvoir se connecter à un autre compte
+      return response;
     }
     const redirectParam = request.nextUrl.searchParams.get("redirect");
     if (
