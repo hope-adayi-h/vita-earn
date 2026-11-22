@@ -266,27 +266,13 @@ async function syncTasksToSupabase(tasks: StoredDailyTask[]): Promise<void> {
 
 /**
  * Applique la règle de fermeture automatique à 21h00 Lomé GMT
- * Si l'heure serveur >= 21h00, toutes les tâches sont automatiquement désactivées pour la soirée
+ * Ne désactive pas de force les tâches sauvegardées par l'administrateur
  */
 function applyNightAutoDeactivation(tasks: StoredDailyTask[]): {
   tasks: StoredDailyTask[];
   modified: boolean;
 } {
-  const lomeTime = getLomeServerTime();
-  if (!lomeTime.isPast21h) {
-    return { tasks, modified: false };
-  }
-
-  let modified = false;
-  const updated = tasks.map((t) => {
-    if (t.isActive) {
-      modified = true;
-      return { ...t, isActive: false, updatedAt: new Date().toISOString() };
-    }
-    return t;
-  });
-
-  return { tasks: updated, modified };
+  return { tasks, modified: false };
 }
 
 /**
@@ -453,9 +439,12 @@ export function deleteStoredDailyTask(id: string): boolean {
  * 2. Si aucune tâche n'est activement programmée par l'administrateur, respect des règles
  *    de fermeture du week-end et de 21h00 GMT.
  */
-export function getTodayTaskForLome(timeInfo?: LomeDateInfo): StoredDailyTask | null {
+export function getTodayTaskForLome(
+  timeInfo?: LomeDateInfo,
+  customTasks?: StoredDailyTask[]
+): StoredDailyTask | null {
   const time = timeInfo || getLomeServerTime();
-  const tasks = getAllStoredDailyTasks();
+  const tasks = customTasks && customTasks.length > 0 ? customTasks : getAllStoredDailyTasks();
 
   // 1. Tâche avec une date spécifique correspondant exactement à aujourd'hui
   const specificDateTask = tasks.find(

@@ -98,8 +98,8 @@ export default async function TachesPage() {
   }
 
   // 3. Récupération et synchronisation des tâches (Supabase platform_settings + local)
-  await fetchAndSyncDailyTasks();
-  const todayRawTask: StoredDailyTask | null = getTodayTaskForLome(lomeTime);
+  const syncedTasks = await fetchAndSyncDailyTasks();
+  const todayRawTask: StoredDailyTask | null = getTodayTaskForLome(lomeTime, syncedTasks);
 
   let publicTask: PublicDailyTask | null = null;
   let hasValidatedToday = false;
