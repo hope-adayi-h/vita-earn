@@ -422,6 +422,8 @@ export async function signInAction(
       cookieStore.delete("vita_logged_out");
       if (isActivated) {
         cookieStore.set("vita_account_activated", "true", AUTH_COOKIE_OPTIONS);
+      } else {
+        cookieStore.delete("vita_account_activated");
       }
       if (matchedAccount.phone) {
         cookieStore.set("vita_registered_phone", matchedAccount.phone, {
@@ -432,6 +434,10 @@ export async function signInAction(
 
       if (matchedAccount.role === "admin") {
         redirect("/admin");
+      }
+
+      if (!isActivated) {
+        redirect("/activation");
       }
 
       redirect("/");

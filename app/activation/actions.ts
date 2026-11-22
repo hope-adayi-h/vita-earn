@@ -606,12 +606,13 @@ export async function checkSasPayPaymentStatusAction(params: {
       try {
         const supabase = createClient();
         const { data: authData } = await supabase.auth.getUser();
-        if (authData?.user) {
+        const targetProfId = authData?.user?.id || (finalUserId && finalUserId.length === 36 ? finalUserId : null);
+        if (targetProfId) {
           const adminClient = createAdminClient();
           await adminClient
             .from("profiles")
-            .update({ is_activated: true, updated_at: new Date().toISOString() })
-            .eq("id", authData.user.id);
+            .update({ is_activated: true, activated_at: new Date().toISOString() })
+            .eq("id", targetProfId);
         }
       } catch {}
 

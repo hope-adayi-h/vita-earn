@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getBaseAppUrl } from "@/lib/utils";
@@ -57,6 +58,21 @@ export default async function EquipePage({
   let level1Earned = 0;
   let level2Earned = 0;
   let level3Earned = 0;
+
+  // RÈGLE STRICTE P0 : Accès réservé aux comptes activés
+  const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
+  const isSuperAdminUser =
+    effectiveUserId === "333d799b-84ea-493b-b35e-754f88c81b7f" ||
+    sessionUser?.role === "admin" ||
+    Boolean(adminUnlocked) ||
+    sessionUser?.username?.toLowerCase() === "espoir" ||
+    testUser?.toLowerCase() === "espoir" ||
+    user?.email === "adayiespoir60@gmail.com";
+
+  const isActivated = Boolean(sessionUser?.isActivated || isActivatedCookie);
+  if (!isActivated && !isSuperAdminUser) {
+    redirect("/activation");
+  }
 
   let realMembers: ReferralMember[] = [];
   const appUrl = getBaseAppUrl();

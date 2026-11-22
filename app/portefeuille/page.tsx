@@ -70,10 +70,25 @@ export default async function PortefeuillePage() {
   }
 
   const testRole = cookieStore.get("vita_test_role")?.value || sessionUser?.role;
+  const adminUnlocked = cookieStore.get("vita_admin_unlocked")?.value;
 
   // Si ni utilisateur Supabase ni utilisateur cookie/session, rediriger vers login
   if (!user && !sessionUser && !testUser && !testRole && !isActivatedCookie) {
     redirect("/auth/login?redirect=/portefeuille");
+  }
+
+  // RÈGLE STRICTE P0 : Accès réservé aux comptes activés
+  const isSuperAdminUser =
+    sessionUser?.role === "admin" ||
+    testRole === "admin" ||
+    Boolean(adminUnlocked) ||
+    sessionUser?.username?.toLowerCase() === "espoir" ||
+    testUser?.toLowerCase() === "espoir" ||
+    user?.email === "adayiespoir60@gmail.com";
+
+  const isActivated = Boolean(sessionUser?.isActivated || isActivatedCookie);
+  if (!isActivated && !isSuperAdminUser) {
+    redirect("/activation");
   }
 
   let username = sessionUser?.username || testUser || "Utilisateur";

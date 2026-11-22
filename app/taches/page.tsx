@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { ArrowLeft, Clock, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -77,6 +78,23 @@ export default async function TachesPage() {
         }
       }
     } catch {}
+  }
+
+  // RÈGLE STRICTE P0 : Accès réservé aux membres connectés et activés
+  const adminUnlocked = cookieStore.get("vita_admin_unlocked")?.value;
+  const testRole = cookieStore.get("vita_test_role")?.value;
+  const isSuperAdminUser =
+    testRole === "admin" ||
+    Boolean(adminUnlocked) ||
+    testUser?.toLowerCase() === "espoir" ||
+    userId === "333d799b-84ea-493b-b35e-754f88c81b7f";
+
+  if (!isLoggedIn && !isSuperAdminUser) {
+    redirect("/auth/login?redirect=/taches");
+  }
+
+  if (!isActivated && !isSuperAdminUser) {
+    redirect("/activation");
   }
 
   // 3. Récupération et synchronisation des tâches (Supabase platform_settings + local)

@@ -372,6 +372,20 @@ export default async function HomePage() {
     }
   }
 
+  // RÈGLE STRICTE P0 : Un utilisateur non activé ne peut JAMAIS accéder au tableau de bord
+  const isSuperAdminUser =
+    effectiveUserId === "333d799b-84ea-493b-b35e-754f88c81b7f" ||
+    sessionUser?.role === "admin" ||
+    testRole === "admin" ||
+    Boolean(adminUnlocked) ||
+    sessionUser?.username?.toLowerCase() === "espoir" ||
+    testUser?.toLowerCase() === "espoir" ||
+    user?.email === "adayiespoir60@gmail.com";
+
+  if (!isActivated && !isSuperAdminUser) {
+    redirect("/activation");
+  }
+
   // Si le nom est toujours vide ou vaut "Membre", récupérer le compte réel dans le coffre persistant vita_accounts
   if (!userName || userName.toLowerCase() === "membre" || userName.toLowerCase() === "utilisateur") {
     if (testUser && testUser.toLowerCase() !== "membre" && testUser.toLowerCase() !== "utilisateur") {

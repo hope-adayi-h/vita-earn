@@ -99,19 +99,20 @@ export async function middleware(request: NextRequest) {
 
   // 2. Vérification rapide et optimisée de la session utilisateur
   let isAuthenticated = false;
+  let sessionUserObj: any = null;
 
   // Optimisation P0 : Vérification instantanée des cookies locaux sans appel réseau bloquant
   const sessionUserCookie = request.cookies.get("vita_session_user")?.value;
   if (sessionUserCookie) {
     try {
-      const parsed = JSON.parse(sessionUserCookie);
-      if (parsed?.id || parsed?.username || parsed?.email) {
+      sessionUserObj = JSON.parse(sessionUserCookie);
+      if (sessionUserObj?.id || sessionUserObj?.username || sessionUserObj?.email) {
         isAuthenticated = true;
       }
     } catch {
       try {
-        const parsed = JSON.parse(decodeURIComponent(sessionUserCookie));
-        if (parsed?.id || parsed?.username || parsed?.email) {
+        sessionUserObj = JSON.parse(decodeURIComponent(sessionUserCookie));
+        if (sessionUserObj?.id || sessionUserObj?.username || sessionUserObj?.email) {
           isAuthenticated = true;
         }
       } catch {}
@@ -139,6 +140,9 @@ export async function middleware(request: NextRequest) {
         const latest = parsedAccounts[parsedAccounts.length - 1];
         if (latest?.id || latest?.username || latest?.email) {
           isAuthenticated = true;
+          if (!sessionUserObj) {
+            sessionUserObj = latest;
+          }
           // Si vita_session_user est manquant, le restaurer immédiatement
           if (!sessionUserCookie) {
             response.cookies.set("vita_session_user", JSON.stringify(latest), {
@@ -222,14 +226,19 @@ export async function middleware(request: NextRequest) {
               (user.user_metadata?.username as string) ||
               (user.user_metadata?.full_name as string) ||
               (user.email ? user.email.split("@")[0] : "Membre");
+            const isUserActuallyActivated = Boolean(
+              user.user_metadata?.is_activated ||
+              request.cookies.get("vita_account_activated")?.value === "true"
+            );
             const healedUser = {
               id: user.id,
               username: rawName,
               fullName: rawName,
               email: user.email || "",
               role: (user.user_metadata?.role as string) || "user",
-              isActivated: true,
+              isActivated: isUserActuallyActivated,
             };
+            sessionUserObj = healedUser;
             response.cookies.set("vita_session_user", JSON.stringify(healedUser), {
               path: "/",
               httpOnly: true,
@@ -251,6 +260,21 @@ export async function middleware(request: NextRequest) {
       }
     }
   }
+
+  // Détection du rôle administrateur
+  const isAdminUser =
+    testRole === "admin" ||
+    Boolean(adminUnlockCookie) ||
+    sessionUserObj?.role === "admin" ||
+    sessionUserObj?.username?.toLowerCase() === "espoir" ||
+    sessionUserObj?.email === "adayiespoir60@gmail.com" ||
+    testUser?.toLowerCase() === "espoir";
+
+  // Détection du statut d'activation effectif
+  const isUserActivated =
+    isAccountActivated ||
+    Boolean(sessionUserObj?.isActivated) ||
+    isAdminUser;
 
   // RÈGLE P0 : Sas de déverrouillage Administrateur obligatoire (Face ID / Code Secret)
   // Le sas /admin/lock reste accessible pour la saisie du code secret maître
@@ -275,10 +299,25 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  // 3b. RÈGLE STRICTE P0 : Verrouillage absolu du tableau de bord et des sections membres
+  // pour tout utilisateur non activé. Redirection obligatoire vers /activation.
+  if (isAuthenticated && !isAdminUser && !isUserActivated) {
+    const isAllowedForUnactivated =
+      path === "/activation" ||
+      path.startsWith("/activation/") ||
+      path.startsWith("/auth/") ||
+      path === "/auth/logout";
+
+    if (!isAllowedForUnactivated) {
+      return NextResponse.redirect(new URL("/activation", request.url));
+    }
+  }
+
   // 4. Si l'utilisateur EST déjà connecté et visite /auth/login
-  // Note : si l'utilisateur visite /auth/register avec un parrain (test d'inscription),
-  // on lui permet d'afficher la page d'inscription pour créer un nouveau compte
   if (isAuthenticated && path === "/auth/login") {
+    if (!isUserActivated && !isAdminUser) {
+      return NextResponse.redirect(new URL("/activation", request.url));
+    }
     const redirectParam = request.nextUrl.searchParams.get("redirect");
     if (
       redirectParam &&
@@ -292,6 +331,9 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAuthenticated && path === "/auth/register" && !request.nextUrl.searchParams.has("sponsor")) {
+    if (!isUserActivated && !isAdminUser) {
+      return NextResponse.redirect(new URL("/activation", request.url));
+    }
     return NextResponse.redirect(new URL("/", request.url));
   }
 

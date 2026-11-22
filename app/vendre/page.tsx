@@ -17,6 +17,10 @@ export default async function VendrePage() {
     redirect("/auth/login?redirect=/vendre");
   }
 
+  if (!data.isActivated) {
+    redirect("/activation");
+  }
+
   return (
     <Suspense
       fallback={
