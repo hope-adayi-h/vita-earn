@@ -394,6 +394,7 @@ export async function startSasPayActivationAction(params: {
         phone: formattedPhone,
       },
       otp: params.otp,
+      feeChargeMode: "DEDUCTED",
     });
 
     // 3. Enregistrement dans les tables de suivi (payments + deposits)

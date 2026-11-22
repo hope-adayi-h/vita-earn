@@ -289,6 +289,7 @@ export class SasPayClient {
       phone: string;
     };
     otp?: string;
+    feeChargeMode?: "DEDUCTED" | "ADD_ON";
   }): Promise<{
     success: boolean;
     status?: string;
@@ -311,6 +312,7 @@ export class SasPayClient {
           network: params.network,
           customer: params.customer,
           otp: params.otp || "",
+          fee_charge_mode: params.feeChargeMode || "DEDUCTED",
         }),
       });
 

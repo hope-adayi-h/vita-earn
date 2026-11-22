@@ -683,19 +683,11 @@ export function ActivationClient({
                 )}
               </div>
             ) : (
-              <div className="pt-2 grid grid-cols-2 gap-3">
-                <Link
-                  href="/"
-                  className="touch-target px-3 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <Home className="w-4 h-4" />
-                  <span>{t("act.dashboard")}</span>
-                </Link>
-
+              <div className="pt-2">
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="touch-target px-3 py-2.5 rounded-xl bg-[#0084FF] hover:bg-[#0070D8] text-white font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 shadow-md transition-colors disabled:opacity-75 disabled:cursor-wait cursor-pointer"
+                  className="touch-target w-full px-4 py-3 rounded-xl bg-[#0084FF] hover:bg-[#0070D8] text-white font-bold text-sm text-center flex items-center justify-center gap-2 shadow-md transition-colors disabled:opacity-75 disabled:cursor-wait cursor-pointer"
                 >
                   {isProcessing ? (
                     <>
