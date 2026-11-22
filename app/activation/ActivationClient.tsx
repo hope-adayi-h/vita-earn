@@ -721,16 +721,18 @@ export function ActivationClient({
         )}
       </div>
 
-      {/* BOUTON DU BAS : Aller au tableau de bord */}
-      <div className="flex justify-end pt-1">
-        <Link
-          href="/"
-          className="touch-target px-4 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs sm:text-sm inline-flex items-center gap-2 shadow-xs transition-colors"
-        >
-          <Home className="w-4 h-4 text-white" />
-          <span>{t("act.dashboard")}</span>
-        </Link>
-      </div>
+      {/* BOUTON DU BAS : Aller au tableau de bord (Uniquement si le compte est activé) */}
+      {initialData.isActivated && (
+        <div className="flex justify-end pt-1">
+          <Link
+            href="/"
+            className="touch-target px-4 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs sm:text-sm inline-flex items-center gap-2 shadow-xs transition-colors"
+          >
+            <Home className="w-4 h-4 text-white" />
+            <span>{t("act.dashboard")}</span>
+          </Link>
+        </div>
+      )}
 
       {/* PILL DU SITE (vitaearn.com) */}
       <div className="text-center pt-2 pb-2">
