@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getBaseAppUrl } from "@/lib/utils";
 import { ReferralSection } from "@/components/ReferralSection";
+import { ProfilePhoneEditor } from "./ProfilePhoneEditor";
 import {
   Wallet,
   Users,
@@ -45,24 +46,61 @@ export default async function ProfilPage() {
     user = data?.user || null;
   } catch {}
 
-  const userEmail = user?.email || testEmail || sessionUser?.email || "";
   const adminClient = createAdminClient();
 
+  // 1. Détection profil et utilisateur
   let profile: any = null;
+  const candidateId = user?.id || (sessionUser?.id && sessionUser.id.includes("-") ? sessionUser.id : null);
+
+  if (candidateId) {
+    const { data } = await adminClient.from("profiles").select("*").eq("id", candidateId).maybeSingle();
+    profile = data;
+  }
+
+  const candidateName = sessionUser?.username || sessionUser?.fullName || testUser;
+  const candidateEmail = user?.email || sessionUser?.email || testEmail;
+
+  if (!profile && candidateName) {
+    const { data } = await adminClient
+      .from("profiles")
+      .select("*")
+      .or(`username.ilike.${candidateName.trim()},full_name.ilike.${candidateName.trim()}`)
+      .limit(1)
+      .maybeSingle();
+    profile = data;
+  }
+
+  // Détection spécifique pour le compte Super Administrateur (Espoir)
+  const isEspoir =
+    candidateName?.toLowerCase() === "espoir" ||
+    testUser?.toLowerCase() === "espoir" ||
+    candidateEmail?.toLowerCase() === "adayiespoir60@gmail.com" ||
+    sessionUser?.role === "admin" ||
+    cookieStore.get("vita_test_role")?.value === "admin";
+
+  if (isEspoir && (!profile || profile.role !== "admin")) {
+    const { data } = await adminClient
+      .from("profiles")
+      .select("*")
+      .eq("role", "admin")
+      .limit(1)
+      .maybeSingle();
+    if (data) profile = data;
+  }
+
+  const activeUserId = profile?.id || candidateId;
   let balance = 0;
   let inviteCount = 0;
   let uplineUsername = "—";
 
-  if (user?.id) {
+  if (activeUserId && activeUserId.includes("-")) {
     try {
-      const [pRes, wRes, refCountRes, uplineRes] = await Promise.all([
-        adminClient.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-        adminClient.from("wallet_balances").select("balance, available_balance").eq("user_id", user.id).maybeSingle(),
-        adminClient.from("referrals").select("id", { count: "exact", head: true }).eq("referrer_id", user.id),
-        adminClient.from("referrals").select("referrer_id").eq("referred_id", user.id).maybeSingle(),
+      const [wRes, refCountRes, uplineRes] = await Promise.all([
+        adminClient.from("wallet_balances").select("balance, available_balance").eq("user_id", activeUserId).maybeSingle(),
+        adminClient.from("referrals").select("id", { count: "exact", head: true }).eq("referrer_id", activeUserId),
+        adminClient.from("referrals").select("referrer_id").eq("referred_id", activeUserId).maybeSingle(),
       ]);
 
-      profile = pRes.data;
       if (wRes.data) {
         balance = Number(wRes.data.available_balance ?? wRes.data.balance) || 0;
       }
@@ -71,11 +109,11 @@ export default async function ProfilPage() {
       if (uplineRes.data?.referrer_id) {
         const { data: uplineProfile } = await adminClient
           .from("profiles")
-          .select("full_name")
+          .select("full_name, username")
           .eq("id", uplineRes.data.referrer_id)
           .maybeSingle();
-        if (uplineProfile?.full_name) {
-          uplineUsername = uplineProfile.full_name;
+        if (uplineProfile?.full_name || uplineProfile?.username) {
+          uplineUsername = uplineProfile.full_name || uplineProfile.username;
         }
       }
     } catch {}
@@ -83,16 +121,28 @@ export default async function ProfilPage() {
     balance = Number(sessionUser.balance) || 0;
   }
 
-  const isActivated = user
-    ? Boolean(profile?.is_activated)
-    : Boolean(isActivatedCookie || sessionUser?.isActivated);
+  // Résolution du parrain si non trouvé via table referrals
+  if (uplineUsername === "—") {
+    if (sessionUser?.upline && sessionUser.upline !== "No One" && sessionUser.upline !== "Aucun") {
+      uplineUsername = sessionUser.upline;
+    } else if (isEspoir || profile?.role === "admin") {
+      uplineUsername = "Aucun";
+    } else {
+      uplineUsername = "Aucun";
+    }
+  }
+
+  const isActivated = isEspoir
+    ? true
+    : Boolean(profile?.is_activated || isActivatedCookie || sessionUser?.isActivated);
 
   const rawUsername =
     profile?.full_name ||
-    sessionUser?.username ||
+    profile?.username ||
     sessionUser?.fullName ||
+    sessionUser?.username ||
     testUser ||
-    (user?.email ? user.email.split("@")[0] : "");
+    (isEspoir ? "Espoir" : "Membre");
 
   const username = rawUsername ? rawUsername.trim().charAt(0).toUpperCase() + rawUsername.trim().slice(1) : "Membre";
 
@@ -120,8 +170,20 @@ export default async function ProfilPage() {
   ];
   const joinedFullDate = `${dateObj.getDate()} ${monthNamesFull[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
 
-  const phone = profile?.phone || sessionUser?.phone || "Non renseigné";
-  const referralCode = profile?.referral_code || sessionUser?.referralCode || "VE8K2X";
+  let phone = profile?.phone || sessionUser?.phone || cookieStore.get("vita_registered_phone")?.value || "";
+  if (!phone || phone === "+228 90 00 00 00") {
+    phone = "Non renseigné";
+  }
+
+  let finalEmail = user?.email || sessionUser?.email || testEmail || "";
+  if (isEspoir && (!finalEmail || finalEmail === "admin@vitaearn.com")) {
+    finalEmail = "adayiespoir60@gmail.com";
+  }
+  if (!finalEmail) {
+    finalEmail = "Non renseigné";
+  }
+
+  const referralCode = profile?.referral_code || sessionUser?.referralCode || (isEspoir ? "VE-ESPOIR" : "VE8K2X");
   const appUrl = getBaseAppUrl();
 
   return (
@@ -267,19 +329,12 @@ export default async function ProfilPage() {
               E-MAIL
             </p>
             <p className="text-sm sm:text-base font-semibold text-[#14201A] dark:text-gray-100 mt-0.5 truncate">
-              {userEmail || "Non renseigné"}
+              {finalEmail}
             </p>
           </div>
 
           {/* TÉLÉPHONE */}
-          <div className="bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] rounded-2xl p-3.5 sm:p-4 shadow-2xs">
-            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-              TÉLÉPHONE
-            </p>
-            <p className="text-sm sm:text-base font-semibold text-[#14201A] dark:text-gray-100 mt-0.5 truncate">
-              {phone}
-            </p>
-          </div>
+          <ProfilePhoneEditor initialPhone={phone} />
 
           {/* PARRAIN */}
           <div className="bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] rounded-2xl p-3.5 sm:p-4 shadow-2xl">

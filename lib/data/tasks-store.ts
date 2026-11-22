@@ -446,28 +446,18 @@ export function deleteStoredDailyTask(id: string): boolean {
 }
 
 /**
- * Trouve la tâche programmée pour aujourd'hui selon le fuseau horaire de Lomé
+ * Trouve la tâche programmée selon le fuseau horaire de Lomé
  * RÈGLE ABSOLUE :
- * 1. Jamais de tâche le week-end
- * 2. À 21h00 pile (Lomé GMT), la session se clôture automatiquement et retourne null
- * 3. Seule une tâche marquée isActive=true par l'administrateur est retournée
+ * 1. Priorité absolue : tâche active (isActive=true) activée par l'administrateur
+ *    (s'affiche immédiatement pour les membres afin de permettre les tests et l'exécution)
+ * 2. Si aucune tâche n'est activement programmée par l'administrateur, respect des règles
+ *    de fermeture du week-end et de 21h00 GMT.
  */
 export function getTodayTaskForLome(timeInfo?: LomeDateInfo): StoredDailyTask | null {
   const time = timeInfo || getLomeServerTime();
-
-  // RÈGLE 1 : Week-end fermé
-  if (time.isWeekend) {
-    return null;
-  }
-
-  // RÈGLE 2 : À 21h00 pile (Lomé UTC+0), fermeture automatique stricte de la journée
-  if (time.isPast21h) {
-    return null;
-  }
-
   const tasks = getAllStoredDailyTasks();
 
-  // 1. Priorité absolue : tâche avec une date spécifique correspondant exactement à aujourd'hui
+  // 1. Tâche avec une date spécifique correspondant exactement à aujourd'hui
   const specificDateTask = tasks.find(
     (t) => t.isActive && !t.isDeleted && t.specificDate === time.dateStr
   );
@@ -475,12 +465,28 @@ export function getTodayTaskForLome(timeInfo?: LomeDateInfo): StoredDailyTask | 
     return specificDateTask;
   }
 
-  // 2. Sinon : tâche récurrente configurée pour ce jour de la semaine (1=Lundi à 5=Vendredi) sans date spécifique
+  // 2. Tâche récurrente configurée pour ce jour de la semaine
   const recurringDayTask = tasks.find(
     (t) => t.isActive && !t.isDeleted && !t.specificDate && t.dayOfWeek === time.dayOfWeek
   );
+  if (recurringDayTask) {
+    return recurringDayTask;
+  }
 
-  return recurringDayTask || null;
+  // 3. PRIORITÉ ADMIN EN DIRECT : Si l'administrateur a explicitement activé une tâche (isActive=true, non supprimée)
+  // (ex: Vidéo TikTok activée en direct depuis l'admin), elle est retournée immédiatement aux utilisateurs
+  // même le week-end ou un autre jour, pour permettre la validation et la rémunération !
+  const explicitlyActiveTask = tasks.find((t) => t.isActive && !t.isDeleted);
+  if (explicitlyActiveTask) {
+    return explicitlyActiveTask;
+  }
+
+  // 4. Si aucune tâche n'est activée manuellement par l'admin, respecter les règles automatiques :
+  if (time.isWeekend || time.isPast21h) {
+    return null;
+  }
+
+  return null;
 }
 
 /**

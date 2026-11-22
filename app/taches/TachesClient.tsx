@@ -272,7 +272,8 @@ export function TachesClient({
       </div>
 
       {/* 2. CAS DU WEEK-END : FERMÉ AVEC INVITATION */}
-      {lomeTime.isWeekend && (
+      {/* 2a. PAUSE DU WEEK-END (SAMEDI & DIMANCHE) */}
+      {lomeTime.isWeekend && !todayTask && (
         <div className="p-6 rounded-3xl bg-amber-50 border border-amber-200 text-center space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 mx-auto flex items-center justify-center">
             <Clock className="w-6 h-6" />
@@ -287,7 +288,7 @@ export function TachesClient({
       )}
 
       {/* 2b. CLÔTURE QUOTIDIENNE STRICTE À 21H00 (LOMÉ GMT) */}
-      {!lomeTime.isWeekend && lomeTime.isPast21h && (
+      {!todayTask && !lomeTime.isWeekend && lomeTime.isPast21h && (
         <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 text-center text-white space-y-3 shadow-lg">
           <div className="w-12 h-12 rounded-2xl bg-slate-800 text-amber-400 mx-auto flex items-center justify-center border border-slate-700">
             <Moon className="w-6 h-6" />
@@ -310,7 +311,7 @@ export function TachesClient({
       )}
 
       {/* 2c. AUCUNE TÂCHE ACTIVÉE POUR LE MOMENT PAR L'ADMINISTRATEUR */}
-      {!lomeTime.isWeekend && !lomeTime.isPast21h && !todayTask && (
+      {!todayTask && !lomeTime.isWeekend && !lomeTime.isPast21h && (
         <div className="p-6 rounded-3xl bg-white border border-slate-200/80 text-center space-y-3 shadow-xs">
           <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 mx-auto flex items-center justify-center border border-amber-200">
             <Clock className="w-6 h-6" />
@@ -353,14 +354,14 @@ export function TachesClient({
       )}
 
       {/* 4. TÂCHE ACTIVE DU JOUR */}
-      {!lomeTime.isWeekend && todayTask && (
+      {todayTask && (
         <div className="space-y-4">
           {/* CARTE D'EN-TÊTE DE LA TÂCHE */}
           <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 mb-1.5">
-                  Tâche du {lomeTime.dayName}
+                  Tâche active du jour
                 </span>
                 <h2 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
                   {todayTask.title}

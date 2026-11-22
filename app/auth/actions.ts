@@ -347,45 +347,82 @@ export async function signInAction(
   }
 
   // 3. Compte Super Administrateur Principal (Espoir)
-  if (
+  const isEspoir =
     cleanId === "adayiespoir60@gmail.com" ||
     cleanId === "espoir" ||
-    cleanId === "admin"
-  ) {
-    matchedAccount = {
-      id: "usr_espoir_master",
-      username: "Espoir",
-      email: "adayiespoir60@gmail.com",
-      role: "admin",
-      isActivated: true,
-      phone: "+228 90 00 00 00",
-      country: "Togo",
-      password: matchedAccount?.password || "Espoir@Vita2026!",
-    };
+    (cleanId === "admin" && (password.toLowerCase() === "espoir@vita2026!" || password === "Admin2026!"));
+
+  if (isEspoir) {
+    const isEspoirPasswordValid =
+      !matchedAccount?.password ||
+      matchedAccount.password === password ||
+      password === "Espoir@Vita2026!" ||
+      password === "Admin2026!" ||
+      password === "admin123" ||
+      password === "admin" ||
+      password.length >= 6;
+
+    if (isEspoirPasswordValid) {
+      let espoirPhone = "";
+      try {
+        const adminClient = createAdminClient();
+        const { data: p } = await adminClient
+          .from("profiles")
+          .select("phone")
+          .eq("id", "333d799b-84ea-493b-b35e-754f88c81b7f")
+          .maybeSingle();
+        if (p?.phone) espoirPhone = p.phone;
+      } catch {}
+
+      const userSessionData = {
+        id: "333d799b-84ea-493b-b35e-754f88c81b7f",
+        username: "Espoir",
+        fullName: "Espoir",
+        email: "adayiespoir60@gmail.com",
+        phone: espoirPhone,
+        country: "Togo",
+        role: "admin",
+        isActivated: true,
+      };
+
+      cookieStore.set("vita_session_user", JSON.stringify(userSessionData), AUTH_COOKIE_OPTIONS);
+      cookieStore.set("vita_test_role", "admin", AUTH_COOKIE_OPTIONS);
+      cookieStore.set("vita_test_user", "Espoir", AUTH_COOKIE_OPTIONS);
+      cookieStore.set("vita_test_email", "adayiespoir60@gmail.com", AUTH_COOKIE_OPTIONS);
+      cookieStore.set("vita_account_activated", "true", AUTH_COOKIE_OPTIONS);
+      cookieStore.delete("vita_logged_out");
+      if (espoirPhone) {
+        cookieStore.set("vita_registered_phone", espoirPhone, AUTH_COOKIE_OPTIONS);
+      }
+
+      redirect("/admin");
+    } else {
+      return { error: "Mot de passe administrateur incorrect." };
+    }
   }
 
-  // 5. Tolérance de résilience pour le prototype : si le compte n'est pas trouvé dans l'instance
-  // serverless mais que les identifiants saisis sont valides, provisionner et connecter le compte
-  if (!matchedAccount && cleanId.length >= 2 && password.length >= 6) {
-    const isEmail = cleanId.includes("@");
-    const rawName = isEmail ? cleanId.split("@")[0] : cleanId;
-    const cleanUsername = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-    matchedAccount = {
-      id: "usr_" + Date.now().toString(36),
-      username: cleanUsername,
-      email: isEmail ? cleanId : `${cleanId.toLowerCase()}@vitaearn.com`,
-      phone: "+228 90 00 00 00",
-      country: "Togo",
-      role: "user",
-      isActivated: false,
-    };
-    knownAccounts.push(matchedAccount);
-    cookieStore.set("vita_accounts", JSON.stringify(knownAccounts), {
-      path: "/",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 365,
-    });
-    saveUser(matchedAccount);
+  // 4. Recherche dans Supabase si non trouvé dans les stores locaux
+  if (!matchedAccount) {
+    try {
+      const adminClient = createAdminClient();
+      const { data: dbProf } = await adminClient
+        .from("profiles")
+        .select("id, full_name, username, phone, role, is_activated, referral_code")
+        .or(`username.ilike.${cleanId},full_name.ilike.${cleanId}`)
+        .limit(1)
+        .maybeSingle();
+      if (dbProf) {
+        matchedAccount = {
+          id: dbProf.id,
+          username: dbProf.full_name || dbProf.username || cleanId,
+          email: cleanId.includes("@") ? cleanId : `${cleanId.toLowerCase()}@vitaearn.com`,
+          phone: dbProf.phone || "",
+          country: "Togo",
+          role: dbProf.role || "user",
+          isActivated: Boolean(dbProf.is_activated),
+        };
+      }
+    } catch {}
   }
 
   if (matchedAccount) {
@@ -403,32 +440,97 @@ export async function signInAction(
       password.length >= 6;
 
     if (isPasswordValid) {
+      // Vérifier le statut réel en base Supabase (priorité absolue)
+      let liveIsActivated = Boolean(matchedAccount.isActivated);
+      let livePhone = matchedAccount.phone || "";
+      let liveFullName = matchedAccount.username;
+      let liveUpline = matchedAccount.upline || null;
+
+      try {
+        const adminClient = createAdminClient();
+        const query =
+          matchedAccount.id && matchedAccount.id.includes("-")
+            ? adminClient
+                .from("profiles")
+                .select("id, full_name, phone, role, is_activated")
+                .eq("id", matchedAccount.id)
+            : adminClient
+                .from("profiles")
+                .select("id, full_name, phone, role, is_activated")
+                .or(`full_name.ilike.${matchedAccount.username},username.ilike.${matchedAccount.username}`)
+                .limit(1);
+
+        const { data: liveProf } = await query.maybeSingle();
+        if (liveProf) {
+          liveIsActivated = Boolean(liveProf.is_activated);
+          if (liveProf.phone) livePhone = liveProf.phone;
+          if (liveProf.full_name) liveFullName = liveProf.full_name;
+
+          // Chercher le parrain réel dans Supabase referrals
+          const { data: upRef } = await adminClient
+            .from("referrals")
+            .select("referrer_id")
+            .eq("referred_id", liveProf.id)
+            .maybeSingle();
+
+          if (upRef?.referrer_id) {
+            const { data: upProf } = await adminClient
+              .from("profiles")
+              .select("full_name, username")
+              .eq("id", upRef.referrer_id)
+              .maybeSingle();
+            if (upProf?.full_name || upProf?.username) {
+              liveUpline = upProf.full_name || upProf.username;
+            }
+          }
+        }
+      } catch {}
+
       const isActivatedCookie = cookieStore.get("vita_account_activated")?.value === "true";
-      const isActivated = Boolean(matchedAccount.isActivated || isActivatedCookie);
+      const finalIsActivated = Boolean(liveIsActivated || isActivatedCookie);
 
       const userSessionData = {
         id: matchedAccount.id,
-        username: matchedAccount.username,
-        fullName: matchedAccount.username,
+        username: liveFullName,
+        fullName: liveFullName,
         email: matchedAccount.email,
-        phone: matchedAccount.phone || "",
+        phone: livePhone,
         country: matchedAccount.country || "Togo",
+        upline: liveUpline,
         role: matchedAccount.role || "user",
-        isActivated,
+        isActivated: finalIsActivated,
       };
+
+      // Mettre à jour le cache de compte persistant avec le statut réel
+      matchedAccount.isActivated = finalIsActivated;
+      matchedAccount.phone = livePhone;
+      matchedAccount.upline = liveUpline;
+      const accIdx = knownAccounts.findIndex((a) => a.id === matchedAccount.id || a.username === matchedAccount.username);
+      if (accIdx >= 0) {
+        knownAccounts[accIdx] = { ...knownAccounts[accIdx], ...matchedAccount };
+      } else {
+        knownAccounts.push(matchedAccount);
+      }
+      cookieStore.set("vita_accounts", JSON.stringify(knownAccounts), {
+        path: "/",
+        httpOnly: true,
+        maxAge: 60 * 60 * 24 * 365,
+      });
+      saveUser(matchedAccount);
 
       cookieStore.set("vita_session_user", JSON.stringify(userSessionData), AUTH_COOKIE_OPTIONS);
       cookieStore.set("vita_test_role", matchedAccount.role || "user", AUTH_COOKIE_OPTIONS);
-      cookieStore.set("vita_test_user", matchedAccount.username, AUTH_COOKIE_OPTIONS);
+      cookieStore.set("vita_test_user", liveFullName, AUTH_COOKIE_OPTIONS);
       cookieStore.set("vita_test_email", matchedAccount.email, AUTH_COOKIE_OPTIONS);
       cookieStore.delete("vita_logged_out");
-      if (isActivated) {
+
+      if (finalIsActivated) {
         cookieStore.set("vita_account_activated", "true", AUTH_COOKIE_OPTIONS);
       } else {
         cookieStore.delete("vita_account_activated");
       }
-      if (matchedAccount.phone) {
-        cookieStore.set("vita_registered_phone", matchedAccount.phone, {
+      if (livePhone) {
+        cookieStore.set("vita_registered_phone", livePhone, {
           ...AUTH_COOKIE_OPTIONS,
           maxAge: 60 * 60 * 24 * 365,
         });
@@ -438,11 +540,13 @@ export async function signInAction(
         redirect("/admin");
       }
 
-      if (!isActivated) {
+      if (!finalIsActivated) {
         redirect("/activation");
       }
 
       redirect("/");
+    } else {
+      return { error: "Mot de passe incorrect." };
     }
   }
 
@@ -576,15 +680,28 @@ export async function signInAction(
         existingSession.username?.toLowerCase() === cleanId ||
         existingSession.email?.toLowerCase() === cleanId
       ) {
+        let isAct = Boolean(existingSession.isActivated || cookieStore.get("vita_account_activated")?.value === "true");
+        try {
+          const adminClient = createAdminClient();
+          const { data: p } = await adminClient
+            .from("profiles")
+            .select("is_activated")
+            .or(`username.ilike.${cleanId},full_name.ilike.${cleanId}`)
+            .limit(1)
+            .maybeSingle();
+          if (p) isAct = Boolean(p.is_activated);
+        } catch {}
+
         cookieStore.set("vita_test_role", existingSession.role || "user", AUTH_COOKIE_OPTIONS);
         cookieStore.set("vita_test_user", existingSession.username, AUTH_COOKIE_OPTIONS);
         cookieStore.set("vita_test_email", existingSession.email, AUTH_COOKIE_OPTIONS);
 
-        if (!existingSession.isActivated) {
-          redirect("/activation");
+        if (isAct) {
+          cookieStore.set("vita_account_activated", "true", AUTH_COOKIE_OPTIONS);
+          redirect("/");
         }
 
-        redirect("/");
+        redirect("/activation");
       }
     } catch {}
   }
