@@ -306,6 +306,15 @@ export async function signInAction(
     password: formData.get("password"),
   };
 
+  const rawRedirect = formData.get("redirect") as string | null;
+  const redirectTarget =
+    rawRedirect &&
+    rawRedirect.startsWith("/") &&
+    !rawRedirect.startsWith("/auth") &&
+    rawRedirect !== "/activation"
+      ? rawRedirect
+      : "/";
+
   const parsed = loginSchema.safeParse(rawData);
   if (!parsed.success) {
     return { error: "Identifiant ou mot de passe invalide." };
@@ -390,12 +399,12 @@ export async function signInAction(
       cookieStore.set("vita_test_user", "Espoir", AUTH_COOKIE_OPTIONS);
       cookieStore.set("vita_test_email", "adayiespoir60@gmail.com", AUTH_COOKIE_OPTIONS);
       cookieStore.set("vita_account_activated", "true", AUTH_COOKIE_OPTIONS);
-      cookieStore.delete("vita_logged_out");
+      cookieStore.set("vita_logged_out", "", { path: "/", maxAge: 0, expires: new Date(0) });
       if (espoirPhone) {
         cookieStore.set("vita_registered_phone", espoirPhone, AUTH_COOKIE_OPTIONS);
       }
 
-      redirect("/admin");
+      redirect(redirectTarget);
     } else {
       return { error: "Mot de passe administrateur incorrect." };
     }
@@ -543,7 +552,7 @@ export async function signInAction(
       cookieStore.set("vita_test_role", matchedAccount.role || "user", AUTH_COOKIE_OPTIONS);
       cookieStore.set("vita_test_user", liveFullName, AUTH_COOKIE_OPTIONS);
       cookieStore.set("vita_test_email", matchedAccount.email, AUTH_COOKIE_OPTIONS);
-      cookieStore.delete("vita_logged_out");
+      cookieStore.set("vita_logged_out", "", { path: "/", maxAge: 0, expires: new Date(0) });
 
       if (finalIsActivated) {
         cookieStore.set("vita_account_activated", "true", AUTH_COOKIE_OPTIONS);
@@ -557,15 +566,11 @@ export async function signInAction(
         });
       }
 
-      if (matchedAccount.role === "admin") {
-        redirect("/admin");
-      }
-
       if (!finalIsActivated) {
         redirect("/activation");
       }
 
-      redirect("/");
+      redirect(redirectTarget);
     } else {
       return { error: "Mot de passe incorrect." };
     }
@@ -680,7 +685,7 @@ export async function signInAction(
       if (profile?.phone) {
         cookieStore.set("vita_registered_phone", profile.phone, AUTH_COOKIE_OPTIONS);
       }
-      cookieStore.delete("vita_logged_out");
+      cookieStore.set("vita_logged_out", "", { path: "/", maxAge: 0, expires: new Date(0) });
       if (isActivated) {
         cookieStore.set("vita_account_activated", "true", AUTH_COOKIE_OPTIONS);
       }
@@ -689,11 +694,7 @@ export async function signInAction(
         redirect("/activation");
       }
 
-      if (profile?.role === "admin" || user.email === "adayiespoir60@gmail.com") {
-        redirect("/admin");
-      }
-
-      redirect("/");
+      redirect(redirectTarget);
     }
   }
 
@@ -721,10 +722,11 @@ export async function signInAction(
         cookieStore.set("vita_test_role", existingSession.role || "user", AUTH_COOKIE_OPTIONS);
         cookieStore.set("vita_test_user", existingSession.username, AUTH_COOKIE_OPTIONS);
         cookieStore.set("vita_test_email", existingSession.email, AUTH_COOKIE_OPTIONS);
+        cookieStore.set("vita_logged_out", "", { path: "/", maxAge: 0, expires: new Date(0) });
 
         if (isAct) {
           cookieStore.set("vita_account_activated", "true", AUTH_COOKIE_OPTIONS);
-          redirect("/");
+          redirect(redirectTarget);
         }
 
         redirect("/activation");

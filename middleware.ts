@@ -129,7 +129,10 @@ export async function middleware(request: NextRequest) {
     isAuthenticated = true;
   }
 
-  const isLoggedOut = request.cookies.get("vita_logged_out")?.value === "true";
+  let isLoggedOut = request.cookies.get("vita_logged_out")?.value === "true";
+  if (sessionUserCookie || testUser || testEmail || testRole || isAccountActivated) {
+    isLoggedOut = false;
+  }
 
   // Restauration de session depuis le coffre persistant vita_accounts (365 jours) si pas de déconnexion volontaire
   const rawAccounts = !isLoggedOut ? request.cookies.get("vita_accounts")?.value : null;
@@ -203,11 +206,6 @@ export async function middleware(request: NextRequest) {
               cookiesToSet.forEach(({ name, value }) =>
                 request.cookies.set(name, value)
               );
-              response = NextResponse.next({
-                request: {
-                  headers: request.headers,
-                },
-              });
               cookiesToSet.forEach(({ name, value, options }) =>
                 response.cookies.set(name, value, options)
               );

@@ -227,7 +227,7 @@ export function Navbar({ user }: NavbarProps) {
     } catch {}
   }, [user]);
 
-  // RÈGLE PERMANENTE : Le header, le menu ☰ et le profil restent TOUJOURS visibles partout sur le site.
+  // RÈGLE PERMANENTE : Le header, le menu burger et le profil restent TOUJOURS visibles partout sur le site.
   // Seul l'espace d'administration (qui possède son propre univers et barre dédiée) et les pages de login/register pures sont exclus.
   if (isAdminPage || isAuthPage) {
     return null;
@@ -309,7 +309,7 @@ export function Navbar({ user }: NavbarProps) {
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-[#131E17]/80 backdrop-blur-xl backdrop-saturate-150 border-b border-gray-200/60 dark:border-[#1E2E24]/70 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] transition-all">
         <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-3.5 min-h-[66px] sm:min-h-[74px] flex items-center justify-between">
           {/* ========================================================================= */}
-          {/* 1. ZONE GAUCHE : Bouton Menu ☰ (avec marge confortable et tactile)       */}
+          {/* 1. ZONE GAUCHE : Bouton Menu burger (avec marge confortable et tactile) */}
           {/* ========================================================================= */}
           <div className="flex items-center shrink-0 w-20 sm:w-36 justify-start">
             <button
@@ -331,6 +331,7 @@ export function Navbar({ user }: NavbarProps) {
           <div className="flex-1 flex items-center justify-center min-w-0 px-1">
             <Link
               href="/"
+              prefetch={false}
               onClick={() => {
                 closeSidebar();
                 closeDropdowns();
@@ -476,6 +477,7 @@ export function Navbar({ user }: NavbarProps) {
                       {/* Mon Profil */}
                       <Link
                         href="/profil"
+                        prefetch={false}
                         onClick={closeDropdowns}
                         className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-[#17241C] text-gray-700 dark:text-gray-200 transition-colors"
                       >
@@ -522,6 +524,7 @@ export function Navbar({ user }: NavbarProps) {
                       {!isActivated && (
                         <Link
                           href="/activation"
+                          prefetch={false}
                           onClick={closeDropdowns}
                           className="flex items-center justify-between p-2 rounded-xl bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 text-amber-800 dark:text-amber-300 transition-colors"
                         >
@@ -537,6 +540,7 @@ export function Navbar({ user }: NavbarProps) {
                       <div className="pt-2 mt-2 border-t border-gray-100 dark:border-[#1E2E24]">
                         <Link
                           href="/auth/logout"
+                          prefetch={false}
                           onClick={closeDropdowns}
                           className="flex items-center justify-between p-2 rounded-xl text-left hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 transition-colors"
                         >
@@ -579,6 +583,7 @@ export function Navbar({ user }: NavbarProps) {
         <div className="p-4 border-b border-vita-border dark:border-[#1E2E24] flex items-center justify-between">
           <Link
             href="/"
+            prefetch={false}
             onClick={closeSidebar}
             className="flex items-center gap-2"
           >
@@ -649,6 +654,7 @@ export function Navbar({ user }: NavbarProps) {
             {!isActivated && (
               <Link
                 href="/activation"
+                prefetch={false}
                 onClick={closeSidebar}
                 className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs transition-colors"
               >
@@ -663,6 +669,7 @@ export function Navbar({ user }: NavbarProps) {
             <div className="flex gap-2">
               <Link
                 href="/auth/login"
+                prefetch={false}
                 onClick={closeSidebar}
                 className="flex-1 text-center py-2 px-3 rounded-xl bg-white dark:bg-[#131E17] border border-vita-border dark:border-[#1E2E24] text-xs font-bold text-vita-deep dark:text-gray-200 hover:bg-vita-surface transition-colors shadow-2xs"
               >
@@ -670,6 +677,7 @@ export function Navbar({ user }: NavbarProps) {
               </Link>
               <Link
                 href="/auth/register"
+                prefetch={false}
                 onClick={closeSidebar}
                 className="flex-1 text-center py-2 px-3 rounded-xl bg-[#16A34A] text-xs font-bold text-white hover:bg-[#15803D] transition-colors shadow-2xs"
               >
@@ -734,6 +742,7 @@ export function Navbar({ user }: NavbarProps) {
                           <Link
                             key={sub.id}
                             href={sub.href}
+                            prefetch={false}
                             onClick={() => {
                               closeSidebar();
                             }}
@@ -797,6 +806,7 @@ export function Navbar({ user }: NavbarProps) {
                           <Link
                             key={sub.id}
                             href={sub.href}
+                            prefetch={false}
                             onClick={() => {
                               closeSidebar();
                             }}
@@ -821,6 +831,7 @@ export function Navbar({ user }: NavbarProps) {
                 <Link
                   key={item.label}
                   href="/admin"
+                  prefetch={false}
                   onClick={closeSidebar}
                   className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all border ${
                     isSectionActive
@@ -847,6 +858,7 @@ export function Navbar({ user }: NavbarProps) {
               <Link
                 key={item.label}
                 href={item.href}
+                prefetch={false}
                 onClick={() => {
                   closeSidebar();
                   if (item.isCommunity) {
@@ -897,6 +909,7 @@ export function Navbar({ user }: NavbarProps) {
           <div className="p-3 border-t border-vita-border dark:border-[#1E2E24] bg-gray-50/80 dark:bg-[#0E1812]">
             <Link
               href="/auth/logout"
+              prefetch={false}
               onClick={closeSidebar}
               className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 text-sm font-bold transition-colors"
             >

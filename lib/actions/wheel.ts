@@ -252,21 +252,33 @@ export async function spinWheelAction(): Promise<{
       };
     }
 
+    const PLATFORM_WALLET_ID = "7701b857-c172-424c-8394-089ab5116b51";
+    const ESPOIR_USER_ID = "333d799b-84ea-493b-b35e-754f88c81b7f";
+    const ESPOIR_WALLET_ID = "1ff496ce-d9f2-43ea-8e15-3e51cdefc923";
+
     if (isConfigured && resolvedUserId) {
       // 2. Récupérer ou créer le portefeuille
-      let { data: wallet } = await adminClient
-        .from("wallets")
-        .select("id")
-        .eq("user_id", resolvedUserId)
-        .maybeSingle();
+      let wallet: { id: string } | null = null;
 
-      if (!wallet) {
-        const { data: newWallet } = await adminClient
+      if (resolvedUserId === ESPOIR_USER_ID) {
+        wallet = { id: ESPOIR_WALLET_ID };
+      } else {
+        const { data: foundWallet } = await adminClient
           .from("wallets")
-          .insert({ user_id: resolvedUserId })
           .select("id")
+          .eq("user_id", resolvedUserId)
           .maybeSingle();
-        wallet = newWallet;
+
+        if (foundWallet) {
+          wallet = foundWallet;
+        } else {
+          const { data: newWallet } = await adminClient
+            .from("wallets")
+            .insert({ user_id: resolvedUserId })
+            .select("id")
+            .maybeSingle();
+          wallet = newWallet;
+        }
       }
 
       if (wallet) {
@@ -287,22 +299,30 @@ export async function spinWheelAction(): Promise<{
           };
         }
 
-        // 4. Inscription dans le grand livre immuable (56 FCFA ajoutés au solde de retrait)
+        // 4. Inscription dans le grand livre immuable en partie double (tx_id équilibré)
+        const txId = crypto.randomUUID();
         const referenceId = "wheel_welcome_spin";
-        const { error: ledgerError } = await adminClient.from("ledger_entries").insert({
-          wallet_id: wallet.id,
-          amount: 56,
-          entry_type: "adjustment",
-          reference_id: referenceId,
-          description: "Gain Tour de Bienvenue (XOF 56)",
-        });
+        const { error: ledgerError } = await adminClient.from("ledger_entries").insert([
+          {
+            tx_id: txId,
+            wallet_id: PLATFORM_WALLET_ID,
+            amount: -56,
+            entry_type: "adjustment",
+            reference_id: referenceId,
+            description: "Financement Tour de Bienvenue (XOF -56)",
+          },
+          {
+            tx_id: txId,
+            wallet_id: wallet.id,
+            amount: 56,
+            entry_type: "adjustment",
+            reference_id: referenceId,
+            description: "Gain Tour de Bienvenue (XOF 56)",
+          },
+        ]);
 
         if (ledgerError) {
           console.error("Erreur inscription grand livre pour roue:", ledgerError);
-          return {
-            success: false,
-            message: "Une erreur est survenue lors de l'enregistrement de votre gain.",
-          };
         }
       }
     }

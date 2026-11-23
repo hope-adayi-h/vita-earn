@@ -92,6 +92,10 @@ function LoginForm() {
         )}
 
         <form action={formAction} className="space-y-4 relative z-10">
+          {redirectParam && (
+            <input type="hidden" name="redirect" value={redirectParam} />
+          )}
+
           {/* Nom d'utilisateur ou adresse e-mail */}
           <div>
             <label className="block text-xs font-bold text-vita-text uppercase tracking-wider mb-1.5">
