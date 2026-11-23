@@ -268,12 +268,25 @@ export default async function HomePage() {
 
       // Lecture des gains des tâches quotidiennes (Time Table)
       const userTaskEarnings = userTaskEarningsRes.data;
+      let totalTaskEarnings = 0;
       if (userTaskEarnings) {
-        const triviaObj = userTaskEarnings.find((t) => t.task_type === "trivia");
-        if (triviaObj) {
-          triviaEarnings = Number(triviaObj.accumulated_amount) || 0;
-        }
+        userTaskEarnings.forEach((t) => {
+          const amt = Number(t.accumulated_amount) || 0;
+          totalTaskEarnings += amt;
+          if (t.task_type === "trivia") {
+            triviaEarnings = amt;
+          }
+        });
       }
+
+      // RÈGLE MÉTIER P0 :
+      // 1. PROFIT (totalEarned) = Cumul de TOUS les gains historiques du compte (commissions + bonus + toutes les tâches).
+      //    Le Profit ne subit JAMAIS aucune soustraction.
+      totalEarned = (Number(wb?.total_earned) || 0) + totalTaskEarnings;
+
+      // 2. SOLDE PRINCIPAL (balance) = Gains retirables disponibles.
+      //    Gains du portefeuille (commissions + bonus roue) + gains du Trivia (seule tâche qui crédite le solde principal).
+      balance = (Number(wb?.available_balance ?? wb?.balance) || 0) + triviaEarnings;
 
       // Réseau de parrainage sur 3 générations (uniquement si des filleuls existent)
       const l1Referrals = l1ReferralsRes.data;
@@ -445,25 +458,23 @@ export default async function HomePage() {
   }
   userInitial = userName.charAt(0).toUpperCase();
 
-  // Nouveau compte activé : le solde retirable commence à 0 F CFA
-  // Les 4 500 F CFA d'abonnement constituent une dépense (enregistrée dans Dépenses)
-  // Le solde augmente uniquement avec les gains réels (parrainages, tâches, bonus)
-  if (sessionUser?.balance !== undefined) {
-    balance = Number(sessionUser.balance) || 0;
-  }
-
-  // Déduction immédiate de tous les retraits effectués enregistrés
-  try {
-    const rawW = cookieStore.get("vita_withdrawals")?.value;
-    if (rawW) {
-      const records = JSON.parse(rawW);
-      if (Array.isArray(records) && records.length > 0) {
-        const sumWithdrawn = records.reduce((acc: number, r: any) => acc + (Number(r.amount) || 0), 0);
-        totalWithdrawn += sumWithdrawn;
-        balance = Math.max(0, balance - sumWithdrawn);
-      }
+  // En mode repli local uniquement (si aucune connexion Supabase active)
+  if (!effectiveUserId) {
+    if (sessionUser?.balance !== undefined) {
+      balance = Number(sessionUser.balance) || 0;
     }
-  } catch {}
+    try {
+      const rawW = cookieStore.get("vita_withdrawals")?.value;
+      if (rawW) {
+        const records = JSON.parse(rawW);
+        if (Array.isArray(records) && records.length > 0) {
+          const sumWithdrawn = records.reduce((acc: number, r: any) => acc + (Number(r.amount) || 0), 0);
+          totalWithdrawn += sumWithdrawn;
+          balance = Math.max(0, balance - sumWithdrawn);
+        }
+      }
+    } catch {}
+  }
 
   // Calcul du Welcome Bonus (900 FCFA débloqués après 20 invitations directes)
   const welcomeBonusTarget = 20;

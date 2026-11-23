@@ -94,14 +94,16 @@ export default async function ProfilPage() {
 
   if (activeUserId && activeUserId.includes("-")) {
     try {
-      const [wRes, refCountRes, uplineRes] = await Promise.all([
+      const [wRes, refCountRes, uplineRes, triviaRes] = await Promise.all([
         adminClient.from("wallet_balances").select("balance, available_balance").eq("user_id", activeUserId).maybeSingle(),
         adminClient.from("referrals").select("id", { count: "exact", head: true }).eq("referrer_id", activeUserId),
         adminClient.from("referrals").select("referrer_id").eq("referred_id", activeUserId).maybeSingle(),
+        adminClient.from("user_task_earnings").select("accumulated_amount").eq("user_id", activeUserId).eq("task_type", "trivia").maybeSingle(),
       ]);
 
+      const triviaAmt = Number(triviaRes.data?.accumulated_amount) || 0;
       if (wRes.data) {
-        balance = Number(wRes.data.available_balance ?? wRes.data.balance) || 0;
+        balance = (Number(wRes.data.available_balance ?? wRes.data.balance) || 0) + triviaAmt;
       }
       inviteCount = refCountRes.count || 0;
 

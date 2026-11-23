@@ -116,7 +116,10 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
     phone: string;
   } | null>(null);
 
-  const availableBalance = initialData.balance;
+  const isTaskWithdrawal = currentTypeKey !== "solde" && currentTypeKey !== "total";
+  const availableBalance = isTaskWithdrawal
+    ? (initialData.taskBalances?.[currentTypeKey] || 0)
+    : initialData.balance;
   const isActivated = initialData.user.isActivated;
 
   // Récupération dynamique et prioritaire du vrai numéro d'inscription
@@ -223,6 +226,7 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
       const formData = new FormData();
       formData.set("amount", numAmount.toString());
       formData.set("operator", fullOperatorLabel);
+      formData.set("withdrawalType", currentTypeKey);
       formData.set("phone", registeredPhone);
       formData.set("accountName", registeredName);
 
@@ -277,11 +281,20 @@ export function WithdrawalClient({ initialData }: WithdrawalClientProps) {
         </div>
 
         {/* Chiffre du Solde Disponible */}
-        <div className="mt-4 pt-3 border-t border-white/20 flex items-baseline gap-2">
-          <span className="text-xs font-bold text-white/80 uppercase">Solde Disponible :</span>
-          <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            {formatFCFA(availableBalance)}
-          </span>
+        <div className="mt-4 pt-3 border-t border-white/20 flex items-baseline justify-between gap-2 flex-wrap">
+          <div className="flex items-baseline gap-2">
+            <span className="text-xs font-bold text-white/80 uppercase">
+              {isTaskWithdrawal ? `Cagnotte ${currentType.badge} :` : "Solde Disponible :"}
+            </span>
+            <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              {formatFCFA(availableBalance)}
+            </span>
+          </div>
+          {isTaskWithdrawal && (
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">
+              Palier retrait : 4 500 FCFA
+            </span>
+          )}
         </div>
       </div>
 

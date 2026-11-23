@@ -34,6 +34,7 @@ export interface WithdrawalPageData {
   balance: number;
   totalWithdrawn: number;
   minWithdrawal: number;
+  taskBalances: Record<string, number>;
 }
 
 /**
@@ -192,11 +193,19 @@ export async function getWithdrawalData(): Promise<WithdrawalPageData> {
     }
   } catch {}
 
-  // RÈGLE ABSOLUE P0 : Lecture du solde disponible réel depuis wallet_balances via service_role
+  const taskBalances: Record<string, number> = {
+    tiktok: 0,
+    youtube: 0,
+    instagram: 0,
+    ads: 0,
+    trivia: 0,
+  };
+
+  // RÈGLE ABSOLUE P0 : Lecture du solde disponible réel depuis wallet_balances et des cagnottes tâches
   if (effectiveUserId) {
     try {
       const adminClient = createAdminClient();
-      const [profileRes, wbRes] = await Promise.all([
+      const [profileRes, wbRes, tasksRes] = await Promise.all([
         adminClient
           .from("profiles")
           .select("full_name, phone, is_activated, username, email")
@@ -207,6 +216,10 @@ export async function getWithdrawalData(): Promise<WithdrawalPageData> {
           .select("balance, available_balance, total_withdrawn")
           .eq("user_id", effectiveUserId)
           .maybeSingle(),
+        adminClient
+          .from("user_task_earnings")
+          .select("task_type, accumulated_amount")
+          .eq("user_id", effectiveUserId),
       ]);
 
       const profile = profileRes.data;
@@ -218,10 +231,16 @@ export async function getWithdrawalData(): Promise<WithdrawalPageData> {
         isActivated = Boolean(profile.is_activated || isActivated);
       }
 
+      if (tasksRes.data) {
+        tasksRes.data.forEach((t) => {
+          taskBalances[t.task_type] = Number(t.accumulated_amount) || 0;
+        });
+      }
+
       const wb = wbRes.data;
       if (wb) {
-        // Le solde disponible est calculé par la vue PostgreSQL wallet_balances (somme de ledger_entries)
-        balance = Number(wb.available_balance ?? wb.balance) || 0;
+        // Solde Principal disponible = portefeuille (commissions + bonus) + Trivia (seule tâche qui crédite le solde principal)
+        balance = (Number(wb.available_balance ?? wb.balance) || 0) + (taskBalances.trivia || 0);
         totalWithdrawn = Number(wb.total_withdrawn) || 0;
         hasSupabaseBalance = true;
       }
@@ -246,6 +265,7 @@ export async function getWithdrawalData(): Promise<WithdrawalPageData> {
     balance,
     totalWithdrawn,
     minWithdrawal: 4500,
+    taskBalances,
   };
 }
 
@@ -397,16 +417,143 @@ export async function submitWithdrawalAction(formData: FormData): Promise<{
     sessionUser?.username ||
     "Titulaire du compte";
 
+  const withdrawalType = (formData.get("withdrawalType") as string) || "solde";
+  const isTaskWithdrawal = withdrawalType !== "solde" && withdrawalType !== "total";
+
   const adminClient = createAdminClient();
 
-  // RÈGLE ABSOLUE P0 : Vérification du solde disponible dans wallet_balances avant tout retrait
-  const { data: wb } = await adminClient
-    .from("wallet_balances")
-    .select("available_balance, balance")
-    .eq("user_id", effectiveUserId)
-    .maybeSingle();
+  if (isTaskWithdrawal) {
+    // RÈGLE MÉTIER : Vérification et débit de la cagnotte spécifique de la tâche (TikTok, YouTube, Instagram, Ads)
+    const { data: taskEarning } = await adminClient
+      .from("user_task_earnings")
+      .select("accumulated_amount")
+      .eq("user_id", effectiveUserId)
+      .eq("task_type", withdrawalType)
+      .maybeSingle();
 
-  const availableBalance = Number(wb?.available_balance ?? wb?.balance ?? sessionUser?.balance ?? 0);
+    const taskBalance = Number(taskEarning?.accumulated_amount) || 0;
+    if (taskBalance < amount) {
+      return {
+        error: `Solde insuffisant pour la cagnotte ${withdrawalType.toUpperCase()} (${taskBalance.toLocaleString("fr-FR")} FCFA disponibles, ${amount.toLocaleString("fr-FR")} FCFA demandés).`,
+      };
+    }
+
+    const cleanOp = normalizeOperator(operator);
+    const withdrawalId = crypto.randomUUID();
+    const refCode = "WDR-" + withdrawalId.substring(0, 8).toUpperCase();
+
+    // 1. Insertion dans la table public.withdrawals
+    const { error: insErr } = await adminClient.from("withdrawals").insert({
+      id: withdrawalId,
+      user_id: effectiveUserId,
+      amount: amount,
+      fee: fee,
+      phone: phone,
+      operator: cleanOp,
+      payment_method: cleanOp,
+      status: "pending",
+      note: `Demande de retrait cagnotte ${withdrawalType.toUpperCase()} (${operator})`,
+      created_at: new Date().toISOString(),
+    });
+
+    if (insErr) {
+      console.error("Erreur insertion table withdrawals:", insErr);
+      return {
+        error: "Erreur lors de l'enregistrement de votre demande. Veuillez réessayer dans quelques instants.",
+      };
+    }
+
+    // 2. Déduction immédiate du montant dans la cagnotte de la tâche
+    await adminClient
+      .from("user_task_earnings")
+      .update({
+        accumulated_amount: Math.max(0, taskBalance - amount),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", effectiveUserId)
+      .eq("task_type", withdrawalType);
+
+    // 3. Sauvegarde dans le store persistant de retraits
+    saveStoredWithdrawal({
+      id: withdrawalId,
+      userId: effectiveUserId,
+      userName: accountName,
+      amount,
+      fee,
+      netAmount,
+      paymentMethod: operator,
+      phoneNumber: phone,
+      accountName,
+      status: "pending",
+      adminNote: null,
+      createdAt: new Date().toISOString(),
+    });
+
+    // 4. Mise à jour de l'historique local dans les cookies utilisateur
+    let existingRecords: WithdrawalRecord[] = [];
+    try {
+      const raw = cookieStore.get("vita_withdrawals")?.value;
+      if (raw) existingRecords = JSON.parse(raw);
+      if (!Array.isArray(existingRecords)) existingRecords = [];
+    } catch {}
+
+    const newRecord: WithdrawalRecord = {
+      id: withdrawalId,
+      amount,
+      fee,
+      netAmount,
+      paymentMethod: operator,
+      phoneNumber: phone,
+      accountName,
+      status: "processing",
+      createdAt: new Date().toISOString(),
+      reference: refCode,
+      estimatedDelay: "10 minutes à 24 heures",
+    };
+
+    existingRecords.unshift(newRecord);
+
+    cookieStore.set("vita_withdrawals", JSON.stringify(existingRecords), {
+      path: "/",
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
+
+    revalidatePath("/");
+    revalidatePath("/retrait");
+    revalidatePath("/retrait/historique");
+    revalidatePath("/portefeuille");
+    revalidatePath("/admin/retraits");
+    revalidatePath("/admin");
+
+    return {
+      success: true,
+      message: `Votre demande de retrait de ${amount.toLocaleString("fr-FR")} FCFA (Cagnotte ${withdrawalType.toUpperCase()}) vers ${operator} a été enregistrée avec succès. Référence : ${refCode}. Frais fixes : 500 FCFA, Net à recevoir : ${netAmount.toLocaleString("fr-FR")} FCFA. Délai de traitement : 10 minutes à 24 heures.`,
+      netAmount,
+      fee,
+    };
+  }
+
+  // RÈGLE ABSOLUE P0 : Retrait Solde Principal général (Portefeuille + Trivia)
+  const [wbRes, triviaRes] = await Promise.all([
+    adminClient
+      .from("wallet_balances")
+      .select("available_balance, balance")
+      .eq("user_id", effectiveUserId)
+      .maybeSingle(),
+    adminClient
+      .from("user_task_earnings")
+      .select("accumulated_amount")
+      .eq("user_id", effectiveUserId)
+      .eq("task_type", "trivia")
+      .maybeSingle(),
+  ]);
+
+  const walletAvail = Number(wbRes.data?.available_balance ?? wbRes.data?.balance ?? sessionUser?.balance ?? 0);
+  const triviaAvail = Number(triviaRes.data?.accumulated_amount) || 0;
+  const availableBalance = walletAvail + triviaAvail;
+
   if (availableBalance < amount) {
     return {
       error: `Solde insuffisant (${availableBalance.toLocaleString("fr-FR")} FCFA disponibles, ${amount.toLocaleString("fr-FR")} FCFA demandés).`,

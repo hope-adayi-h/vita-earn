@@ -148,7 +148,7 @@ export default async function PortefeuillePage() {
 
   if (targetUserId) {
     try {
-      const [wbRes, withdrawalsRes, walletRes] = await Promise.all([
+      const [wbRes, withdrawalsRes, walletRes, tasksRes] = await Promise.all([
         adminClient
           .from("wallet_balances")
           .select("balance, available_balance, pending_balance, total_earned, total_withdrawn")
@@ -156,7 +156,7 @@ export default async function PortefeuillePage() {
           .maybeSingle(),
         adminClient
           .from("withdrawals")
-          .select("id, amount, net_amount, payment_method, phone_number, status, admin_note, created_at")
+          .select("id, amount, fee, operator, payment_method, phone, status, admin_note, note, created_at")
           .eq("user_id", targetUserId)
           .order("created_at", { ascending: false })
           .limit(10),
@@ -165,19 +165,45 @@ export default async function PortefeuillePage() {
           .select("id")
           .eq("user_id", targetUserId)
           .maybeSingle(),
+        adminClient
+          .from("user_task_earnings")
+          .select("task_type, accumulated_amount")
+          .eq("user_id", targetUserId),
       ]);
+
+      const taskEarnings = tasksRes.data;
+      let totalTaskEarnings = 0;
+      let triviaEarnings = 0;
+      if (taskEarnings) {
+        taskEarnings.forEach((t) => {
+          const amt = Number(t.accumulated_amount) || 0;
+          totalTaskEarnings += amt;
+          if (t.task_type === "trivia") {
+            triviaEarnings = amt;
+          }
+        });
+      }
 
       const wb = wbRes.data;
       if (wb) {
-        availableBalance = Number(wb.available_balance ?? wb.balance) || 0;
+        availableBalance = (Number(wb.available_balance ?? wb.balance) || 0) + triviaEarnings;
         pendingBalance = Number(wb.pending_balance) || 0;
-        totalEarned = Number(wb.total_earned) || 0;
+        totalEarned = (Number(wb.total_earned) || 0) + totalTaskEarnings;
         totalWithdrawn = Number(wb.total_withdrawn) || 0;
       }
 
       const userWithdrawals = withdrawalsRes.data;
       if (userWithdrawals && userWithdrawals.length > 0) {
-        withdrawals = userWithdrawals as unknown as WithdrawalItem[];
+        withdrawals = userWithdrawals.map((w: any) => ({
+          id: w.id,
+          amount: Number(w.amount) || 0,
+          net_amount: Math.max(0, (Number(w.amount) || 0) - (Number(w.fee) || 500)),
+          payment_method: w.operator || w.payment_method || "T-Money",
+          phone_number: w.phone || "",
+          status: w.status,
+          admin_note: w.admin_note || w.note || null,
+          created_at: w.created_at,
+        }));
       }
 
       if (walletRes.data?.id) {
