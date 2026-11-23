@@ -87,16 +87,16 @@ export default async function ProfilPage() {
     if (data) profile = data;
   }
 
-  const activeUserId = profile?.id || candidateId;
+  const activeUserId = profile?.id || (isEspoir ? "333d799b-84ea-493b-b35e-754f88c81b7f" : candidateId);
   let balance = 0;
   let inviteCount = 0;
   let uplineUsername = "—";
 
   if (activeUserId && activeUserId.includes("-")) {
     try {
-      const [wRes, refCountRes, uplineRes, triviaRes] = await Promise.all([
+      const [wRes, l1RefsRes, uplineRes, triviaRes] = await Promise.all([
         adminClient.from("wallet_balances").select("balance, available_balance").eq("user_id", activeUserId).maybeSingle(),
-        adminClient.from("referrals").select("id", { count: "exact", head: true }).eq("referrer_id", activeUserId),
+        adminClient.from("referrals").select("referred_id").eq("referrer_id", activeUserId),
         adminClient.from("referrals").select("referrer_id").eq("referred_id", activeUserId).maybeSingle(),
         adminClient.from("user_task_earnings").select("accumulated_amount").eq("user_id", activeUserId).eq("task_type", "trivia").maybeSingle(),
       ]);
@@ -105,7 +105,31 @@ export default async function ProfilPage() {
       if (wRes.data) {
         balance = (Number(wRes.data.available_balance ?? wRes.data.balance) || 0) + triviaAmt;
       }
-      inviteCount = refCountRes.count || 0;
+
+      // Total des invitations cumulées sur les 3 niveaux (N1 + N2 + N3)
+      const l1Ids = (l1RefsRes.data || []).map((r) => r.referred_id);
+      let l2Ids: string[] = [];
+      let l3Ids: string[] = [];
+
+      if (l1Ids.length > 0) {
+        const { data: l2Refs } = await adminClient
+          .from("referrals")
+          .select("referred_id")
+          .in("referrer_id", l1Ids);
+
+        l2Ids = (l2Refs || []).map((r) => r.referred_id);
+
+        if (l2Ids.length > 0) {
+          const { data: l3Refs } = await adminClient
+            .from("referrals")
+            .select("referred_id")
+            .in("referrer_id", l2Ids);
+
+          l3Ids = (l3Refs || []).map((r) => r.referred_id);
+        }
+      }
+
+      inviteCount = l1Ids.length + l2Ids.length + l3Ids.length;
 
       if (uplineRes.data?.referrer_id) {
         const { data: uplineProfile } = await adminClient

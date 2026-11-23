@@ -215,7 +215,7 @@ export default async function HomePage() {
       } else {
         isActivated = Boolean(isActivatedCookie);
       }
-      welcomeBonusClaimed = Boolean(profile?.welcome_bonus_claimed);
+      welcomeBonusClaimed = Boolean(profile?.welcome_bonus_claimed) || cookieStore.get("vita_welcome_bonus_claimed")?.value === "true";
 
       const rawName =
         sessionUser?.username ||
