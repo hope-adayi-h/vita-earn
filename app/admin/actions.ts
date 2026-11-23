@@ -243,26 +243,70 @@ export async function reviewWithdrawalAction(params: {
       return { error: "Accès formellement refusé : privilèges administrateur requis." };
     }
 
-    // 1. Tenter l'appel RPC Supabase si configuré
-    try {
-      const adminClient = createAdminClient();
-      await adminClient.rpc("review_withdrawal", {
-        p_withdrawal_id: params.withdrawalId,
-        p_action: params.action,
-        p_admin_id: user.id,
-        p_notes: params.notes || null,
-      });
-    } catch {
-      // Tolérance si Supabase hors-ligne ou procédure locale
-    }
-
-    // 2. Mise à jour dans le store persistant de retraits
     let targetStatus: "pending" | "processing" | "approved" | "paid" | "rejected" = "processing";
     if (params.action === "approve") targetStatus = "approved";
     else if (params.action === "paid") targetStatus = "paid";
     else if (params.action === "reject") targetStatus = "rejected";
     else if (params.action === "processing") targetStatus = "processing";
 
+    // 1. Mise à jour directe et sécurisée dans la table public.withdrawals sur Supabase
+    try {
+      const adminClient = createAdminClient();
+      const { data: targetW } = await adminClient
+        .from("withdrawals")
+        .select("id, user_id, amount, status")
+        .eq("id", params.withdrawalId)
+        .maybeSingle();
+
+      const reviewerId = user?.id && user.id.length === 36 ? user.id : "333d799b-84ea-493b-b35e-754f88c81b7f";
+
+      if (targetW) {
+        await adminClient
+          .from("withdrawals")
+          .update({
+            status: targetStatus,
+            admin_note: params.notes || null,
+            reviewed_by: reviewerId,
+            reviewed_at: new Date().toISOString(),
+          })
+          .eq("id", params.withdrawalId);
+
+        // Si rejet : Restituer intégralement les fonds au client dans le grand livre (Règle P0)
+        if (params.action === "reject" && targetW.status !== "rejected" && targetW.status !== "paid") {
+          const { data: userWallet } = await adminClient
+            .from("wallets")
+            .select("id")
+            .eq("user_id", targetW.user_id)
+            .maybeSingle();
+
+          if (userWallet) {
+            const txId = crypto.randomUUID();
+            await adminClient.from("ledger_entries").insert([
+              {
+                tx_id: txId,
+                wallet_id: userWallet.id,
+                amount: Number(targetW.amount),
+                entry_type: "refund_credit",
+                reference_id: targetW.id,
+                description: `Remboursement retrait refusé #${targetW.id.substring(0, 8).toUpperCase()}`,
+              },
+              {
+                tx_id: txId,
+                wallet_id: "a3514696-fd19-40a9-a451-abae118f9591",
+                amount: -Number(targetW.amount),
+                entry_type: "adjustment",
+                reference_id: targetW.id,
+                description: `Restitution provision retrait refusé #${targetW.id.substring(0, 8).toUpperCase()}`,
+              },
+            ]);
+          }
+        }
+      }
+    } catch (dbErr) {
+      console.error("Erreur mise à jour Supabase retrait:", dbErr);
+    }
+
+    // 2. Mise à jour dans le store persistant de retraits
     updateStoredWithdrawalStatus(params.withdrawalId, targetStatus, params.notes);
 
     // 3. Mise à jour dans les cookies de session s'ils existent

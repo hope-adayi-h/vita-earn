@@ -157,7 +157,7 @@ export default async function AdminDashboardPage() {
       // 4. Retraits Mobile Money (Validés, En attente, En cours)
       const { data: dbWithdrawals } = await adminClient
         .from("withdrawals")
-        .select("id, amount, status, payment_method, account_name, created_at")
+        .select("id, user_id, amount, status, payment_method, operator, phone, created_at")
         .order("created_at", { ascending: false });
 
       if (dbWithdrawals && dbWithdrawals.length > 0) {
@@ -167,6 +167,20 @@ export default async function AdminDashboardPage() {
         pendingWithdrawalsCount = 0;
         processingWithdrawalsAmount = 0;
         processingWithdrawalsCount = 0;
+
+        const wUserIds = Array.from(new Set(dbWithdrawals.map((w) => w.user_id).filter(Boolean)));
+        let wProfileMap = new Map<string, string>();
+        if (wUserIds.length > 0) {
+          const { data: wProfiles } = await adminClient
+            .from("profiles")
+            .select("id, full_name, username")
+            .in("id", wUserIds);
+          if (wProfiles) {
+            wProfiles.forEach((p) => {
+              wProfileMap.set(p.id, p.full_name || p.username || "Membre");
+            });
+          }
+        }
 
         dbWithdrawals.forEach((w) => {
           const amt = Number(w.amount) || 0;
@@ -181,7 +195,7 @@ export default async function AdminDashboardPage() {
             processingWithdrawalsCount++;
           }
 
-          const meth = (w.payment_method || "").toLowerCase();
+          const meth = (w.operator || w.payment_method || "").toLowerCase();
           if (meth.includes("flooz") || meth.includes("moov")) methodStats.flooz += amt;
           else if (meth.includes("wave")) methodStats.wave += amt;
           else if (meth.includes("mtn")) methodStats.mtn += amt;
@@ -192,12 +206,12 @@ export default async function AdminDashboardPage() {
         recentActivities = dbWithdrawals.slice(0, 6).map((w) => ({
           id: w.id,
           type: "withdrawal",
-          title: `Retrait ${w.account_name || "Membre"}`,
-          subtitle: `Opérateur : ${(w.payment_method || "T-Money").toUpperCase()}`,
+          title: `Retrait ${wProfileMap.get(w.user_id) || "Membre"}`,
+          subtitle: `Opérateur : ${(w.operator || w.payment_method || "T-Money").toUpperCase()}`,
           amount: Number(w.amount),
           status: w.status as any,
           date: w.created_at,
-          method: w.payment_method,
+          method: w.operator || w.payment_method,
         }));
       }
 
@@ -311,7 +325,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-5">
-      {/* 1. Header exclusif avec 3 traits (☰) et Bouton RETOUR SUR LE SITE */}
+      {/* 1. Header exclusif avec menu et Bouton RETOUR SUR LE SITE */}
       <AdminNavbar
         userEmail={userEmail}
         isSuperAdmin={isSuperAdmin}
