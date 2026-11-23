@@ -60,13 +60,15 @@ export function EquipeView({
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Filtrage selon le niveau actif
+  // Filtrage selon le niveau actif :
+  // Les niveaux 1, 2, 3 affichent UNIQUEMENT les membres ayant activé leur compte (isActivated: true).
+  // L'onglet "inactifs" regroupe STRICTEMENT les membres inscrits non activés (!isActivated).
   const currentTabMembers = useMemo(() => {
     if (activeTab === "inactifs") {
       return referrals.filter((r) => !r.isActivated);
     }
     const numLevel = Number(activeTab) as 1 | 2 | 3;
-    return referrals.filter((r) => r.level === numLevel);
+    return referrals.filter((r) => r.level === numLevel && r.isActivated);
   }, [activeTab, referrals]);
 
   const filteredMembers = useMemo(() => {
@@ -187,7 +189,7 @@ export function EquipeView({
               : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           }`}
         >
-          Niveau 1 ({referrals.filter((r) => r.level === 1).length})
+          Niveau 1 ({referrals.filter((r) => r.level === 1 && r.isActivated).length})
         </Link>
         <Link
           href="/equipe?level=2"
@@ -197,7 +199,7 @@ export function EquipeView({
               : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           }`}
         >
-          Niveau 2 ({referrals.filter((r) => r.level === 2).length})
+          Niveau 2 ({referrals.filter((r) => r.level === 2 && r.isActivated).length})
         </Link>
         <Link
           href="/equipe?level=3"
@@ -207,7 +209,7 @@ export function EquipeView({
               : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           }`}
         >
-          Niveau 3 ({referrals.filter((r) => r.level === 3).length})
+          Niveau 3 ({referrals.filter((r) => r.level === 3 && r.isActivated).length})
         </Link>
         <Link
           href="/equipe?level=inactifs"
@@ -217,7 +219,7 @@ export function EquipeView({
               : "text-amber-700 dark:text-amber-400 hover:text-amber-800"
           }`}
         >
-          Inactifs ({inactifsCount})
+          Inactifs ({referrals.filter((r) => !r.isActivated).length})
         </Link>
       </div>
 
