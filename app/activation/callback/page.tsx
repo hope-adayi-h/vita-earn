@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { processSuccessfulActivation } from "@/lib/payments/activation-service";
 
 export const metadata = {
-  title: "Statut du Paiement SasPay — Vita Earn",
+  title: "Statut du Paiement — Vita Earn",
   description: "Statut de votre paiement d'activation de compte Vita Earn.",
 };
 
@@ -131,13 +131,13 @@ export default async function SasPayCallbackPage({
         <div className="space-y-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Paiement Encaissé par SasPay</span>
+            <span>Paiement Mobile Money Confirmé</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">
             Félicitations !
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-            Votre paiement d'adhésion de <strong>4 500 FCFA</strong> a été validé avec succès par SasPay.
+            Votre paiement d'adhésion de <strong>4 500 FCFA</strong> a été validé avec succès.
             Votre compte Vita Earn est désormais pleinement activé. Le programme d'affiliation sur 3 niveaux,
             la publication d'articles et les retraits Mobile Money vous sont immédiatement ouverts.
           </p>

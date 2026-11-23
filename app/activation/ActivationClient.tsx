@@ -238,7 +238,7 @@ export function ActivationClient({
         setIsProcessing(false);
       }
     } catch {
-      setErrorMessage("Une erreur réseau est survenue lors de la connexion à SasPay.");
+      setErrorMessage("Une erreur réseau est survenue lors de la connexion au service de paiement.");
       setIsProcessing(false);
     }
   };

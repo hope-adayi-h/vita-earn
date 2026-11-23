@@ -405,16 +405,37 @@ export async function signInAction(
   if (!matchedAccount) {
     try {
       const adminClient = createAdminClient();
-      const { data: dbProf } = await adminClient
-        .from("profiles")
-        .select("id, full_name, username, phone, role, is_activated, referral_code")
-        .or(`username.ilike.${cleanId},full_name.ilike.${cleanId}`)
-        .limit(1)
-        .maybeSingle();
+      let dbProf: any = null;
+
+      if (cleanId.includes("@")) {
+        const { data: userListData } = await adminClient.auth.admin.listUsers({ perPage: 200 });
+        const foundAuthUser = userListData?.users?.find(
+          (u) => u.email?.toLowerCase() === cleanId
+        );
+        if (foundAuthUser) {
+          const { data: p } = await adminClient
+            .from("profiles")
+            .select("id, full_name, phone, role, is_activated, referral_code")
+            .eq("id", foundAuthUser.id)
+            .maybeSingle();
+          if (p) dbProf = p;
+        }
+      }
+
+      if (!dbProf) {
+        const { data: p } = await adminClient
+          .from("profiles")
+          .select("id, full_name, phone, role, is_activated, referral_code")
+          .or(`full_name.ilike.${cleanId},phone.ilike.%${cleanId.replace(/\s+/g, "")}%`)
+          .limit(1)
+          .maybeSingle();
+        dbProf = p;
+      }
+
       if (dbProf) {
         matchedAccount = {
           id: dbProf.id,
-          username: dbProf.full_name || dbProf.username || cleanId,
+          username: dbProf.full_name || cleanId,
           email: cleanId.includes("@") ? cleanId : `${cleanId.toLowerCase()}@vitaearn.com`,
           phone: dbProf.phone || "",
           country: "Togo",
@@ -628,9 +649,10 @@ export async function signInAction(
         };
       }
 
-      const { data: profile } = await supabase
+      const adminClient = createAdminClient();
+      const { data: profile } = await adminClient
         .from("profiles")
-        .select("full_name, is_activated, role")
+        .select("full_name, is_activated, role, phone")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -646,6 +668,7 @@ export async function signInAction(
         username: displayName,
         fullName: displayName,
         email: user.email,
+        phone: profile?.phone || "",
         role: profile?.role || "user",
         isActivated,
       };
@@ -654,6 +677,9 @@ export async function signInAction(
       cookieStore.set("vita_test_role", profile?.role || "user", AUTH_COOKIE_OPTIONS);
       cookieStore.set("vita_test_user", displayName, AUTH_COOKIE_OPTIONS);
       cookieStore.set("vita_test_email", user.email || "", AUTH_COOKIE_OPTIONS);
+      if (profile?.phone) {
+        cookieStore.set("vita_registered_phone", profile.phone, AUTH_COOKIE_OPTIONS);
+      }
       cookieStore.delete("vita_logged_out");
       if (isActivated) {
         cookieStore.set("vita_account_activated", "true", AUTH_COOKIE_OPTIONS);

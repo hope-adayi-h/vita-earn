@@ -150,6 +150,20 @@ export default async function HomePage() {
       effectiveUserId = "333d799b-84ea-493b-b35e-754f88c81b7f";
     } else if (sessionUser?.id && sessionUser.id.length === 36) {
       effectiveUserId = sessionUser.id;
+    } else if (sessionUser?.username || testUser || sessionUser?.email || testEmail) {
+      const candidateName = sessionUser?.username || testUser;
+      const candidateEmail = sessionUser?.email || testEmail;
+      try {
+        const { data: pData } = await adminClient
+          .from("profiles")
+          .select("id")
+          .or(`username.ilike.${candidateName?.trim() || ""},email.ilike.${candidateEmail?.trim() || ""}`)
+          .limit(1)
+          .maybeSingle();
+        if (pData?.id) {
+          effectiveUserId = pData.id;
+        }
+      } catch {}
     }
   }
 
@@ -187,10 +201,10 @@ export default async function HomePage() {
           .select("referred_id, created_at")
           .eq("referrer_id", effectiveUserId),
         adminClient
-          .from("ledger_entries")
-          .select("id, amount, entry_type, description, created_at")
-          .order("created_at", { ascending: false })
-          .limit(5),
+          .from("wallets")
+          .select("id")
+          .eq("user_id", effectiveUserId)
+          .maybeSingle(),
       ]);
 
       const profile = profileRes.data;
@@ -333,16 +347,25 @@ export default async function HomePage() {
         });
       }
 
-      // Dernières écritures réelles du grand livre
-      const entries = entriesRes.data;
-      if (entries) {
-        ledgerEntries = entries.map((e) => ({
-          id: e.id,
-          amount: Number(e.amount),
-          entry_type: e.entry_type,
-          description: e.description,
-          created_at: e.created_at,
-        }));
+      // Dernières écritures réelles du grand livre pour ce portefeuille
+      const userWalletId = entriesRes.data?.id;
+      if (userWalletId) {
+        const { data: entries } = await adminClient
+          .from("ledger_entries")
+          .select("id, amount, entry_type, description, created_at")
+          .eq("wallet_id", userWalletId)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (entries && entries.length > 0) {
+          ledgerEntries = entries.map((e) => ({
+            id: e.id,
+            amount: Number(e.amount),
+            entry_type: e.entry_type,
+            description: e.description,
+            created_at: e.created_at,
+          }));
+        }
       }
     } else if (sessionUser) {
       const sName = sessionUser.username || sessionUser.fullName || "";

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { formatFCFA } from "@/lib/utils";
 import { WithdrawalModal } from "@/components/WithdrawalModal";
 import {
@@ -131,25 +132,39 @@ export default async function PortefeuillePage() {
     }
   } catch {}
 
-  if (user) {
+  const adminClient = createAdminClient();
+  let targetUserId = user?.id || (sessionUser?.id && sessionUser.id.includes("-") ? sessionUser.id : null);
+
+  if (!targetUserId && (sessionUser?.username || testUser)) {
+    const candidateName = sessionUser?.username || testUser;
+    const { data: p } = await adminClient
+      .from("profiles")
+      .select("id")
+      .or(`username.ilike.${candidateName.trim()},full_name.ilike.${candidateName.trim()}`)
+      .limit(1)
+      .maybeSingle();
+    if (p?.id) targetUserId = p.id;
+  }
+
+  if (targetUserId) {
     try {
-      const [wbRes, withdrawalsRes, entriesRes] = await Promise.all([
-        supabase
+      const [wbRes, withdrawalsRes, walletRes] = await Promise.all([
+        adminClient
           .from("wallet_balances")
           .select("balance, available_balance, pending_balance, total_earned, total_withdrawn")
-          .eq("user_id", user.id)
+          .eq("user_id", targetUserId)
           .maybeSingle(),
-        supabase
+        adminClient
           .from("withdrawals")
           .select("id, amount, net_amount, payment_method, phone_number, status, admin_note, created_at")
-          .eq("user_id", user.id)
+          .eq("user_id", targetUserId)
           .order("created_at", { ascending: false })
           .limit(10),
-        supabase
-          .from("ledger_entries")
-          .select("id, amount, entry_type, description, created_at")
-          .order("created_at", { ascending: false })
-          .limit(20),
+        adminClient
+          .from("wallets")
+          .select("id")
+          .eq("user_id", targetUserId)
+          .maybeSingle(),
       ]);
 
       const wb = wbRes.data;
@@ -165,15 +180,23 @@ export default async function PortefeuillePage() {
         withdrawals = userWithdrawals as unknown as WithdrawalItem[];
       }
 
-      const entries = entriesRes.data;
-      if (entries && entries.length > 0) {
-        ledgerEntries = entries.map((e) => ({
-          id: e.id,
-          amount: Number(e.amount),
-          entry_type: e.entry_type,
-          description: e.description,
-          created_at: e.created_at,
-        }));
+      if (walletRes.data?.id) {
+        const { data: entries } = await adminClient
+          .from("ledger_entries")
+          .select("id, amount, entry_type, description, created_at")
+          .eq("wallet_id", walletRes.data.id)
+          .order("created_at", { ascending: false })
+          .limit(20);
+
+        if (entries && entries.length > 0) {
+          ledgerEntries = entries.map((e) => ({
+            id: e.id,
+            amount: Number(e.amount),
+            entry_type: e.entry_type,
+            description: e.description,
+            created_at: e.created_at,
+          }));
+        }
       }
     } catch {
       // Supabase non connecté ou table vide

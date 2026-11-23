@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getBaseAppUrl } from "@/lib/utils";
 import { ReferralSection } from "@/components/ReferralSection";
-import { ProfilePhoneEditor } from "./ProfilePhoneEditor";
 import {
   Wallet,
   Users,
@@ -334,7 +333,14 @@ export default async function ProfilPage() {
           </div>
 
           {/* TÉLÉPHONE */}
-          <ProfilePhoneEditor initialPhone={phone} />
+          <div className="bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] rounded-2xl p-3.5 sm:p-4 shadow-2xs">
+            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+              TÉLÉPHONE
+            </p>
+            <p className="text-sm sm:text-base font-semibold text-[#14201A] dark:text-gray-100 mt-0.5 truncate">
+              {phone}
+            </p>
+          </div>
 
           {/* PARRAIN */}
           <div className="bg-white dark:bg-[#131E17] border border-gray-100 dark:border-[#1E2E24] rounded-2xl p-3.5 sm:p-4 shadow-2xl">

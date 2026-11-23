@@ -31,7 +31,7 @@ export async function processSuccessfulActivation(params: {
     updateStoredDepositStatus({
       identifierOrRef: providerRef || userId,
       status: "succeeded",
-      confirmationSource: "Paiement automatique confirmé par SasPay",
+      confirmationSource: "Paiement automatique Mobile Money confirmé",
     });
   } catch {}
 
@@ -199,14 +199,14 @@ export async function processSuccessfulActivation(params: {
     const commissionRecords: any[] = [];
     let distributedAmount = 0;
 
-    // Débit du portefeuille externe (-4 500 FCFA reçu de Mobile Money / SasPay)
+    // Débit du portefeuille externe (-4 500 FCFA reçu de Mobile Money)
     ledgerEntries.push({
       tx_id: txId,
       wallet_id: EXTERNAL_WALLET_ID,
       amount: -4500,
       entry_type: "activation_credit",
       reference_id: validPaymentId,
-      description: "Encaissement activation SasPay",
+      description: "Adhésion Vita Earn (Mobile Money)",
     });
 
     // Niveau 1 : 2 000 FCFA

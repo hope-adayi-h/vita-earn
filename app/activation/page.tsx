@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getActivationData } from "./actions";
 import { ActivationClient } from "./ActivationClient";
 import { resolveAlternativePaymentForUser } from "@/lib/data/alternative-payment-store";
@@ -12,6 +13,12 @@ export const metadata = {
 
 export default async function ActivationPage() {
   const data = await getActivationData();
+
+  // Si le compte est déjà activé (paiement validé ou activé manuellement par l'administrateur)
+  if (data.isActivated) {
+    redirect("/");
+  }
+
   const alternativePayment = await resolveAlternativePaymentForUser(data.user.country);
   const autoPaymentSettings = await getAutoPaymentCountrySettings();
 
