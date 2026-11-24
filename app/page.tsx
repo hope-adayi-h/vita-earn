@@ -6,7 +6,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { formatFCFA } from "@/lib/utils";
 import { ReferralSection } from "@/components/ReferralSection";
 import { WelcomeBonusCard } from "@/components/WelcomeBonusCard";
-import { TimeTableSection } from "@/components/TimeTableSection";
+import { TimeTableSection, TaskItem } from "@/components/TimeTableSection";
+import { fetchAndSyncDailyTasks } from "@/lib/data/tasks-store";
 import { UserAvatar } from "@/components/UserAvatar";
 import { T } from "@/components/T";
 import {
@@ -113,6 +114,7 @@ export default async function HomePage() {
   let totalExpenses = 0;
   let triviaEarnings = 0; // Au départ à 0 FCFA comme demandé par l'utilisateur
   let welcomeBonusClaimed = false;
+  let timeTableTasks: TaskItem[] = [];
 
   let referralCode = "VE8K2X";
   let level1Count = 0;
@@ -169,6 +171,8 @@ export default async function HomePage() {
 
   try {
     if (effectiveUserId) {
+      const todayDateStr = new Date().toISOString().split("T")[0];
+
       // Optimisation majeure : Exécution parallèle simultanée des requêtes Supabase via service_role
       const [
         profileRes,
@@ -177,6 +181,7 @@ export default async function HomePage() {
         userTaskEarningsRes,
         l1ReferralsRes,
         entriesRes,
+        todayTasksHistoryRes,
       ] = await Promise.all([
         adminClient
           .from("profiles")
@@ -205,6 +210,11 @@ export default async function HomePage() {
           .select("id")
           .eq("user_id", effectiveUserId)
           .maybeSingle(),
+        adminClient
+          .from("task_history")
+          .select("task_type")
+          .eq("user_id", effectiveUserId)
+          .eq("completed_date", todayDateStr),
       ]);
 
       const profile = profileRes.data;
@@ -287,6 +297,92 @@ export default async function HomePage() {
       // 2. SOLDE PRINCIPAL (balance) = Gains retirables disponibles.
       //    Gains du portefeuille (commissions + bonus roue) + gains du Trivia (seule tâche qui crédite le solde principal).
       balance = (Number(wb?.available_balance ?? wb?.balance) || 0) + triviaEarnings;
+
+      // Synchronisation dynamique du TimeTable avec les activations réelles de l'administrateur
+      const syncedDailyTasks = await fetchAndSyncDailyTasks();
+      const todayCompletedTypes = new Set<string>();
+      if (todayTasksHistoryRes?.data) {
+        todayTasksHistoryRes.data.forEach((h: any) => todayCompletedTypes.add(h.task_type));
+      }
+
+      const earningsMap = new Map<string, number>();
+      if (userTaskEarnings) {
+        userTaskEarnings.forEach((t: any) => {
+          earningsMap.set(t.task_type, Number(t.accumulated_amount) || 0);
+        });
+      }
+
+      const quizTask = syncedDailyTasks.find((t) => t.taskType === "quiz" || t.id === "task_lundi");
+      const tiktokTask = syncedDailyTasks.find((t) => t.taskType === "tiktok" || t.id === "task_mardi");
+      const youtubeTask = syncedDailyTasks.find((t) => t.taskType === "youtube" || t.id === "task_mercredi");
+      const adsTask = syncedDailyTasks.find((t) => t.taskType === "adsense" || t.id === "task_jeudi");
+      const instaTask = syncedDailyTasks.find((t) => t.taskType === "instagram" || t.id === "task_vendredi");
+
+      timeTableTasks = [
+        {
+          id: "trivia",
+          title: quizTask?.title || "Trivia Questions",
+          dayLabel: "Lundi",
+          time: "8:00 AM",
+          rewardAmount: Number(quizTask?.rewardAmount || 15),
+          accumulatedAmount: earningsMap.get("trivia") || 0,
+          thresholdAmount: 4500,
+          isActive: Boolean(quizTask?.isActive),
+          isCompletedToday: todayCompletedTypes.has("trivia") || todayCompletedTypes.has("quiz"),
+          description: quizTask?.instructions || "Répondez aux questions de culture générale et gagnez des récompenses instantanées.",
+          questionPrompt: "Quelle est la monnaie officielle utilisée au Togo et dans la zone UEMOA ?",
+          questionChoices: ["Naira", "Franc CFA (XOF)", "Cedi", "Dollar"],
+          correctChoiceIndex: 1,
+        },
+        {
+          id: "tiktok",
+          title: tiktokTask?.title || "TikTok Videos",
+          dayLabel: "Mardi",
+          time: "8:00 AM",
+          rewardAmount: Number(tiktokTask?.rewardAmount || 150),
+          accumulatedAmount: earningsMap.get("tiktok") || 0,
+          thresholdAmount: 4500,
+          isActive: Boolean(tiktokTask?.isActive),
+          isCompletedToday: todayCompletedTypes.has("tiktok"),
+          description: tiktokTask?.instructions || "Visionnez la courte vidéo sponsorisée TikTok pour valider vos gains.",
+        },
+        {
+          id: "youtube",
+          title: youtubeTask?.title || "YouTube Videos",
+          dayLabel: "Mercredi",
+          time: "8:00 AM",
+          rewardAmount: Number(youtubeTask?.rewardAmount || 150),
+          accumulatedAmount: earningsMap.get("youtube") || 0,
+          thresholdAmount: 4500,
+          isActive: Boolean(youtubeTask?.isActive),
+          isCompletedToday: todayCompletedTypes.has("youtube"),
+          description: youtubeTask?.instructions || "Visionnez la vidéo de formation YouTube et débloquez votre récompense.",
+        },
+        {
+          id: "ads",
+          title: adsTask?.title || "Ads Clicking",
+          dayLabel: "Jeudi",
+          time: "8:00 AM",
+          rewardAmount: Number(adsTask?.rewardAmount || 200),
+          accumulatedAmount: earningsMap.get("ads") || earningsMap.get("adsense") || 0,
+          thresholdAmount: 4500,
+          isActive: Boolean(adsTask?.isActive),
+          isCompletedToday: todayCompletedTypes.has("ads") || todayCompletedTypes.has("adsense"),
+          description: adsTask?.instructions || "Visitez le lien sponsorisé du jour pour recevoir votre crédit.",
+        },
+        {
+          id: "instagram",
+          title: instaTask?.title || "Instagram Videos",
+          dayLabel: "Vendredi",
+          time: "8:00 AM",
+          rewardAmount: Number(instaTask?.rewardAmount || 200),
+          accumulatedAmount: earningsMap.get("instagram") || 0,
+          thresholdAmount: 4500,
+          isActive: Boolean(instaTask?.isActive),
+          isCompletedToday: todayCompletedTypes.has("instagram"),
+          description: instaTask?.instructions || "Découvrez et interagissez avec le contenu vidéo Instagram du jour.",
+        },
+      ];
 
       // Réseau de parrainage sur 3 générations (uniquement si des filleuls existent)
       const l1Referrals = l1ReferralsRes.data;
@@ -725,7 +821,7 @@ export default async function HomePage() {
       </div>
 
       {/* 8. TIME TABLE - PLANNING DES 5 TÂCHES RÉMUNÉRÉES (TRIVIA, TIKTOK, YOUTUBE, ADS, INSTAGRAM) */}
-      <TimeTableSection />
+      <TimeTableSection tasks={timeTableTasks} userBalance={balance} />
 
       {/* 8. RACCOURCIS D'ACTION RAPIDE */}
       <div className="grid grid-cols-2 gap-3 pt-2">

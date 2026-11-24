@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   HelpCircle,
   Video,
@@ -117,6 +117,13 @@ export function TimeTableSection({ tasks: initialTasks }: TimeTableSectionProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [videoTimer, setVideoTimer] = useState<number | null>(null);
+
+  // Synchronisation dynamique avec les données serveur dès qu'elles changent
+  useEffect(() => {
+    if (initialTasks && initialTasks.length > 0) {
+      setTaskList(initialTasks);
+    }
+  }, [initialTasks]);
 
   // Vrais logos officiels pour chaque tâche (TikTok, YouTube, AdSense, Instagram, Trivia)
   const getTaskIcon = (id: string) => {

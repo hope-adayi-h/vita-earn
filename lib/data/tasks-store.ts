@@ -542,27 +542,8 @@ export function recordStoredTaskValidation(params: {
     return { success: false, error: "Erreur d'enregistrement." };
   }
 
-  // 2. Créditer immédiatement le solde et le profit de l'utilisateur dans le local store
-  try {
-    const users = getAllUsers();
-    const cleanUser = userId.toLowerCase().trim();
-    const targetUser = users.find(
-      (u) =>
-        u.id.toLowerCase() === cleanUser ||
-        u.username.toLowerCase() === cleanUser ||
-        u.email.toLowerCase() === cleanUser
-    );
-
-    if (targetUser) {
-      targetUser.balance = (targetUser.balance || 0) + rewardAmount;
-      targetUser.profit = (targetUser.profit || 0) + rewardAmount;
-
-      const usersFilePath = path.join(getDataDir(), "registered_users.json");
-      fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2), "utf-8");
-    }
-  } catch (err) {
-    console.error("Erreur crédit solde utilisateur:", err);
-  }
+  // 2. Note : les gains vidéo et publicités sont cloisonnés dans leur propre cagnotte
+  // et ne modifient pas directement le solde principal. Seul le quiz crédite le solde principal.
 
   return { success: true, reward: rewardAmount };
 }

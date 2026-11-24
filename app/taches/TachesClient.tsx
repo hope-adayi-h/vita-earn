@@ -102,6 +102,33 @@ export function TachesClient({
   const [countdown, setCountdown] = useState<number>(requiredSeconds);
   const [hasCompletedTimer, setHasCompletedTimer] = useState<boolean>(initialHasValidated);
 
+  // États pour les tâches vidéo (Mardi, Mercredi, Vendredi)
+  const isVideoTask =
+    todayTask?.taskType === "tiktok" ||
+    todayTask?.taskType === "youtube" ||
+    todayTask?.taskType === "instagram";
+  const requiredVideoSeconds = todayTask?.videoDurationSeconds || 30;
+  const [videoCountdown, setVideoCountdown] = useState<number>(requiredVideoSeconds);
+  const [hasCompletedVideoTimer, setHasCompletedVideoTimer] = useState<boolean>(initialHasValidated);
+
+  // Compte à rebours automatique pour les vidéos partenaires
+  useEffect(() => {
+    if (isVideoTask && !hasValidated && !hasCompletedVideoTimer) {
+      setVideoCountdown(requiredVideoSeconds);
+      const timer = setInterval(() => {
+        setVideoCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setHasCompletedVideoTimer(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [isVideoTask, todayTask?.id, hasValidated, hasCompletedVideoTimer, requiredVideoSeconds]);
+
   // Compte à rebours automatique pour l'annonce AdSense
   useEffect(() => {
     if (todayTask?.taskType === "adsense" && !hasValidated && !hasCompletedTimer) {
@@ -492,10 +519,32 @@ export function TachesClient({
                   embedUrl={todayTask.embedUrl}
                   platform={todayTask.platform || "youtube"}
                   title={todayTask.title}
+                  directUrl={todayTask.embedUrl.includes("http") ? todayTask.embedUrl : undefined}
                 />
               ) : (
                 <div className="aspect-video bg-slate-900 text-white flex items-center justify-center rounded-2xl">
                   <Play className="w-8 h-8 text-white/60" />
+                </div>
+              )}
+
+              {/* Compte à rebours de visionnage vidéo */}
+              {!hasValidated && !hasCompletedVideoTimer && (
+                <div className="space-y-1.5 p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+                      <span>Visionnage obligatoire en cours</span>
+                    </span>
+                    <span className="text-emerald-700 font-black">{videoCountdown}s restantes</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-600 transition-all duration-1000 ease-linear rounded-full"
+                      style={{
+                        width: `${Math.round(((requiredVideoSeconds - videoCountdown) / requiredVideoSeconds) * 100)}%`,
+                      }}
+                    />
+                  </div>
                 </div>
               )}
 
@@ -504,23 +553,32 @@ export function TachesClient({
                 <button
                   type="button"
                   onClick={handleValidateVideo}
-                  disabled={isPending}
-                  className="w-full touch-target min-h-[48px] rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-black text-sm py-3.5 px-4 flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                  disabled={!hasCompletedVideoTimer || isPending}
+                  className={`w-full touch-target min-h-[48px] rounded-2xl font-black text-sm py-3.5 px-4 flex items-center justify-center gap-2 shadow-md transition-all ${
+                    hasCompletedVideoTimer
+                      ? "bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white cursor-pointer ring-2 ring-emerald-500/30"
+                      : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                  }`}
                 >
                   {isPending ? (
                     <span>Validation en cours...</span>
-                  ) : (
+                  ) : hasCompletedVideoTimer ? (
                     <>
                       <CheckCircle2 className="w-5 h-5 text-white" />
                       <span>Valider la vidéo et encaisser {formatFCFA(todayTask.rewardAmount)}</span>
                       <ArrowRight className="w-4 h-4 text-white/80" />
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4 text-slate-400" />
+                      <span>Visionnez la vidéo ({videoCountdown}s restantes)</span>
                     </>
                   )}
                 </button>
               ) : (
                 <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-center text-xs font-bold flex items-center justify-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Tâche vidéo déjà validée pour aujourd&apos;hui. Gain crédité !</span>
+                  <span>Tâche vidéo déjà validée pour aujourd&apos;hui. Gain crédité dans votre cagnotte !</span>
                 </div>
               )}
             </div>

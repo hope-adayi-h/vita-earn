@@ -140,32 +140,54 @@ export async function validateDailyVideoTaskAction(taskId: string): Promise<Task
     // 6. Plafond de récompense (lu côté serveur)
     const rewardAmount = Math.max(1, Math.min(todayTask.rewardAmount, 500));
 
-    // 7. Enregistrement dans Supabase si connecté via la procédure SQL sécurisée
-    if (isConfigured && supabaseAuthId) {
+    // 7. Enregistrement dans Supabase dans la cagnotte dédiée user_task_earnings
+    if (isConfigured && effectiveUserId) {
       try {
         const adminClient = createAdminClient();
-        const { data: rpcRes, error: rpcErr } = await adminClient.rpc("validate_video_task", {
-          p_user_id: supabaseAuthId,
-          p_task_id: taskId,
-          p_current_date: lomeTime.dateStr,
+        const taskTypeKey = todayTask.taskType || "tiktok";
+
+        // Historique de la tâche
+        await adminClient.from("task_history").insert({
+          user_id: effectiveUserId,
+          task_type: taskTypeKey,
+          reward_amount: rewardAmount,
+          completed_date: lomeTime.dateStr,
         });
 
-        if (rpcErr) {
-          console.warn("Erreur RPC validate_video_task Supabase:", rpcErr.message);
-          // Si l'erreur indique qu'elle est déjà validée
-          if (rpcErr.message.includes("déjà validé")) {
-            return {
-              success: false,
-              message: "Vous avez déjà validé cette tâche aujourd'hui.",
-            };
-          }
+        // Mise à jour de la cagnotte dédiée (seuil de 4 500 FCFA)
+        const { data: curEarn } = await adminClient
+          .from("user_task_earnings")
+          .select("accumulated_amount")
+          .eq("user_id", effectiveUserId)
+          .eq("task_type", taskTypeKey)
+          .maybeSingle();
+
+        const newAcc = (Number(curEarn?.accumulated_amount) || 0) + rewardAmount;
+        if (curEarn) {
+          await adminClient
+            .from("user_task_earnings")
+            .update({
+              accumulated_amount: newAcc,
+              last_completed_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("user_id", effectiveUserId)
+            .eq("task_type", taskTypeKey);
+        } else {
+          await adminClient.from("user_task_earnings").insert({
+            user_id: effectiveUserId,
+            task_type: taskTypeKey,
+            accumulated_amount: newAcc,
+            threshold_amount: 4500,
+            last_completed_at: new Date().toISOString(),
+          });
         }
       } catch (err) {
-        console.warn("Fallback local validation:", err);
+        console.warn("Erreur mise à jour user_task_earnings:", err);
       }
     }
 
-    // 8. Enregistrement dans le store local résilient et crédit immédiat
+    // 8. Enregistrement dans le store local
     const storeRes = recordStoredTaskValidation({
       userId: effectiveUserId,
       taskId,
@@ -180,52 +202,16 @@ export async function validateDailyVideoTaskAction(taskId: string): Promise<Task
       };
     }
 
-    // 9. Mettre à jour les cookies de session pour reflet immédiat
-    try {
-      if (sessionUserRaw) {
-        const sessionUser = JSON.parse(sessionUserRaw);
-        sessionUser.balance = (sessionUser.balance || 0) + rewardAmount;
-        sessionUser.profit = (sessionUser.profit || 0) + rewardAmount;
-        cookieStore.set("vita_session_user", JSON.stringify(sessionUser), {
-          path: "/",
-          maxAge: 31536000,
-          sameSite: "lax",
-        });
-      }
-
-      // Mettre à jour vita_accounts si présent
-      const rawAccounts = cookieStore.get("vita_accounts")?.value;
-      if (rawAccounts) {
-        const accounts = JSON.parse(rawAccounts);
-        if (Array.isArray(accounts)) {
-          const acc = accounts.find(
-            (a: any) =>
-              a.id === effectiveUserId ||
-              a.username?.toLowerCase() === userId.toLowerCase() ||
-              a.email?.toLowerCase() === userEmail.toLowerCase()
-          );
-          if (acc) {
-            acc.balance = (acc.balance || 0) + rewardAmount;
-            acc.profit = (acc.profit || 0) + rewardAmount;
-            cookieStore.set("vita_accounts", JSON.stringify(accounts), {
-              path: "/",
-              maxAge: 31536000,
-              sameSite: "lax",
-            });
-          }
-        }
-      }
-    } catch {}
-
     // Revalidation des routes concernées
     revalidatePath("/taches");
     revalidatePath("/");
     revalidatePath("/portefeuille");
+    revalidatePath("/retrait");
     revalidatePath("/admin/taches");
 
     return {
       success: true,
-      message: `Félicitations ! Vous avez validé la tâche vidéo du jour et reçu ${rewardAmount} FCFA sur votre solde.`,
+      message: `Félicitations ! Vous avez validé la tâche vidéo du jour et reçu ${rewardAmount} FCFA dans votre cagnotte dédiée.`,
       reward: rewardAmount,
     };
   } catch (err: unknown) {
@@ -373,8 +359,77 @@ export async function submitDailyQuizAction(
       };
     }
 
-    // Mise à jour des cookies de session pour refléter immédiatement le solde
+    // RÈGLE ABSOLUE AGENTS.md :
+    // Les gains du questionnaire (Trivia / Quiz) sont directement crédités sur le Solde Principal
+    // et le PROFIT via une écriture immuable dans ledger_entries, immédiatement retirable sur /retrait.
     if (quizRes.earnedReward > 0) {
+      if (isConfigured && effectiveUserId) {
+        try {
+          const adminClient = createAdminClient();
+
+          // 1. Trouver ou créer le portefeuille de l'utilisateur
+          let { data: wallet } = await adminClient
+            .from("wallets")
+            .select("id")
+            .eq("user_id", effectiveUserId)
+            .maybeSingle();
+
+          if (!wallet) {
+            const { data: newW } = await adminClient
+              .from("wallets")
+              .insert({ user_id: effectiveUserId })
+              .select("id")
+              .maybeSingle();
+            wallet = newW;
+          }
+
+          if (wallet) {
+            // 2. Écriture immuable dans ledger_entries (Solde Principal retirable)
+            const { error: ledgerErr } = await adminClient.from("ledger_entries").insert({
+              wallet_id: wallet.id,
+              amount: quizRes.earnedReward,
+              entry_type: "activation_credit",
+              description: `Gain Questionnaire Trivia (${lomeTime.dateStr})`,
+            });
+            if (ledgerErr) {
+              console.error("Erreur écriture ledger quiz:", ledgerErr);
+            }
+          }
+
+          // 3. Tracking dans user_task_earnings
+          const { data: curEarn } = await adminClient
+            .from("user_task_earnings")
+            .select("accumulated_amount")
+            .eq("user_id", effectiveUserId)
+            .eq("task_type", "trivia")
+            .maybeSingle();
+
+          const newAcc = (Number(curEarn?.accumulated_amount) || 0) + quizRes.earnedReward;
+          if (curEarn) {
+            await adminClient
+              .from("user_task_earnings")
+              .update({
+                accumulated_amount: newAcc,
+                last_completed_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+              .eq("user_id", effectiveUserId)
+              .eq("task_type", "trivia");
+          } else {
+            await adminClient.from("user_task_earnings").insert({
+              user_id: effectiveUserId,
+              task_type: "trivia",
+              accumulated_amount: newAcc,
+              threshold_amount: 4500,
+              last_completed_at: new Date().toISOString(),
+            });
+          }
+        } catch (dbErr) {
+          console.error("Erreur crédit Supabase quiz:", dbErr);
+        }
+      }
+
+      // 4. Mise à jour des cookies de session pour refléter immédiatement le solde
       try {
         if (sessionUserRaw) {
           const sessionUser = JSON.parse(sessionUserRaw);
@@ -392,6 +447,7 @@ export async function submitDailyQuizAction(
     revalidatePath("/taches");
     revalidatePath("/");
     revalidatePath("/portefeuille");
+    revalidatePath("/retrait");
 
     const feedbackMsg =
       quizRes.failedQuestion
@@ -529,26 +585,56 @@ export async function validateAdSensePhotoTaskAction(
       return { success: false, message: storeRes.error || "Erreur de validation." };
     }
 
-    try {
-      if (sessionUserRaw) {
-        const sessionUser = JSON.parse(sessionUserRaw);
-        sessionUser.balance = (sessionUser.balance || 0) + rewardAmount;
-        sessionUser.profit = (sessionUser.profit || 0) + rewardAmount;
-        cookieStore.set("vita_session_user", JSON.stringify(sessionUser), {
-          path: "/",
-          maxAge: 31536000,
-          sameSite: "lax",
+    // Enregistrement dans Supabase dans la cagnotte dédiée user_task_earnings (ads)
+    if (isConfigured && effectiveUserId) {
+      try {
+        const adminClient = createAdminClient();
+        await adminClient.from("task_history").insert({
+          user_id: effectiveUserId,
+          task_type: "ads",
+          reward_amount: rewardAmount,
+          completed_date: lomeTime.dateStr,
         });
+
+        const { data: curEarn } = await adminClient
+          .from("user_task_earnings")
+          .select("accumulated_amount")
+          .eq("user_id", effectiveUserId)
+          .eq("task_type", "ads")
+          .maybeSingle();
+
+        const newAcc = (Number(curEarn?.accumulated_amount) || 0) + rewardAmount;
+        if (curEarn) {
+          await adminClient
+            .from("user_task_earnings")
+            .update({
+              accumulated_amount: newAcc,
+              last_completed_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("user_id", effectiveUserId)
+            .eq("task_type", "ads");
+        } else {
+          await adminClient.from("user_task_earnings").insert({
+            user_id: effectiveUserId,
+            task_type: "ads",
+            accumulated_amount: newAcc,
+            threshold_amount: 4500,
+            last_completed_at: new Date().toISOString(),
+          });
+        }
+      } catch (err) {
+        console.warn("Erreur mise à jour user_task_earnings ads:", err);
       }
-    } catch {}
+    }
 
     revalidatePath("/taches");
     revalidatePath("/");
-    revalidatePath("/portefeuille");
+    revalidatePath("/retrait");
 
     return {
       success: true,
-      message: `Félicitations ! Vous avez complété la publicité du jeudi et empoché ${rewardAmount} FCFA !`,
+      message: `Félicitations ! Vous avez complété l'annonce AdSense et reçu ${rewardAmount} FCFA dans votre cagnotte dédiée !`,
       reward: rewardAmount,
     };
   } catch (err: unknown) {
