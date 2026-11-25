@@ -155,8 +155,8 @@ export function TimeTableSection({ tasks: initialTasks }: TimeTableSectionProps)
 
     if (task.id !== "trivia") {
       // Pour les tâches vidéo (TikTok, YouTube, Ads, Instagram) :
-      // Redirection immédiate vers /taches pour visionnage réel et élimination du double gain
-      router.push("/taches");
+      // Redirection immédiate vers /taches?task=... pour visionnage réel et élimination du double gain
+      router.push(`/taches?task=${encodeURIComponent(task.id)}`);
       return;
     }
 

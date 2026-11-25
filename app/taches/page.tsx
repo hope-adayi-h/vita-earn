@@ -6,9 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getLomeServerTime } from "@/lib/utils/lome-time";
 import {
-  getTodayTaskForLome,
+  getActiveTasksForLome,
   fetchAndSyncDailyTasks,
   hasUserValidatedToday,
+  normalizeTaskAliases,
   StoredDailyTask,
 } from "@/lib/data/tasks-store";
 import { findUserByIdentifier } from "@/lib/auth/local-store";
@@ -19,7 +20,11 @@ export const metadata = {
   description: "Complétez votre tâche quotidienne (Quiz, Vidéos, Publicités) et encaissez votre gain en direct.",
 };
 
-export default async function TachesPage() {
+export default async function TachesPage({
+  searchParams,
+}: {
+  searchParams?: { task?: string };
+}) {
   // 1. Calcul strict de la date et de l'heure du serveur selon le fuseau horaire de Lomé (Africa/Lome)
   const lomeTime = getLomeServerTime();
 
@@ -105,60 +110,68 @@ export default async function TachesPage() {
   }
 
   // 3. Récupération et synchronisation des tâches (Supabase platform_settings + local)
+  // Retourne toutes les tâches activées par l'administrateur (1 à 5 tâches possibles le même jour)
   const syncedTasks = await fetchAndSyncDailyTasks();
-  const todayRawTask: StoredDailyTask | null = getTodayTaskForLome(lomeTime, syncedTasks);
+  const activeRawTasks: StoredDailyTask[] = getActiveTasksForLome(lomeTime, syncedTasks);
 
-  let publicTask: PublicDailyTask | null = null;
-  let hasValidatedToday = false;
+  // RÈGLE DE SÉCURITÉ ABSOLUE : on ne transmet JAMAIS le lien brut (videoUrl) ni la bonne réponse du quiz au client
+  const publicTasks: PublicDailyTask[] = activeRawTasks.map((t) => ({
+    id: t.id,
+    dayOfWeek: t.dayOfWeek,
+    taskType: t.taskType,
+    title: t.title,
+    instructions: t.instructions,
+    rewardAmount: t.rewardAmount,
+    isActive: t.isActive,
+    quizQuestions: t.quizQuestions?.map((q) => ({
+      id: q.id,
+      question: q.question,
+      options: q.options,
+      rewardAmount: q.rewardAmount,
+    })),
+    platform: t.platform,
+    embedUrl: t.embedUrl,
+    cleanUrl: t.cleanUrl || t.videoUrl,
+    videoDurationSeconds: t.videoDurationSeconds,
+    adImageUrl: t.adImageUrl,
+    adTargetUrl: t.adTargetUrl,
+    adDurationSeconds: t.adDurationSeconds,
+    sponsorName: t.sponsorName,
+  }));
 
-  if (todayRawTask) {
-    // RÈGLE DE SÉCURITÉ ABSOLUE : on ne transmet JAMAIS le lien brut (videoUrl) ni la bonne réponse du quiz au client
-    publicTask = {
-      id: todayRawTask.id,
-      dayOfWeek: todayRawTask.dayOfWeek,
-      taskType: todayRawTask.taskType,
-      title: todayRawTask.title,
-      instructions: todayRawTask.instructions,
-      rewardAmount: todayRawTask.rewardAmount,
-      isActive: todayRawTask.isActive,
-      quizQuestions: todayRawTask.quizQuestions?.map((q) => ({
-        id: q.id,
-        question: q.question,
-        options: q.options,
-        rewardAmount: q.rewardAmount,
-      })),
-      platform: todayRawTask.platform,
-      embedUrl: todayRawTask.embedUrl,
-      cleanUrl: todayRawTask.cleanUrl || todayRawTask.videoUrl,
-      videoDurationSeconds: todayRawTask.videoDurationSeconds,
-      adImageUrl: todayRawTask.adImageUrl,
-      adTargetUrl: todayRawTask.adTargetUrl,
-      adDurationSeconds: todayRawTask.adDurationSeconds,
-      sponsorName: todayRawTask.sponsorName,
-    };
+  const validatedSet = new Set<string>();
 
-    if (userId) {
-      hasValidatedToday =
-        hasUserValidatedToday(userId, todayRawTask.id, lomeTime.dateStr) ||
-        hasUserValidatedToday(userId, todayRawTask.taskType || "", lomeTime.dateStr);
+  if (userId && activeRawTasks.length > 0) {
+    let dbCompletedTypes: string[] = [];
+    if (isConfigured) {
+      try {
+        const adminClient = createAdminClient();
+        const { data: dbTasks } = await adminClient
+          .from("task_history")
+          .select("task_type")
+          .eq("user_id", userId)
+          .eq("completed_date", lomeTime.dateStr);
+        if (dbTasks) {
+          dbCompletedTypes = dbTasks.map((r) => String(r.task_type || "").toLowerCase());
+        }
+      } catch {}
+    }
 
-      if (!hasValidatedToday && isConfigured) {
-        try {
-          const adminClient = createAdminClient();
-          const { data: dbTask } = await adminClient
-            .from("task_history")
-            .select("id")
-            .eq("user_id", userId)
-            .eq("task_type", todayRawTask.taskType || "")
-            .eq("completed_date", lomeTime.dateStr)
-            .maybeSingle();
-          if (dbTask) {
-            hasValidatedToday = true;
-          }
-        } catch {}
+    for (const rawTask of activeRawTasks) {
+      const localDone =
+        hasUserValidatedToday(userId, rawTask.id, lomeTime.dateStr) ||
+        hasUserValidatedToday(userId, rawTask.taskType || "", lomeTime.dateStr);
+
+      const aliases = normalizeTaskAliases(rawTask.id);
+      const dbDone = dbCompletedTypes.some((t) => aliases.includes(t));
+
+      if (localDone || dbDone) {
+        validatedSet.add(rawTask.id);
       }
     }
   }
+
+  const validatedTaskIds = Array.from(validatedSet);
 
   return (
     <div className="max-w-xl mx-auto py-3 sm:py-6 space-y-4">
@@ -172,7 +185,9 @@ export default async function TachesPage() {
           <span>Retour au tableau de bord</span>
         </Link>
         <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-          Session du Jour
+          {publicTasks.length > 1
+            ? `${publicTasks.length} Tâches Actives`
+            : "Session du Jour"}
         </span>
       </div>
 
@@ -185,17 +200,18 @@ export default async function TachesPage() {
           </h1>
         </div>
         <p className="text-xs text-emerald-100/90 leading-relaxed">
-          Chaque jour ouvré du lundi au vendredi, complétez l&apos;activité sponsorisée du jour (Quiz interactif le lundi, vidéos TikTok/YouTube/Instagram, publicité photo AdSense le jeudi) et encaissez votre récompense en direct sur votre solde.
+          Participez aux activités sponsorisées activées par l&apos;administrateur (Quiz, vidéos TikTok/YouTube/Instagram, publicité photo AdSense). Chaque tâche est validable une seule fois par jour.
         </p>
       </div>
 
       {/* Composant interactif utilisateur */}
       <TachesClient
-        todayTask={publicTask}
+        activeTasks={publicTasks}
+        validatedTaskIds={validatedTaskIds}
+        initialSelectedTaskId={searchParams?.task}
         lomeTime={lomeTime}
         isActivated={isActivated}
         isLoggedIn={isLoggedIn}
-        hasValidatedToday={hasValidatedToday}
       />
     </div>
   );

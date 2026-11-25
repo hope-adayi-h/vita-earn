@@ -68,11 +68,12 @@ export interface PublicDailyTask {
 }
 
 interface TachesClientProps {
-  todayTask: PublicDailyTask | null;
+  activeTasks: PublicDailyTask[];
+  validatedTaskIds: string[];
+  initialSelectedTaskId?: string;
   lomeTime: LomeDateInfo;
   isActivated: boolean;
   isLoggedIn: boolean;
-  hasValidatedToday: boolean;
 }
 
 const WEEK_SCHEDULE = [
@@ -84,13 +85,37 @@ const WEEK_SCHEDULE = [
 ];
 
 export function TachesClient({
-  todayTask,
+  activeTasks,
+  validatedTaskIds: initialValidatedIds,
+  initialSelectedTaskId,
   lomeTime,
   isActivated,
   isLoggedIn,
-  hasValidatedToday: initialHasValidated,
 }: TachesClientProps) {
-  const [hasValidated, setHasValidated] = useState(initialHasValidated);
+  const [validatedIds, setValidatedIds] = useState<string[]>(initialValidatedIds);
+
+  // Sélection initiale : tâche demandée en URL (?task=...), sinon première tâche non complétée, sinon première tâche active
+  const resolveInitialTaskId = () => {
+    if (activeTasks.length === 0) return "";
+    if (initialSelectedTaskId) {
+      const targetKey = initialSelectedTaskId.toLowerCase().trim();
+      const matched = activeTasks.find(
+        (t) =>
+          t.id.toLowerCase() === targetKey ||
+          t.taskType.toLowerCase() === targetKey ||
+          (targetKey === "ads" && t.taskType === "adsense") ||
+          (targetKey === "trivia" && t.taskType === "quiz")
+      );
+      if (matched) return matched.id;
+    }
+    const firstPending = activeTasks.find((t) => !initialValidatedIds.includes(t.id));
+    return firstPending ? firstPending.id : activeTasks[0].id;
+  };
+
+  const [selectedTaskId, setSelectedTaskId] = useState<string>(resolveInitialTaskId);
+  const todayTask = activeTasks.find((t) => t.id === selectedTaskId) || activeTasks[0] || null;
+  const hasValidated = todayTask ? validatedIds.includes(todayTask.id) : false;
+
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -101,7 +126,7 @@ export function TachesClient({
   // États pour la Pub AdSense Photo (Jeudi)
   const requiredSeconds = todayTask?.adDurationSeconds || 15;
   const [countdown, setCountdown] = useState<number>(requiredSeconds);
-  const [hasCompletedTimer, setHasCompletedTimer] = useState<boolean>(initialHasValidated);
+  const [hasCompletedTimer, setHasCompletedTimer] = useState<boolean>(hasValidated);
 
   // États pour les tâches vidéo (Mardi, Mercredi, Vendredi)
   const isVideoTask =
@@ -110,7 +135,21 @@ export function TachesClient({
     todayTask?.taskType === "instagram";
   const requiredVideoSeconds = todayTask?.videoDurationSeconds || 30;
   const [videoCountdown, setVideoCountdown] = useState<number>(requiredVideoSeconds);
-  const [hasCompletedVideoTimer, setHasCompletedVideoTimer] = useState<boolean>(initialHasValidated);
+  const [hasCompletedVideoTimer, setHasCompletedVideoTimer] = useState<boolean>(hasValidated);
+
+  // Réinitialiser les timers et retours lorsqu'on change de tâche active
+  const handleSelectTask = (taskId: string) => {
+    if (taskId === selectedTaskId) return;
+    const target = activeTasks.find((t) => t.id === taskId);
+    const alreadyDone = validatedIds.includes(taskId);
+    setSelectedTaskId(taskId);
+    setFeedback(null);
+    setQuizResult(null);
+    setVideoCountdown(target?.videoDurationSeconds || 30);
+    setHasCompletedVideoTimer(alreadyDone);
+    setCountdown(target?.adDurationSeconds || 15);
+    setHasCompletedTimer(alreadyDone);
+  };
 
   // Compte à rebours automatique pour les vidéos partenaires
   useEffect(() => {
@@ -184,7 +223,7 @@ export function TachesClient({
     startTransition(async () => {
       const res = await submitDailyQuizAction(todayTask.id, quizAnswers);
       setQuizResult(res);
-      setHasValidated(true);
+      setValidatedIds((prev) => (prev.includes(todayTask.id) ? prev : [...prev, todayTask.id]));
       if (res.success) {
         setFeedback({
           type: res.failedQuestion && res.earnedReward === 0 ? "error" : "success",
@@ -213,7 +252,7 @@ export function TachesClient({
     startTransition(async () => {
       const res = await validateDailyVideoTaskAction(todayTask.id);
       if (res.success) {
-        setHasValidated(true);
+        setValidatedIds((prev) => (prev.includes(todayTask.id) ? prev : [...prev, todayTask.id]));
         setFeedback({
           type: "success",
           text: res.message || `Félicitations ! Vous avez empoché ${formatFCFA(todayTask.rewardAmount)}.`,
@@ -241,7 +280,7 @@ export function TachesClient({
     startTransition(async () => {
       const res = await validateAdSensePhotoTaskAction(todayTask.id, requiredSeconds);
       if (res.success) {
-        setHasValidated(true);
+        setValidatedIds((prev) => (prev.includes(todayTask.id) ? prev : [...prev, todayTask.id]));
         setFeedback({
           type: "success",
           text: res.message || `Félicitations ! Vous avez empoché ${formatFCFA(todayTask.rewardAmount)}.`,
@@ -271,33 +310,93 @@ export function TachesClient({
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {WEEK_SCHEDULE.map((item) => {
             const isToday = item.day === lomeTime.dayOfWeek && !lomeTime.isWeekend;
+            const activeForDay = activeTasks.find((t) => t.dayOfWeek === item.day);
+            const isSelected = Boolean(activeForDay && activeForDay.id === todayTask?.id);
+            const isDone = Boolean(activeForDay && validatedIds.includes(activeForDay.id));
             const Icon = item.icon;
             return (
-              <div
+              <button
                 key={item.day}
+                type="button"
+                disabled={!activeForDay}
+                onClick={() => activeForDay && handleSelectTask(activeForDay.id)}
                 className={`p-2.5 rounded-2xl border text-center transition-all ${
-                  isToday
-                    ? "bg-emerald-600 text-white border-emerald-600 shadow-sm ring-2 ring-emerald-500/30"
-                    : "bg-slate-50/70 border-slate-200/80 text-slate-700"
+                  isSelected
+                    ? "bg-emerald-600 text-white border-emerald-600 shadow-sm ring-2 ring-emerald-500/30 cursor-pointer"
+                    : activeForDay
+                    ? "bg-emerald-50/60 border-emerald-200 text-slate-800 hover:bg-emerald-100/70 cursor-pointer"
+                    : "bg-slate-50/70 border-slate-200/80 text-slate-400 cursor-not-allowed opacity-70"
                 }`}
               >
                 <div className="flex items-center justify-center gap-1 mb-1">
-                  <Icon className={`w-3.5 h-3.5 ${isToday ? "text-white" : "text-slate-500"}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isSelected ? "text-white" : activeForDay ? "text-emerald-700" : "text-slate-400"}`} />
                   <span className="text-xs font-black">{item.name}</span>
                 </div>
-                <p className={`text-[10px] font-medium leading-tight ${isToday ? "text-emerald-100" : "text-slate-500"}`}>
+                <p className={`text-[10px] font-medium leading-tight ${isSelected ? "text-emerald-100" : activeForDay ? "text-slate-600" : "text-slate-400"}`}>
                   {item.type}
                 </p>
-                {isToday && (
-                  <span className="inline-block mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase bg-white text-emerald-700">
-                    Aujourd&apos;hui
+                {isDone ? (
+                  <span className={`inline-flex items-center gap-0.5 mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase ${isSelected ? "bg-white text-emerald-700" : "bg-emerald-100 text-emerald-700"}`}>
+                    <CheckCircle2 className="w-2.5 h-2.5" />
+                    <span>Fait</span>
+                  </span>
+                ) : activeForDay ? (
+                  <span className={`inline-block mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase ${isSelected ? "bg-white text-emerald-700" : "bg-emerald-600 text-white"}`}>
+                    {isToday ? "Aujourd'hui" : "Activée"}
+                  </span>
+                ) : (
+                  <span className="inline-block mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase bg-slate-200/70 text-slate-500">
+                    Fermée
                   </span>
                 )}
-              </div>
+              </button>
             );
           })}
         </div>
       </div>
+
+      {/* SÉLECTEUR MULTI-TÂCHES (LORSQUE L'ADMIN ACTIVE PLUSIEURS TÂCHES LE MÊME JOUR) */}
+      {activeTasks.length > 1 && (
+        <div className="p-4 rounded-3xl bg-white border border-emerald-200/80 shadow-xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Tâches disponibles aujourd&apos;hui ({validatedIds.filter((id) => activeTasks.some((t) => t.id === id)).length}/{activeTasks.length} complétées)</span>
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {activeTasks.map((t) => {
+              const isSelected = t.id === todayTask?.id;
+              const isDone = validatedIds.includes(t.id);
+              const dayInfo = WEEK_SCHEDULE.find((d) => d.day === t.dayOfWeek);
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => handleSelectTask(t.id)}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                    isSelected
+                      ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+                      : isDone
+                      ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                      : "bg-slate-50 text-slate-700 border-slate-200 hover:border-emerald-400"
+                  }`}
+                >
+                  {isDone ? (
+                    <CheckCircle2 className={`w-3.5 h-3.5 ${isSelected ? "text-white" : "text-emerald-600"}`} />
+                  ) : (
+                    <Play className={`w-3 h-3 ${isSelected ? "text-white" : "text-emerald-600"}`} />
+                  )}
+                  <span>{dayInfo?.type || t.title}</span>
+                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md ${isSelected ? "bg-white/20 text-white" : "bg-emerald-100 text-emerald-700"}`}>
+                    +{formatFCFA(t.rewardAmount)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 2. CAS DU WEEK-END : FERMÉ AVEC INVITATION */}
       {/* 2a. PAUSE DU WEEK-END (SAMEDI & DIMANCHE) */}

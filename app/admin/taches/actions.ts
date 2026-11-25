@@ -10,6 +10,8 @@ import {
   toggleStoredTaskActive,
   toggleAllStoredTasksActive,
   deleteStoredDailyTask,
+  getAllStoredDailyTasks,
+  syncTasksToSupabase,
   StoredDailyTask,
   QuizQuestionItem,
 } from "@/lib/data/tasks-store";
@@ -91,7 +93,7 @@ export async function saveDailyVideoTaskAction(input: SaveTaskInput): Promise<Ac
       };
     }
     const parsed = parseUniversalVideoUrl(rawVideoUrl);
-    if (!parsed.isValid || !parsed.platform || !parsed.embedUrl) {
+    if (!parsed.isValid || !parsed.platform || (!parsed.embedUrl && !parsed.cleanUrl)) {
       return {
         success: false,
         error: parsed.error || "Lien vidéo non valide. Veuillez fournir un lien YouTube, TikTok, Facebook ou Instagram.",
@@ -117,7 +119,7 @@ export async function saveDailyVideoTaskAction(input: SaveTaskInput): Promise<Ac
     const dayNames = ["", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
     const title = input.title?.trim() || `Tâche du ${dayNames[dayOfWeek]} (${parsed.platformName})`;
 
-    // 7. Enregistrement dans le store local
+    // 7. Enregistrement dans le store local + synchro Supabase
     const saved = saveStoredDailyTask({
       id: input.id,
       dayOfWeek,
@@ -125,6 +127,7 @@ export async function saveDailyVideoTaskAction(input: SaveTaskInput): Promise<Ac
       taskType: (dayOfWeek === 2 ? "tiktok" : dayOfWeek === 3 ? "youtube" : "instagram") as any,
       title,
       videoUrl: rawVideoUrl,
+      cleanUrl: parsed.cleanUrl,
       platform: parsed.platform,
       embedUrl: parsed.embedUrl,
       videoId: parsed.videoId,
@@ -133,6 +136,7 @@ export async function saveDailyVideoTaskAction(input: SaveTaskInput): Promise<Ac
       isActive: Boolean(input.isActive),
       isDeleted: false,
     });
+    await syncTasksToSupabase(getAllStoredDailyTasks());
 
     // 8. Enregistrement dans Supabase si configuré
     try {
@@ -224,6 +228,7 @@ export async function saveDailyQuizTaskAction(input: SaveQuizInput): Promise<Act
       isActive: Boolean(input.isActive),
       isDeleted: false,
     });
+    await syncTasksToSupabase(getAllStoredDailyTasks());
 
     revalidatePath("/admin/taches");
     revalidatePath("/taches");
@@ -275,6 +280,7 @@ export async function saveDailyAdSenseTaskAction(input: SaveAdSenseInput): Promi
       isActive: Boolean(input.isActive),
       isDeleted: false,
     });
+    await syncTasksToSupabase(getAllStoredDailyTasks());
 
     revalidatePath("/admin/taches");
     revalidatePath("/taches");
@@ -302,6 +308,7 @@ export async function toggleDailyVideoTaskAction(taskId: string, isActive: boole
     }
 
     toggleStoredTaskActive(taskId, isActive);
+    await syncTasksToSupabase(getAllStoredDailyTasks());
 
     try {
       const isConfigured =
@@ -342,6 +349,7 @@ export async function toggleAllDailyTasksAction(isActive: boolean): Promise<Acti
     }
 
     toggleAllStoredTasksActive(isActive);
+    await syncTasksToSupabase(getAllStoredDailyTasks());
 
     revalidatePath("/admin/taches");
     revalidatePath("/taches");

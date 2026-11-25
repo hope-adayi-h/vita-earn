@@ -135,7 +135,7 @@ const DEFAULT_TASKS: StoredDailyTask[] = [
     title: "Tâche Vidéo TikTok du Mardi — Création de Contenu Viral",
     videoUrl: "https://www.tiktok.com/@tiktok/video/7106594312292453678",
     platform: "tiktok",
-    embedUrl: "https://www.tiktok.com/embed/v2/7106594312292453678",
+    embedUrl: "https://www.tiktok.com/player/v1/7106594312292453678?music_info=1&description=1",
     videoId: "7106594312292453678",
     instructions:
       "Visionnez la vidéo TikTok de formation partenaire pendant au moins 30 secondes. Cliquez ensuite sur Valider pour créditer votre solde.",
@@ -244,7 +244,7 @@ function writeTasksToFile(tasks: StoredDailyTask[]): void {
 /**
  * Sauvegarde asynchrone dans la table platform_settings de Supabase
  */
-async function syncTasksToSupabase(tasks: StoredDailyTask[]): Promise<void> {
+export async function syncTasksToSupabase(tasks: StoredDailyTask[]): Promise<void> {
   try {
     const isConfigured =
       Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
@@ -477,6 +477,21 @@ export function getTodayTaskForLome(
   }
 
   return null;
+}
+
+/**
+ * Retourne TOUTES les tâches actuellement activées par l'administrateur (1 à 5 tâches)
+ * Permet à l'admin d'activer 1, 2, ou toutes les 5 tâches dans une même journée,
+ * quel que soit le jour choisi.
+ */
+export function getActiveTasksForLome(
+  _timeInfo?: LomeDateInfo,
+  customTasks?: StoredDailyTask[]
+): StoredDailyTask[] {
+  const tasks = customTasks && customTasks.length > 0 ? customTasks : getAllStoredDailyTasks();
+  return tasks
+    .filter((t) => t.isActive && !t.isDeleted)
+    .sort((a, b) => (a.dayOfWeek || 0) - (b.dayOfWeek || 0));
 }
 
 /**

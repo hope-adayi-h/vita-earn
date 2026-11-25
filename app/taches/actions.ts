@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getLomeServerTime } from "@/lib/utils/lome-time";
 import {
-  getTodayTaskForLome,
+  fetchAndSyncDailyTasks,
   hasUserValidatedToday,
   recordStoredTaskValidation,
   recordQuizSubmission,
@@ -35,13 +35,6 @@ export async function validateDailyVideoTaskAction(taskId: string): Promise<Task
   try {
     // 1. Calcul de l'heure et du jour officiel côté serveur (Lomé, UTC+0)
     const lomeTime = getLomeServerTime();
-
-    if (lomeTime.isWeekend) {
-      return {
-        success: false,
-        message: "Les tâches rémunérées ne sont pas disponibles le week-end (samedi et dimanche). Rendez-vous lundi dès 08:00 !",
-      };
-    }
 
     // 2. Identification de l'utilisateur connecté
     const cookieStore = cookies();
@@ -119,12 +112,13 @@ export async function validateDailyVideoTaskAction(taskId: string): Promise<Task
       };
     }
 
-    // 4. Vérification de la tâche du jour
-    const todayTask = getTodayTaskForLome(lomeTime);
-    if (!todayTask || todayTask.id !== taskId || !todayTask.isActive || todayTask.isDeleted) {
+    // 4. Vérification que la tâche demandée est bien active (permet d'activer 1 à 5 tâches le même jour)
+    const syncedTasks = await fetchAndSyncDailyTasks();
+    const todayTask = syncedTasks.find((t) => t.id === taskId && t.isActive && !t.isDeleted);
+    if (!todayTask) {
       return {
         success: false,
-        message: "Cette tâche n'est pas programmée ou active pour aujourd'hui.",
+        message: "Cette tâche n'est pas activée actuellement par l'administrateur.",
       };
     }
 
@@ -266,10 +260,12 @@ export async function submitDailyQuizAction(
   try {
     const lomeTime = getLomeServerTime();
 
-    if (lomeTime.isWeekend) {
+    const syncedTasks = await fetchAndSyncDailyTasks();
+    const activeQuiz = syncedTasks.find((t) => t.id === taskId && t.isActive && !t.isDeleted);
+    if (!activeQuiz) {
       return {
         success: false,
-        message: "Les tâches rémunérées ne sont pas disponibles le week-end.",
+        message: "Ce questionnaire n'est pas activé actuellement par l'administrateur.",
         earnedReward: 0,
         score: 0,
         totalQuestions: 0,
@@ -605,9 +601,10 @@ export async function validateAdSensePhotoTaskAction(
       };
     }
 
-    const todayTask = getTodayTaskForLome(lomeTime);
-    if (!todayTask || todayTask.id !== taskId || !todayTask.isActive || todayTask.isDeleted) {
-      return { success: false, message: "Cette publicité n'est pas active aujourd'hui." };
+    const syncedTasks = await fetchAndSyncDailyTasks();
+    const todayTask = syncedTasks.find((t) => t.id === taskId && t.isActive && !t.isDeleted);
+    if (!todayTask) {
+      return { success: false, message: "Cette publicité n'est pas activée actuellement par l'administrateur." };
     }
 
     const requiredDuration = todayTask.adDurationSeconds || 15;
