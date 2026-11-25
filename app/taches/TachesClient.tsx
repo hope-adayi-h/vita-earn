@@ -57,6 +57,7 @@ export interface PublicDailyTask {
   // Vidéos
   platform?: VideoPlatform;
   embedUrl?: string;
+  cleanUrl?: string;
   videoDurationSeconds?: number;
 
   // Jeudi : Photo AdSense
@@ -519,7 +520,7 @@ export function TachesClient({
                   embedUrl={todayTask.embedUrl}
                   platform={todayTask.platform || "youtube"}
                   title={todayTask.title}
-                  directUrl={todayTask.embedUrl.includes("http") ? todayTask.embedUrl : undefined}
+                  directUrl={todayTask.cleanUrl || (todayTask.embedUrl.includes("http") ? todayTask.embedUrl : undefined)}
                 />
               ) : (
                 <div className="aspect-video bg-slate-900 text-white flex items-center justify-center rounded-2xl">

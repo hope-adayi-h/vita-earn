@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { formatFCFA } from "@/lib/utils";
 import { reviewWithdrawalAction } from "../actions";
@@ -18,6 +18,7 @@ import {
   Filter,
   Copy,
   Check,
+  X,
 } from "lucide-react";
 
 export interface WithdrawalAdminItem {
@@ -68,15 +69,21 @@ export function stripCountryPrefix(phone: string): string {
 
 export function RetraitsClient({ initialWithdrawals }: RetraitsClientProps) {
   const router = useRouter();
+  const [withdrawalsList, setWithdrawalsList] = useState<WithdrawalAdminItem[]>(initialWithdrawals);
   const [filter, setFilter] = useState<string>("all");
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [confirmingPaidId, setConfirmingPaidId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectMotive, setRejectMotive] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  const filtered = initialWithdrawals.filter((w) => {
+  useEffect(() => {
+    setWithdrawalsList(initialWithdrawals);
+  }, [initialWithdrawals]);
+
+  const filtered = withdrawalsList.filter((w) => {
     if (filter === "all") return true;
     return w.status === filter;
   });
@@ -97,6 +104,22 @@ export function RetraitsClient({ initialWithdrawals }: RetraitsClientProps) {
     setLoadingId(id);
     setErrorMsg(null);
     setSuccessMsg(null);
+    setConfirmingPaidId(null);
+
+    // Mise à jour optimiste immédiate dans l'interface
+    const previousState = [...withdrawalsList];
+    const targetStatus = action === "paid" ? "paid" : action === "reject" ? "rejected" : action === "processing" ? "processing" : "approved";
+    setWithdrawalsList((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              status: targetStatus,
+              adminNote: notes || item.adminNote,
+            }
+          : item
+      )
+    );
 
     try {
       const res = await reviewWithdrawalAction({
@@ -106,14 +129,16 @@ export function RetraitsClient({ initialWithdrawals }: RetraitsClientProps) {
       });
 
       if (res.error) {
+        setWithdrawalsList(previousState);
         setErrorMsg(res.error);
       } else {
-        setSuccessMsg(res.message || "Action enregistrée !");
+        setSuccessMsg(res.message || "Action enregistrée avec succès !");
         setRejectingId(null);
         setRejectMotive("");
         router.refresh();
       }
     } catch {
+      setWithdrawalsList(previousState);
       setErrorMsg("Une erreur est survenue lors de l'opération.");
     } finally {
       setLoadingId(null);
@@ -190,8 +215,8 @@ export function RetraitsClient({ initialWithdrawals }: RetraitsClientProps) {
         ].map((tab) => {
           const count =
             tab.key === "all"
-              ? initialWithdrawals.length
-              : initialWithdrawals.filter((w) => w.status === tab.key).length;
+              ? withdrawalsList.length
+              : withdrawalsList.filter((w) => w.status === tab.key).length;
           const isActive = filter === tab.key;
           return (
             <button
@@ -462,31 +487,64 @@ export function RetraitsClient({ initialWithdrawals }: RetraitsClientProps) {
                   </div>
                 )}
 
+                {/* Zone de confirmation de paiement direct */}
+                {confirmingPaidId === w.id && (
+                  <div className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-400 space-y-3 animate-fadeIn">
+                    <div className="flex items-start gap-2.5">
+                      <ShieldCheck className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-xs font-black text-emerald-950 uppercase tracking-wide">
+                          Confirmation du virement Mobile Money :
+                        </h4>
+                        <p className="text-xs text-emerald-900 mt-1 leading-relaxed">
+                          Confirmez-vous avoir envoyé la somme nette de <strong className="text-emerald-950 underline">{formatFCFA(netToPay)}</strong> à <strong className="text-emerald-950">{beneficiaryName}</strong> au numéro <strong className="text-emerald-950 font-mono">{cleanPhone}</strong> ?
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        disabled={isLoading}
+                        onClick={() =>
+                          handleAction(
+                            w.id,
+                            "paid",
+                            `Transfert Mobile Money de ${formatFCFA(netToPay)} effectué par l'administrateur au numéro ${cleanPhone}`
+                          )
+                        }
+                        className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                      >
+                        {isLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-100" />
+                        )}
+                        <span>Oui, confirmer et valider le paiement</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={isLoading}
+                        onClick={() => setConfirmingPaidId(null)}
+                        className="px-3.5 py-2.5 rounded-xl bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold text-xs transition-colors cursor-pointer"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* 4. BOUTONS D'ACTIONS ADMINISTRATIVES */}
                 <div className="pt-2 flex flex-wrap items-center gap-2.5 justify-end border-t border-gray-200">
-                  {w.status !== "paid" && w.status !== "rejected" && (
+                  {w.status !== "paid" && w.status !== "rejected" && confirmingPaidId !== w.id && (
                     <>
                       {/* BOUTON PRINCIPAL : VALIDATION MANUELLE DU RETRAIT */}
                       <button
                         type="button"
-                        onClick={() => {
-                          const confirmed = confirm(
-                            `VALIDATION DU RETRAIT :\n\n` +
-                            `• Bénéficiaire : ${beneficiaryName}\n` +
-                            `• Numéro : ${cleanPhone}\n` +
-                            `• Montant envoyé : ${formatFCFA(netToPay)}\n\n` +
-                            `Confirmez-vous avoir envoyé les fonds et valider définitivement ce retrait ?`
-                          );
-                          if (confirmed) {
-                            handleAction(
-                              w.id,
-                              "paid",
-                              `Transfert Mobile Money de ${formatFCFA(netToPay)} effectué par l'administrateur au numéro ${cleanPhone}`
-                            );
-                          }
-                        }}
+                        onClick={() => setConfirmingPaidId(w.id)}
                         disabled={isLoading}
-                        className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
+                        className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-all shadow-md flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                       >
                         {isLoading ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -501,7 +559,7 @@ export function RetraitsClient({ initialWithdrawals }: RetraitsClientProps) {
                           type="button"
                           onClick={() => handleAction(w.id, "processing")}
                           disabled={isLoading}
-                          className="px-3.5 py-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 text-xs font-bold transition-all"
+                          className="px-3.5 py-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 text-xs font-bold transition-all cursor-pointer"
                         >
                           Passer en cours
                         </button>
@@ -511,7 +569,7 @@ export function RetraitsClient({ initialWithdrawals }: RetraitsClientProps) {
                         type="button"
                         onClick={() => setRejectingId(w.id)}
                         disabled={isLoading}
-                        className="px-3.5 py-2 rounded-xl bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 text-xs font-bold transition-all"
+                        className="px-3.5 py-2 rounded-xl bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 text-xs font-bold transition-all cursor-pointer"
                       >
                         Refuser (Restituer les fonds)
                       </button>

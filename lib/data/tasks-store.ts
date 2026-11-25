@@ -34,6 +34,7 @@ export interface StoredDailyTask {
 
   // Vidéos (Mardi: TikTok, Mercredi: YouTube, Vendredi: Instagram)
   videoUrl?: string;
+  cleanUrl?: string;
   platform?: VideoPlatform;
   embedUrl?: string;
   videoId?: string;
@@ -492,17 +493,55 @@ export function getAllTaskValidations(): StoredTaskValidation[] {
 }
 
 /**
+ * Normalise les identifiants et types de tâches pour l'anti-doublon universel
+ */
+export function normalizeTaskAliases(taskIdOrType: string): string[] {
+  const t = (taskIdOrType || "").toLowerCase().trim();
+  if (t === "task_lundi" || t === "trivia" || t === "quiz" || t === "task_trivia" || t === "task_quiz") {
+    return ["task_lundi", "trivia", "quiz", "task_trivia", "task_quiz"];
+  }
+  if (t === "task_mardi" || t === "tiktok" || t === "task_tiktok") {
+    return ["task_mardi", "tiktok", "task_tiktok"];
+  }
+  if (t === "task_mercredi" || t === "youtube" || t === "task_youtube") {
+    return ["task_mercredi", "youtube", "task_youtube"];
+  }
+  if (t === "task_jeudi" || t === "ads" || t === "adsense" || t === "task_ads" || t === "task_adsense") {
+    return ["task_jeudi", "ads", "adsense", "task_ads", "task_adsense"];
+  }
+  if (t === "task_vendredi" || t === "instagram" || t === "task_instagram") {
+    return ["task_vendredi", "instagram", "task_instagram"];
+  }
+  return [t];
+}
+
+/**
  * Vérifie si un utilisateur a déjà validé une tâche aujourd'hui (Lomé)
+ * RÈGLE ABSOLUE ANTI-DOUBLON : synchronise immédiatement les identifiants
+ * Dashboard (ex: tiktok) et Page Tâches (ex: task_mardi)
  */
 export function hasUserValidatedToday(userId: string, taskId: string, dateStr: string): boolean {
+  if (!userId || !taskId) return false;
   const validations = getAllTaskValidations();
   const cleanUser = userId.toLowerCase().trim();
-  return validations.some(
-    (v) =>
-      (v.userId.toLowerCase() === cleanUser || v.userId === userId) &&
-      v.taskId === taskId &&
-      v.validatedDate === dateStr
-  );
+  const aliases = normalizeTaskAliases(taskId);
+
+  return validations.some((v) => {
+    const userMatches =
+      v.userId === userId ||
+      v.userId.toLowerCase().trim() === cleanUser;
+
+    if (!userMatches) return false;
+
+    const dateMatches =
+      v.validatedDate === dateStr ||
+      (dateStr && v.validatedDate && v.validatedDate.startsWith(dateStr.slice(0, 10)));
+
+    if (!dateMatches) return false;
+
+    const vTask = (v.taskId || "").toLowerCase().trim();
+    return aliases.includes(vTask);
+  });
 }
 
 /**

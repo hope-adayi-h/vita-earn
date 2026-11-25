@@ -128,13 +128,39 @@ export async function validateDailyVideoTaskAction(taskId: string): Promise<Task
       };
     }
 
-    // 5. Vérification de l'idempotence stricte (anti-doublon)
+    // 5. Vérification de l'idempotence stricte (anti-doublon universel)
     const effectiveUserId = supabaseAuthId || userId;
-    if (hasUserValidatedToday(effectiveUserId, taskId, lomeTime.dateStr)) {
+    const taskTypeKey = todayTask.taskType || "tiktok";
+
+    if (
+      hasUserValidatedToday(effectiveUserId, taskId, lomeTime.dateStr) ||
+      hasUserValidatedToday(effectiveUserId, taskTypeKey, lomeTime.dateStr)
+    ) {
       return {
         success: false,
         message: "Vous avez déjà validé cette tâche aujourd'hui. Votre gain a déjà été crédité.",
       };
+    }
+
+    // Double vérification dans Supabase task_history
+    if (isConfigured && effectiveUserId) {
+      try {
+        const adminClient = createAdminClient();
+        const { data: existingTask } = await adminClient
+          .from("task_history")
+          .select("id")
+          .eq("user_id", effectiveUserId)
+          .eq("task_type", taskTypeKey)
+          .eq("completed_date", lomeTime.dateStr)
+          .maybeSingle();
+
+        if (existingTask) {
+          return {
+            success: false,
+            message: "Vous avez déjà validé cette tâche aujourd'hui. Votre gain a déjà été crédité.",
+          };
+        }
+      } catch {}
     }
 
     // 6. Plafond de récompense (lu côté serveur)
@@ -331,7 +357,11 @@ export async function submitDailyQuizAction(
 
     const effectiveUserId = supabaseAuthId || userId;
 
-    if (hasUserValidatedToday(effectiveUserId, taskId, lomeTime.dateStr)) {
+    if (
+      hasUserValidatedToday(effectiveUserId, taskId, lomeTime.dateStr) ||
+      hasUserValidatedToday(effectiveUserId, "trivia", lomeTime.dateStr) ||
+      hasUserValidatedToday(effectiveUserId, "quiz", lomeTime.dateStr)
+    ) {
       return {
         success: false,
         message:
@@ -340,6 +370,30 @@ export async function submitDailyQuizAction(
         score: 0,
         totalQuestions: 0,
       };
+    }
+
+    if (isConfigured && effectiveUserId) {
+      try {
+        const adminClient = createAdminClient();
+        const { data: existingTrivia } = await adminClient
+          .from("task_history")
+          .select("id")
+          .eq("user_id", effectiveUserId)
+          .in("task_type", ["trivia", "quiz"])
+          .eq("completed_date", lomeTime.dateStr)
+          .maybeSingle();
+
+        if (existingTrivia) {
+          return {
+            success: false,
+            message:
+              "Vous avez déjà complété ou tenté le questionnaire d'aujourd'hui. Une seule tentative autorisée chaque lundi.",
+            earnedReward: 0,
+            score: 0,
+            totalQuestions: 0,
+          };
+        }
+      } catch {}
     }
 
     const quizRes = recordQuizSubmission({

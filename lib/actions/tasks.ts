@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { recordStoredTaskValidation, hasUserValidatedToday } from "@/lib/data/tasks-store";
 
 export interface TaskState {
   id: string;
@@ -354,8 +355,15 @@ export async function submitTriviaAnswerAction(choiceIndex: number) {
       }
     } catch {}
 
-    // Vérifier si déjà complété aujourd'hui
+    // Vérifier si déjà complété aujourd'hui (Supabase + Store local)
     const todayStr = new Date().toISOString().split("T")[0];
+    if (hasUserValidatedToday(effectiveUserId, "trivia", todayStr)) {
+      return {
+        success: false,
+        message: "Vous avez déjà validé votre questionnaire d'aujourd'hui. Revenez à la prochaine session !",
+      };
+    }
+
     const { data: existingHistory } = await adminClient
       .from("task_history")
       .select("id")
@@ -438,7 +446,17 @@ export async function submitTriviaAnswerAction(choiceIndex: number) {
       });
     }
 
-    // 5. Mettre à jour le cookie de session pour reflet instantané dans l'interface
+    // 5. Mettre à jour également le store local pour anti-doublon universel
+    try {
+      recordStoredTaskValidation({
+        userId: effectiveUserId,
+        taskId: "trivia",
+        rewardAmount: reward,
+        dateStr: todayStr,
+      });
+    } catch {}
+
+    // 6. Mettre à jour le cookie de session pour reflet instantané dans l'interface
     if (sessionUser) {
       try {
         sessionUser.balance = (sessionUser.balance || 0) + reward;
@@ -573,7 +591,15 @@ export async function completeGenericTaskAction(taskType: string) {
 
     const todayStr = new Date().toISOString().split("T")[0];
 
-    // Vérifier historique journalier (1 seule fois par jour)
+    // RÈGLE ANTI-DOUBLON UNIFIÉE : Vérifier store local et Supabase
+    if (hasUserValidatedToday(effectiveUserId, taskType, todayStr)) {
+      return {
+        success: false,
+        message: "Vous avez déjà accompli cette tâche aujourd'hui. Rendez-vous au prochain créneau !",
+      };
+    }
+
+    // Vérifier historique journalier Supabase (1 seule fois par jour)
     const { data: existingHistory } = await adminClient
       .from("task_history")
       .select("id")
@@ -626,8 +652,20 @@ export async function completeGenericTaskAction(taskType: string) {
       });
     }
 
+    // RÈGLE ANTI-DOUBLON : enregistrer également dans le store local
+    try {
+      recordStoredTaskValidation({
+        userId: effectiveUserId,
+        taskId: taskType,
+        rewardAmount: taskReward,
+        dateStr: todayStr,
+      });
+    } catch {}
+
     revalidatePath("/");
+    revalidatePath("/taches");
     revalidatePath("/retrait");
+    revalidatePath("/portefeuille");
 
     return {
       success: true,

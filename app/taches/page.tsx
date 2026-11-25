@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { ArrowLeft, Clock, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getLomeServerTime } from "@/lib/utils/lome-time";
 import {
   getTodayTaskForLome,
@@ -128,6 +129,7 @@ export default async function TachesPage() {
       })),
       platform: todayRawTask.platform,
       embedUrl: todayRawTask.embedUrl,
+      cleanUrl: todayRawTask.cleanUrl || todayRawTask.videoUrl,
       videoDurationSeconds: todayRawTask.videoDurationSeconds,
       adImageUrl: todayRawTask.adImageUrl,
       adTargetUrl: todayRawTask.adTargetUrl,
@@ -136,7 +138,25 @@ export default async function TachesPage() {
     };
 
     if (userId) {
-      hasValidatedToday = hasUserValidatedToday(userId, todayRawTask.id, lomeTime.dateStr);
+      hasValidatedToday =
+        hasUserValidatedToday(userId, todayRawTask.id, lomeTime.dateStr) ||
+        hasUserValidatedToday(userId, todayRawTask.taskType || "", lomeTime.dateStr);
+
+      if (!hasValidatedToday && isConfigured) {
+        try {
+          const adminClient = createAdminClient();
+          const { data: dbTask } = await adminClient
+            .from("task_history")
+            .select("id")
+            .eq("user_id", userId)
+            .eq("task_type", todayRawTask.taskType || "")
+            .eq("completed_date", lomeTime.dateStr)
+            .maybeSingle();
+          if (dbTask) {
+            hasValidatedToday = true;
+          }
+        } catch {}
+      }
     }
   }
 

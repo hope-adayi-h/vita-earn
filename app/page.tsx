@@ -7,7 +7,7 @@ import { formatFCFA } from "@/lib/utils";
 import { ReferralSection } from "@/components/ReferralSection";
 import { WelcomeBonusCard } from "@/components/WelcomeBonusCard";
 import { TimeTableSection, TaskItem } from "@/components/TimeTableSection";
-import { fetchAndSyncDailyTasks } from "@/lib/data/tasks-store";
+import { fetchAndSyncDailyTasks, getAllTaskValidations, normalizeTaskAliases } from "@/lib/data/tasks-store";
 import { UserAvatar } from "@/components/UserAvatar";
 import { T } from "@/components/T";
 import {
@@ -302,8 +302,24 @@ export default async function HomePage() {
       const syncedDailyTasks = await fetchAndSyncDailyTasks();
       const todayCompletedTypes = new Set<string>();
       if (todayTasksHistoryRes?.data) {
-        todayTasksHistoryRes.data.forEach((h: any) => todayCompletedTypes.add(h.task_type));
+        todayTasksHistoryRes.data.forEach((h: any) => {
+          normalizeTaskAliases(h.task_type).forEach((alias) => todayCompletedTypes.add(alias));
+        });
       }
+
+      // RÈGLE ANTI-DOUBLON ABSOLUE : Synchronisation croisée avec daily_task_validations.json
+      try {
+        const localValidations = getAllTaskValidations();
+        const todayStr = new Date().toISOString().split("T")[0];
+        const cleanU = (sessionUser?.id || sessionUser?.username || testUser || effectiveUserId || "").toLowerCase();
+        localValidations.forEach((v) => {
+          const vDate = v.validatedDate ? v.validatedDate.slice(0, 10) : "";
+          const vUser = (v.userId || "").toLowerCase();
+          if (vDate === todayStr && (vUser === cleanU || v.userId === effectiveUserId)) {
+            normalizeTaskAliases(v.taskId).forEach((alias) => todayCompletedTypes.add(alias));
+          }
+        });
+      } catch {}
 
       const earningsMap = new Map<string, number>();
       if (userTaskEarnings) {

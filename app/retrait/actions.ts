@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkWithdrawalRateLimit } from "@/lib/security/rate-limit";
-import { saveStoredWithdrawal } from "@/lib/data/withdrawals-store";
+import { saveStoredWithdrawal, getAllStoredWithdrawals } from "@/lib/data/withdrawals-store";
 
 export interface WithdrawalRecord {
   id: string;
@@ -289,6 +289,29 @@ export async function getWithdrawalHistory(): Promise<WithdrawalRecord[]> {
           estimatedDelay: r.estimatedDelay ?? "10 minutes à 24 heures",
         }));
       }
+    }
+  } catch {}
+
+  // Synchronisation avec les données stockées localement (withdrawals.json)
+  try {
+    const stored = getAllStoredWithdrawals();
+    if (stored && stored.length > 0) {
+      localRecords = localRecords.map((rec) => {
+        const found = stored.find((s) => s.id === rec.id);
+        if (found) {
+          let updatedStatus: "pending" | "processing" | "completed" = rec.status;
+          if (found.status === "paid" || found.status === "approved") {
+            updatedStatus = "completed";
+          } else if (found.status === "processing") {
+            updatedStatus = "processing";
+          }
+          return {
+            ...rec,
+            status: updatedStatus,
+          };
+        }
+        return rec;
+      });
     }
   } catch {}
 

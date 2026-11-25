@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   HelpCircle,
   Video,
@@ -111,6 +112,7 @@ export function TimeTableSection({ tasks: initialTasks }: TimeTableSectionProps)
     },
   ];
 
+  const router = useRouter();
   const [taskList, setTaskList] = useState<TaskItem[]>(initialTasks || defaultTasks);
   const [activeModalTask, setActiveModalTask] = useState<TaskItem | null>(null);
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
@@ -147,13 +149,21 @@ export function TimeTableSection({ tasks: initialTasks }: TimeTableSectionProps)
     }
   };
 
-  // Ouverture de la modale de tâche
+  // Ouverture de la modale de tâche ou redirection
   const handleOpenTask = (task: TaskItem) => {
     if (!task.isActive || task.isCompletedToday) return;
+
+    if (task.id !== "trivia") {
+      // Pour les tâches vidéo (TikTok, YouTube, Ads, Instagram) :
+      // Redirection immédiate vers /taches pour visionnage réel et élimination du double gain
+      router.push("/taches");
+      return;
+    }
+
     setActiveModalTask(task);
     setSelectedChoice(null);
     setFeedbackMessage(null);
-    setVideoTimer(task.id !== "trivia" ? 10 : null);
+    setVideoTimer(null);
   };
 
   // Soumission du Quiz Trivia

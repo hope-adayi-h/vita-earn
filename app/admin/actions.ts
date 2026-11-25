@@ -251,54 +251,57 @@ export async function reviewWithdrawalAction(params: {
 
     // 1. Mise à jour directe et sécurisée dans la table public.withdrawals sur Supabase
     try {
-      const adminClient = createAdminClient();
-      const { data: targetW } = await adminClient
-        .from("withdrawals")
-        .select("id, user_id, amount, status")
-        .eq("id", params.withdrawalId)
-        .maybeSingle();
-
-      const reviewerId = user?.id && user.id.length === 36 ? user.id : "333d799b-84ea-493b-b35e-754f88c81b7f";
-
-      if (targetW) {
-        await adminClient
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.withdrawalId);
+      if (isUuid) {
+        const adminClient = createAdminClient();
+        const { data: targetW } = await adminClient
           .from("withdrawals")
-          .update({
-            status: targetStatus,
-            admin_note: params.notes || null,
-            reviewed_by: reviewerId,
-            reviewed_at: new Date().toISOString(),
-          })
-          .eq("id", params.withdrawalId);
+          .select("id, user_id, amount, status")
+          .eq("id", params.withdrawalId)
+          .maybeSingle();
 
-        // Si rejet : Restituer intégralement les fonds au client dans le grand livre (Règle P0)
-        if (params.action === "reject" && targetW.status !== "rejected" && targetW.status !== "paid") {
-          const { data: userWallet } = await adminClient
-            .from("wallets")
-            .select("id")
-            .eq("user_id", targetW.user_id)
-            .maybeSingle();
+        const reviewerId = user?.id && user.id.length === 36 ? user.id : "333d799b-84ea-493b-b35e-754f88c81b7f";
 
-          if (userWallet) {
-            const txId = crypto.randomUUID();
-            await adminClient.from("ledger_entries").insert([
-              {
-                tx_id: txId,
-                wallet_id: userWallet.id,
-                amount: Number(targetW.amount),
-                entry_type: "refund_credit",
-                reference_id: targetW.id,
-                description: `Remboursement retrait refusé #${targetW.id.substring(0, 8).toUpperCase()}`,
-              },
-              {
-                tx_id: txId,
-                wallet_id: "a3514696-fd19-40a9-a451-abae118f9591",
-                amount: -Number(targetW.amount),
-                entry_type: "adjustment",
-                reference_id: targetW.id,
-                description: `Restitution provision retrait refusé #${targetW.id.substring(0, 8).toUpperCase()}`,
-              },
-            ]);
+        if (targetW) {
+          await adminClient
+            .from("withdrawals")
+            .update({
+              status: targetStatus,
+              admin_note: params.notes || null,
+              reviewed_by: reviewerId,
+              reviewed_at: new Date().toISOString(),
+            })
+            .eq("id", params.withdrawalId);
+
+          // Si rejet : Restituer intégralement les fonds au client dans le grand livre (Règle P0)
+          if (params.action === "reject" && targetW.status !== "rejected" && targetW.status !== "paid") {
+            const { data: userWallet } = await adminClient
+              .from("wallets")
+              .select("id")
+              .eq("user_id", targetW.user_id)
+              .maybeSingle();
+
+            if (userWallet) {
+              const txId = crypto.randomUUID();
+              await adminClient.from("ledger_entries").insert([
+                {
+                  tx_id: txId,
+                  wallet_id: userWallet.id,
+                  amount: Number(targetW.amount),
+                  entry_type: "refund_credit",
+                  reference_id: targetW.id,
+                  description: `Remboursement retrait refusé #${targetW.id.substring(0, 8).toUpperCase()}`,
+                },
+                {
+                  tx_id: txId,
+                  wallet_id: "a3514696-fd19-40a9-a451-abae118f9591",
+                  amount: -Number(targetW.amount),
+                  entry_type: "adjustment",
+                  reference_id: targetW.id,
+                  description: `Restitution provision retrait refusé #${targetW.id.substring(0, 8).toUpperCase()}`,
+                },
+              ]);
+            }
           }
         }
       }
@@ -335,8 +338,10 @@ export async function reviewWithdrawalAction(params: {
 
     revalidatePath("/admin");
     revalidatePath("/admin/retraits");
+    revalidatePath("/retrait/historique");
     revalidatePath("/portefeuille");
     revalidatePath("/retrait");
+    revalidatePath("/");
 
     let actionLabel = "mis à jour";
     if (params.action === "approve") actionLabel = "approuvé";
@@ -457,8 +462,10 @@ export async function triggerSasPayPayoutAction(withdrawalId: string): Promise<{
 
     revalidatePath("/admin");
     revalidatePath("/admin/retraits");
+    revalidatePath("/retrait/historique");
     revalidatePath("/portefeuille");
     revalidatePath("/retrait");
+    revalidatePath("/");
 
     return {
       success: true,

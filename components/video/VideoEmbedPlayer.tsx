@@ -105,7 +105,7 @@ export function VideoEmbedPlayer({
           title={title}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
           allowFullScreen
-          referrerPolicy="no-referrer-when-downgrade"
+          referrerPolicy="strict-origin-when-cross-origin"
           className="w-full h-full border-0 absolute inset-0"
           onLoad={() => setIsLoading(false)}
           onError={() => {
