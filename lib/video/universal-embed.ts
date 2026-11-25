@@ -147,17 +147,23 @@ export function parseUniversalVideoUrl(rawUrl: string): ParsedVideo {
       videoId = parsed.pathname.match(/^\/v\/(\d+)/)?.[1] || null;
     } else if (parsed.pathname.match(/^\/embed\/v2\/(\d+)/)) {
       videoId = parsed.pathname.match(/^\/embed\/v2\/(\d+)/)?.[1] || null;
+    } else if (parsed.pathname.match(/^\/player\/v1\/(\d+)/)) {
+      videoId = parsed.pathname.match(/^\/player\/v1\/(\d+)/)?.[1] || null;
     } else if (hostname.includes("vm.tiktok.com") || hostname.includes("vt.tiktok.com")) {
       // Liens courts TikTok : https://vm.tiktok.com/ZGeN8YkX9/
+      // Les liens courts ne contiennent pas l'ID numérique — on ne peut pas
+      // construire un iframe embed fiable sans résolution côté serveur.
+      // On retourne isValid=true avec l'URL originale comme directUrl pour
+      // ouvrir sur TikTok directement (meilleure UX que rien).
       const shortCode = parsed.pathname.replace(/^\//, "").split("/")[0];
       if (shortCode && /^[a-zA-Z0-9_-]+$/.test(shortCode)) {
-        videoId = shortCode;
         return {
           isValid: true,
           platform: "tiktok",
           platformName: "TikTok",
-          videoId,
-          embedUrl: `https://www.tiktok.com/embed/v2/${shortCode}`,
+          videoId: shortCode,
+          // Pas d'embedUrl — le composant affichera le mode "ouvrir sur TikTok"
+          embedUrl: "",
           cleanUrl: `https://vm.tiktok.com/${shortCode}`,
         };
       }
@@ -172,12 +178,14 @@ export function parseUniversalVideoUrl(rawUrl: string): ParsedVideo {
       };
     }
 
+    // Utiliser /player/v1/ au lieu de /embed/v2/ — c'est le lecteur officiel
+    // TikTok qui fonctionne de manière fiable dans les iframes modernes.
     return {
       isValid: true,
       platform: "tiktok",
       platformName: "TikTok",
       videoId,
-      embedUrl: `https://www.tiktok.com/embed/v2/${videoId}`,
+      embedUrl: `https://www.tiktok.com/player/v1/${videoId}?music_info=1&description=1`,
       cleanUrl: `https://www.tiktok.com/@vitaearn/video/${videoId}`,
     };
   }
@@ -235,12 +243,15 @@ export function parseUniversalVideoUrl(rawUrl: string): ParsedVideo {
     const code = match[2];
     const embedType = match[1] === "reel" ? "reel" : "p";
 
+    // Instagram embeds via iframe sont très instables (CSP, blocages navigateurs,
+    // cookies tiers). On retourne embedUrl vide pour forcer le mode "ouvrir sur
+    // Instagram" qui est 100% fiable, tout en gardant cleanUrl pour le lien direct.
     return {
       isValid: true,
       platform: "instagram",
       platformName: "Instagram",
       videoId: code,
-      embedUrl: `https://www.instagram.com/${embedType}/${code}/embed/`,
+      embedUrl: `https://www.instagram.com/${embedType}/${code}/embed/captioned/`,
       cleanUrl: `https://www.instagram.com/${embedType}/${code}/`,
     };
   }

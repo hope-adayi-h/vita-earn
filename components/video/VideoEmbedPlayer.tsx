@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { AlertTriangle, Play, RefreshCw, ExternalLink } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Play, RefreshCw, ExternalLink, AlertTriangle } from "lucide-react";
 import type { VideoPlatform } from "@/lib/video/universal-embed";
 
 interface VideoEmbedPlayerProps {
@@ -12,6 +12,19 @@ interface VideoEmbedPlayerProps {
   directUrl?: string;
 }
 
+/**
+ * Lecteur vidéo universel — YouTube, TikTok, Instagram, Facebook.
+ *
+ * Stratégie par plateforme :
+ * - YouTube : iframe standard youtube-nocookie.com (très fiable).
+ * - TikTok  : iframe /player/v1/{id} (lecteur officiel TikTok).
+ *   Si l'embedUrl est vide (lien court sans ID numérique), mode externe.
+ * - Instagram : iframe /embed/captioned/ avec injection du script embed.js
+ *   en fallback si l'iframe seul ne charge pas. Si échec total, mode externe.
+ * - Facebook : iframe plugins/video.php (fiable).
+ *
+ * Fallback universel : bouton "Ouvrir sur [Plateforme]" avec le lien direct.
+ */
 export function VideoEmbedPlayer({
   embedUrl,
   platform,
@@ -21,13 +34,14 @@ export function VideoEmbedPlayer({
 }: VideoEmbedPlayerProps) {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Déterminer l'URL directe pour ouverture externe
   const fallbackUrl =
     directUrl ||
-    (platform === "tiktok" && !embedUrl.includes("/embed/v2/")
-      ? embedUrl
-      : platform === "youtube" && embedUrl.includes("embed/")
+    (platform === "youtube" && embedUrl.includes("embed/")
       ? `https://www.youtube.com/watch?v=${embedUrl.split("embed/")[1]?.split("?")[0]}`
       : embedUrl);
 
@@ -40,19 +54,84 @@ export function VideoEmbedPlayer({
       ? "Instagram"
       : "Facebook";
 
-  // Pour TikTok avec code court alphabétique (qui échoue en /embed/v2/), afficher directement le lecteur interactif avec accès direct
-  const isShortTikTok = platform === "tiktok" && embedUrl.includes("/embed/v2/") && !/\d{10,}/.test(embedUrl);
+  // Pour Instagram : injecter le script embed.js dynamiquement après le chargement
+  // de l'iframe pour forcer le rendu du contenu intégré.
+  useEffect(() => {
+    const processInstagramEmbeds = () => {
+      if (typeof window === "undefined") return;
+      const win = window as unknown as {
+        instgrm?: { Embeds?: { process: () => void } };
+      };
+      win.instgrm?.Embeds?.process();
+    };
 
-  if (!embedUrl || hasError || isShortTikTok) {
+    if (platform === "instagram" && iframeLoaded && !hasError) {
+      if (!document.getElementById("instagram-embed-script")) {
+        const script = document.createElement("script");
+        script.id = "instagram-embed-script";
+        script.src = "https://www.instagram.com/embed.js";
+        script.async = true;
+        script.onload = processInstagramEmbeds;
+        document.body.appendChild(script);
+      } else {
+        processInstagramEmbeds();
+      }
+    }
+  }, [platform, iframeLoaded, hasError]);
+
+  // Timeout de détection d'échec de chargement (8 secondes)
+  useEffect(() => {
+    if (!embedUrl || hasError || !isLoading) return;
+
+    const timeout = setTimeout(() => {
+      if (isLoading && !iframeLoaded) {
+        // L'iframe n'a toujours pas chargé après 8s — considérer comme bloqué
+        // mais ne pas forcer l'erreur pour TikTok/Instagram car le player peut
+        // être lent sur les connexions africaines
+        setIsLoading(false);
+      }
+    }, 8000);
+
+    return () => clearTimeout(timeout);
+  }, [embedUrl, hasError, isLoading, iframeLoaded]);
+
+  const handleIframeLoad = useCallback(() => {
+    setIsLoading(false);
+    setIframeLoaded(true);
+  }, []);
+
+  const handleIframeError = useCallback(() => {
+    setIsLoading(false);
+    setHasError(true);
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    setHasError(false);
+    setIsLoading(true);
+    setIframeLoaded(false);
+  }, []);
+
+  // MODE EXTERNE : pas d'embedUrl ou erreur confirmée
+  if (!embedUrl || hasError) {
     return (
       <div className="w-full rounded-2xl bg-slate-900 border border-slate-800 p-6 text-center text-slate-300 space-y-4">
         <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
-          <Play className="w-7 h-7 text-emerald-400 fill-emerald-400/20" />
+          {hasError ? (
+            <AlertTriangle className="w-7 h-7 text-amber-400" />
+          ) : (
+            <Play className="w-7 h-7 text-emerald-400 fill-emerald-400/20" />
+          )}
         </div>
         <div>
-          <h4 className="text-sm font-black text-white">Vidéo {platformDisplayName} prête pour le visionnage</h4>
+          <h4 className="text-sm font-black text-white">
+            {hasError
+              ? `Le lecteur intégré ${platformDisplayName} n'a pas pu charger`
+              : `Vidéo ${platformDisplayName} prête pour le visionnage`}
+          </h4>
           <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto leading-relaxed">
-            Pour une expérience optimale sans restriction de navigateur, visionnez la vidéo directement sur {platformDisplayName} pendant au moins 30 secondes pour débloquer votre récompense.
+            {hasError
+              ? `Le navigateur a bloqué le lecteur intégré. Visionnez la vidéo directement sur ${platformDisplayName} pour débloquer votre récompense.`
+              : `Visionnez la vidéo directement sur ${platformDisplayName} pendant au moins 30 secondes pour débloquer votre récompense.`}
           </p>
         </div>
 
@@ -68,31 +147,37 @@ export function VideoEmbedPlayer({
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           )}
-          <button
-            type="button"
-            onClick={() => {
-              setHasError(false);
-              setIsLoading(true);
-            }}
-            className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Réessayer l&apos;intégration</span>
-          </button>
+          {hasError && (
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Réessayer l&apos;intégration</span>
+            </button>
+          )}
         </div>
       </div>
     );
   }
 
+  // MODE IFRAME INTÉGRÉ
   const isVertical = platform === "tiktok" || platform === "instagram";
+
+  // Sandbox / attributs spécifiques par plateforme
+  const iframeAllow =
+    "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen";
 
   return (
     <div className="space-y-2">
       <div
+        ref={containerRef}
         className={`relative w-full rounded-2xl overflow-hidden bg-black shadow-lg border border-slate-800 ${
           isVertical ? "max-w-md mx-auto aspect-[9/16] min-h-[440px] max-h-[580px]" : "aspect-video"
         } ${className}`}
       >
+        {/* Spinner de chargement */}
         {isLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-slate-400 z-10 space-y-2">
             <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
@@ -101,17 +186,15 @@ export function VideoEmbedPlayer({
         )}
 
         <iframe
+          ref={iframeRef}
           src={embedUrl}
           title={title}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+          allow={iframeAllow}
           allowFullScreen
-          referrerPolicy="strict-origin-when-cross-origin"
+          referrerPolicy="no-referrer-when-downgrade"
           className="w-full h-full border-0 absolute inset-0"
-          onLoad={() => setIsLoading(false)}
-          onError={() => {
-            setIsLoading(false);
-            setHasError(true);
-          }}
+          onLoad={handleIframeLoad}
+          onError={handleIframeError}
         />
       </div>
 
