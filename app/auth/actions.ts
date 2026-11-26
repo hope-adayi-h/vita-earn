@@ -347,29 +347,36 @@ export async function signInAction(
       (a.phone && a.phone.replace(/\s+/g, "") === cleanId.replace(/\s+/g, ""))
   );
 
-  // 2. Recherche dans le store local (registered_users.json)
-  if (!matchedAccount) {
-    const localUser = findUserByIdentifier(cleanId);
-    if (localUser) {
-      matchedAccount = localUser;
-    }
+  // 2. Recherche dans le store local (registered_users.json) pour récupérer le mot de passe local si présent
+  const localUser = findUserByIdentifier(cleanId);
+  if (!matchedAccount && localUser) {
+    matchedAccount = localUser;
+  } else if (matchedAccount && localUser?.password && !matchedAccount.password) {
+    matchedAccount.password = localUser.password;
   }
 
   // 3. Compte Super Administrateur Principal (Espoir)
   const isEspoir =
     cleanId === "adayiespoir60@gmail.com" ||
-    cleanId === "espoir" ||
-    (cleanId === "admin" && (password.toLowerCase() === "espoir@vita2026!" || password === "Admin2026!"));
+    cleanId === "espoir";
 
   if (isEspoir) {
-    const isEspoirPasswordValid =
-      !matchedAccount?.password ||
-      matchedAccount.password === password ||
-      password === "Espoir@Vita2026!" ||
-      password === "Admin2026!" ||
-      password === "admin123" ||
-      password === "admin" ||
-      password.length >= 6;
+    let isEspoirPasswordValid = false;
+
+    if (matchedAccount?.password && matchedAccount.password === password) {
+      isEspoirPasswordValid = true;
+    } else if (password === "Espoir@Vita2026!") {
+      isEspoirPasswordValid = true;
+    } else {
+      try {
+        const supabase = createClient();
+        const { error: sbErr } = await supabase.auth.signInWithPassword({
+          email: "adayiespoir60@gmail.com",
+          password,
+        });
+        if (!sbErr) isEspoirPasswordValid = true;
+      } catch {}
+    }
 
     if (isEspoirPasswordValid) {
       let espoirPhone = "";
@@ -462,12 +469,39 @@ export async function signInAction(
       };
     }
 
-    const isPasswordValid =
-      !matchedAccount.password ||
-      matchedAccount.password === password ||
-      password === "User2026!" ||
-      password === "admin" ||
-      password.length >= 6;
+    // Vérification STRICTE du mot de passe : uniquement le mot de passe réel du compte
+    let isPasswordValid = false;
+
+    if (matchedAccount.password) {
+      isPasswordValid = matchedAccount.password === password;
+    }
+
+    // Si non vérifié localement (ex: compte créé sur un autre appareil / stocké dans Supabase Auth),
+    // vérifier obligatoirement auprès de Supabase Auth avec le vrai e-mail du compte.
+    if (!isPasswordValid) {
+      try {
+        let authEmailToCheck = matchedAccount.email || "";
+        const adminClient = createAdminClient();
+
+        if (matchedAccount.id && matchedAccount.id.includes("-")) {
+          const { data: authRecord } = await adminClient.auth.admin.getUserById(matchedAccount.id);
+          if (authRecord?.user?.email) {
+            authEmailToCheck = authRecord.user.email;
+          }
+        }
+
+        if (authEmailToCheck) {
+          const supabase = createClient();
+          const { error: sbSignInErr } = await supabase.auth.signInWithPassword({
+            email: authEmailToCheck,
+            password,
+          });
+          if (!sbSignInErr) {
+            isPasswordValid = true;
+          }
+        }
+      } catch {}
+    }
 
     if (isPasswordValid) {
       // Vérifier le statut réel en base Supabase (priorité absolue)
@@ -576,29 +610,6 @@ export async function signInAction(
     }
   }
 
-  // 2. Compte test Administrateur dédié
-  const isTestAdmin =
-    (cleanId === "admin" || cleanId === "admin@vitaearn.com") &&
-    (password === "Admin2026!" || password === "admin123" || password === "admin");
-
-  if (isTestAdmin) {
-    cookieStore.set("vita_test_role", "admin", AUTH_COOKIE_OPTIONS);
-    cookieStore.set("vita_test_user", "Administrateur", AUTH_COOKIE_OPTIONS);
-    cookieStore.set("vita_test_email", "admin@vitaearn.com", AUTH_COOKIE_OPTIONS);
-
-    try {
-      const supabase = createClient();
-      await supabase.auth.signInWithPassword({
-        email: "admin@vitaearn.com",
-        password,
-      });
-    } catch {
-      // Ignoré si Supabase local non connecté
-    }
-
-    redirect("/admin");
-  }
-
   const supabase = createClient();
 
   let emailToUse = identifier;
@@ -698,42 +709,6 @@ export async function signInAction(
     }
   }
 
-  // Vérification session enregistrée hors Supabase
-  const existingSessionCookie = cookieStore.get("vita_session_user")?.value;
-  if (existingSessionCookie) {
-    try {
-      const existingSession = JSON.parse(existingSessionCookie);
-      if (
-        existingSession.username?.toLowerCase() === cleanId ||
-        existingSession.email?.toLowerCase() === cleanId
-      ) {
-        let isAct = Boolean(existingSession.isActivated || cookieStore.get("vita_account_activated")?.value === "true");
-        try {
-          const adminClient = createAdminClient();
-          const { data: p } = await adminClient
-            .from("profiles")
-            .select("is_activated")
-            .or(`username.ilike.${cleanId},full_name.ilike.${cleanId}`)
-            .limit(1)
-            .maybeSingle();
-          if (p) isAct = Boolean(p.is_activated);
-        } catch {}
-
-        cookieStore.set("vita_test_role", existingSession.role || "user", AUTH_COOKIE_OPTIONS);
-        cookieStore.set("vita_test_user", existingSession.username, AUTH_COOKIE_OPTIONS);
-        cookieStore.set("vita_test_email", existingSession.email, AUTH_COOKIE_OPTIONS);
-        cookieStore.set("vita_logged_out", "", { path: "/", maxAge: 0, expires: new Date(0) });
-
-        if (isAct) {
-          cookieStore.set("vita_account_activated", "true", AUTH_COOKIE_OPTIONS);
-          redirect(redirectTarget);
-        }
-
-        redirect("/activation");
-      }
-    } catch {}
-  }
-
   return {
     error: "Identifiant ou mot de passe incorrect.",
   };
@@ -765,67 +740,24 @@ export async function signOutAction(): Promise<void> {
  * Demande de réinitialisation de mot de passe (mot de passe oublié)
  */
 export async function forgotPasswordAction(
-  prevState: ActionResponse | null,
-  formData: FormData
+  _prevState: ActionResponse | null,
+  _formData: FormData
 ): Promise<ActionResponse> {
-  const rawData = {
-    email: formData.get("email"),
-  };
-
-  const parsed = forgotPasswordSchema.safeParse(rawData);
-  if (!parsed.success) {
-    return { error: "Veuillez saisir une adresse e-mail valide." };
-  }
-
-  const { email } = parsed.data;
-  const supabase = createClient();
-  const appUrl = getAppUrl();
-
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${appUrl}/auth/reset-password`,
-  });
-
-  if (error) {
-    return {
-      error: "Impossible d'envoyer l'e-mail de réinitialisation. Veuillez réessayer plus tard.",
-    };
-  }
-
   return {
-    success: true,
-    message: "Un lien de réinitialisation a été envoyé à votre adresse e-mail.",
+    error:
+      "La modification du mot de passe par l'utilisateur est désactivée. Seul le mot de passe initial permet d'accéder au compte.",
   };
 }
 
 /**
- * Mise à jour du mot de passe avec le jeton reçu
+ * Mise à jour du mot de passe désactivée côté utilisateur
  */
 export async function resetPasswordAction(
-  prevState: ActionResponse | null,
-  formData: FormData
+  _prevState: ActionResponse | null,
+  _formData: FormData
 ): Promise<ActionResponse> {
-  const rawData = {
-    password: formData.get("password"),
-    confirmPassword: formData.get("confirmPassword"),
+  return {
+    error:
+      "La modification du mot de passe par l'utilisateur est désactivée. Seul le mot de passe initial permet d'accéder au compte.",
   };
-
-  const parsed = resetPasswordSchema.safeParse(rawData);
-  if (!parsed.success) {
-    return { error: "Les mots de passe saisis sont invalides ou ne correspondent pas." };
-  }
-
-  const { password } = parsed.data;
-  const supabase = createClient();
-
-  const { error } = await supabase.auth.updateUser({
-    password,
-  });
-
-  if (error) {
-    return {
-      error: "Impossible de mettre à jour le mot de passe. Le lien a peut-être expiré.",
-    };
-  }
-
-  redirect("/auth/login?reset=success");
 }
