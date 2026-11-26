@@ -6,39 +6,62 @@ import {
   MapPin,
   ExternalLink,
   Plus,
+  Edit3,
   X,
   Upload,
   User,
+  Phone,
   CheckCircle2,
   AlertCircle,
   Search,
   Loader2,
 } from "lucide-react";
 import { compressImageFileToDataUrl } from "@/lib/utils/image-resize";
-import { createEmploiPostAction } from "./actions";
+import { saveMyEmploiPostAction } from "./actions";
 import type { StoredEmploiPost } from "@/lib/data/emploi-store";
 
 interface EmploiClientProps {
   initialPosts: StoredEmploiPost[];
+  currentUserId: string;
 }
 
-export function EmploiClient({ initialPosts }: EmploiClientProps) {
+export function EmploiClient({ initialPosts, currentUserId }: EmploiClientProps) {
   const [posts, setPosts] = useState<StoredEmploiPost[]>(initialPosts);
+  const myExistingPost = currentUserId
+    ? posts.find((p) => p.userId && p.userId === currentUserId) || null
+    : null;
+
   const [showForm, setShowForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Champs du formulaire
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [location, setLocation] = useState("");
-  const [profession, setProfession] = useState("");
-  const [description, setDescription] = useState("");
-  const [serviceUrl, setServiceUrl] = useState("");
-  const [photoUrl, setPhotoUrl] = useState("");
+  // Champs du formulaire (pré-remplis si l'utilisateur a déjà un emploi)
+  const [firstName, setFirstName] = useState(myExistingPost?.firstName || "");
+  const [lastName, setLastName] = useState(myExistingPost?.lastName || "");
+  const [phone, setPhone] = useState(myExistingPost?.phone || "");
+  const [location, setLocation] = useState(myExistingPost?.location || "");
+  const [profession, setProfession] = useState(myExistingPost?.profession || "");
+  const [description, setDescription] = useState(myExistingPost?.description || "");
+  const [serviceUrl, setServiceUrl] = useState(myExistingPost?.serviceUrl || "");
+  const [photoUrl, setPhotoUrl] = useState(myExistingPost?.photoUrl || "");
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const handleOpenForm = () => {
+    setFeedback(null);
+    if (!showForm && myExistingPost) {
+      setFirstName(myExistingPost.firstName);
+      setLastName(myExistingPost.lastName);
+      setPhone(myExistingPost.phone || "");
+      setLocation(myExistingPost.location);
+      setProfession(myExistingPost.profession);
+      setDescription(myExistingPost.description);
+      setServiceUrl(myExistingPost.serviceUrl || "");
+      setPhotoUrl(myExistingPost.photoUrl || "");
+    }
+    setShowForm(!showForm);
+  };
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -63,9 +86,10 @@ export function EmploiClient({ initialPosts }: EmploiClientProps) {
     setFeedback(null);
 
     startTransition(async () => {
-      const res = await createEmploiPostAction({
+      const res = await saveMyEmploiPostAction({
         firstName,
         lastName,
+        phone,
         location,
         profession,
         description,
@@ -74,23 +98,20 @@ export function EmploiClient({ initialPosts }: EmploiClientProps) {
       });
 
       if (res.success && res.post) {
-        setPosts((prev) => [res.post!, ...prev]);
-        setFirstName("");
-        setLastName("");
-        setLocation("");
-        setProfession("");
-        setDescription("");
-        setServiceUrl("");
-        setPhotoUrl("");
+        if (res.isUpdate) {
+          setPosts((prev) => prev.map((p) => (p.id === res.post!.id ? res.post! : p)));
+        } else {
+          setPosts((prev) => [res.post!, ...prev]);
+        }
         setShowForm(false);
         setFeedback({
           type: "success",
-          text: res.message || "Votre profil a été publié immédiatement.",
+          text: res.message || "Votre profil a été enregistré.",
         });
       } else {
         setFeedback({
           type: "error",
-          text: res.error || "Impossible de publier votre annonce.",
+          text: res.error || "Impossible d'enregistrer votre annonce.",
         });
       }
     });
@@ -109,20 +130,22 @@ export function EmploiClient({ initialPosts }: EmploiClientProps) {
 
   return (
     <div className="space-y-5">
-      {/* Barre d'action : Publier + Recherche */}
+      {/* Barre d'action : Publier ou Modifier + Recherche */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <button
           type="button"
-          onClick={() => {
-            setShowForm(!showForm);
-            setFeedback(null);
-          }}
+          onClick={handleOpenForm}
           className="min-h-[44px] px-5 py-2.5 rounded-2xl bg-[#1B4D0F] hover:bg-[#2F7A1A] text-white text-xs sm:text-sm font-black shadow-xs transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
         >
           {showForm ? (
             <>
               <X className="w-4 h-4" />
               <span>Fermer le formulaire</span>
+            </>
+          ) : myExistingPost ? (
+            <>
+              <Edit3 className="w-4 h-4 text-[#7ED321]" />
+              <span>Modifier mon emploi</span>
             </>
           ) : (
             <>
@@ -164,7 +187,7 @@ export function EmploiClient({ initialPosts }: EmploiClientProps) {
         </div>
       )}
 
-      {/* Formulaire de publication utilisateur */}
+      {/* Formulaire de publication / modification utilisateur */}
       {showForm && (
         <form
           onSubmit={handleSubmit}
@@ -172,10 +195,14 @@ export function EmploiClient({ initialPosts }: EmploiClientProps) {
         >
           <div className="space-y-1">
             <h2 className="text-base font-black text-[#14201A]">
-              Publier votre profil professionnel
+              {myExistingPost
+                ? "Modifier votre profil professionnel"
+                : "Publier votre profil professionnel"}
             </h2>
             <p className="text-xs text-[#5B6B60]">
-              Renseignez vos informations et votre activité. Votre annonce apparaîtra directement sur la page Emploi.
+              {myExistingPost
+                ? "Un seul emploi est autorisé par compte. Vous pouvez mettre à jour vos informations ci-dessous."
+                : "Renseignez vos informations et votre numéro de téléphone. Votre annonce apparaîtra directement sur la page Emploi."}
             </p>
           </div>
 
@@ -235,6 +262,20 @@ export function EmploiClient({ initialPosts }: EmploiClientProps) {
 
             <div>
               <label className="text-xs font-bold text-[#14201A] block mb-1">
+                Numéro de téléphone *
+              </label>
+              <input
+                type="tel"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Ex: +228 90 00 00 00"
+                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-[#14201A] focus:outline-hidden focus:border-[#2F7A1A]"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-[#14201A] block mb-1">
                 Lieu de résidence *
               </label>
               <input
@@ -247,7 +288,7 @@ export function EmploiClient({ initialPosts }: EmploiClientProps) {
               />
             </div>
 
-            <div>
+            <div className="sm:col-span-2">
               <label className="text-xs font-bold text-[#14201A] block mb-1">
                 Profession / Travail *
               </label>
@@ -297,10 +338,12 @@ export function EmploiClient({ initialPosts }: EmploiClientProps) {
             {isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Publication en cours...</span>
+                <span>Enregistrement en cours...</span>
               </>
             ) : (
-              <span>Publier immédiatement</span>
+              <span>
+                {myExistingPost ? "Mettre à jour mon emploi" : "Publier immédiatement"}
+              </span>
             )}
           </button>
         </form>
@@ -357,9 +400,17 @@ export function EmploiClient({ initialPosts }: EmploiClientProps) {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1.5 text-xs text-[#5B6B60]">
-                    <MapPin className="w-3.5 h-3.5 text-[#2F7A1A] shrink-0" />
-                    <span>{post.location}</span>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-[#5B6B60]">
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-[#2F7A1A] shrink-0" />
+                      <span>{post.location}</span>
+                    </span>
+                    {post.phone && (
+                      <span className="inline-flex items-center gap-1 font-bold text-[#1B4D0F]">
+                        <Phone className="w-3.5 h-3.5 text-[#2F7A1A] shrink-0" />
+                        <span>{post.phone}</span>
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -368,8 +419,18 @@ export function EmploiClient({ initialPosts }: EmploiClientProps) {
                 {post.description}
               </p>
 
-              {post.serviceUrl && (
-                <div className="pt-1">
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                {post.phone && (
+                  <a
+                    href={`tel:${post.phone}`}
+                    className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-xl bg-[#F4F7F0] hover:bg-emerald-100 text-[#1B4D0F] border border-[#1B4D0F]/20 text-xs font-bold transition-colors"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>Appeler ({post.phone})</span>
+                  </a>
+                )}
+
+                {post.serviceUrl && (
                   <a
                     href={post.serviceUrl}
                     target="_blank"
@@ -379,8 +440,8 @@ export function EmploiClient({ initialPosts }: EmploiClientProps) {
                     <span>Voir le site / service</span>
                     <ExternalLink className="w-3.5 h-3.5 text-[#7ED321]" />
                   </a>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ))}
         </div>

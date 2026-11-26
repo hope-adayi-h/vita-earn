@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   User,
+  Phone,
   Loader2,
 } from "lucide-react";
 import { deleteEmploiPostAction } from "./actions";
@@ -135,6 +136,12 @@ export function AdminEmploiClient({ initialPosts }: AdminEmploiClientProps) {
                         <MapPin className="w-3.5 h-3.5 text-slate-400" />
                         {post.location}
                       </span>
+                      {post.phone && (
+                        <span className="inline-flex items-center gap-1 font-bold text-slate-700">
+                          <Phone className="w-3.5 h-3.5 text-[#0084FF]" />
+                          {post.phone}
+                        </span>
+                      )}
                       <span>
                         Publié le {new Date(post.createdAt).toLocaleDateString("fr-FR")}
                       </span>

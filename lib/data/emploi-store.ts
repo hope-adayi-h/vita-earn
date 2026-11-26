@@ -5,14 +5,17 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface StoredEmploiPost {
   id: string;
+  userId?: string;
   firstName: string;
   lastName: string;
+  phone: string;
   location: string;
   profession: string;
   description: string;
   serviceUrl?: string;
   photoUrl?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 function getDataDir(): string {
@@ -108,20 +111,40 @@ export async function fetchAndSyncEmploiPosts(): Promise<StoredEmploiPost[]> {
   return getLocalEmploiPosts();
 }
 
-export async function addEmploiPost(
-  input: Omit<StoredEmploiPost, "id" | "createdAt">
-): Promise<{ post: StoredEmploiPost; allPosts: StoredEmploiPost[] }> {
+export async function upsertEmploiPostForUser(
+  userId: string,
+  input: Omit<StoredEmploiPost, "id" | "userId" | "createdAt" | "updatedAt">
+): Promise<{ post: StoredEmploiPost; allPosts: StoredEmploiPost[]; isUpdate: boolean }> {
   const current = await fetchAndSyncEmploiPosts();
+  const now = new Date().toISOString();
+  const existingIndex = current.findIndex((p) => p.userId && p.userId === userId);
+
+  if (existingIndex >= 0) {
+    const updatedPost: StoredEmploiPost = {
+      ...current[existingIndex],
+      ...input,
+      userId,
+      updatedAt: now,
+    };
+    const updated = [...current];
+    updated[existingIndex] = updatedPost;
+    writeEmploiToFile(updated);
+    await syncEmploiToSupabase(updated);
+    return { post: updatedPost, allPosts: updated, isUpdate: true };
+  }
+
   const post: StoredEmploiPost = {
     ...input,
+    userId,
     id: `emp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
   };
 
   const updated = [post, ...current];
   writeEmploiToFile(updated);
   await syncEmploiToSupabase(updated);
-  return { post, allPosts: updated };
+  return { post, allPosts: updated, isUpdate: false };
 }
 
 export async function deleteEmploiPost(id: string): Promise<StoredEmploiPost[]> {

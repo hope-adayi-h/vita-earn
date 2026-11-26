@@ -12,7 +12,6 @@ import {
   Download,
   CheckCircle2,
   Phone,
-  MessageCircle,
   MapPin,
   ExternalLink,
   PlusCircle,
@@ -21,6 +20,8 @@ import {
   Sparkles,
   ShieldCheck,
 } from "lucide-react";
+import { WhatsAppLogo } from "@/components/WhatsAppLogo";
+import { ProductShareActions } from "./[id]/ProductShareActions";
 
 interface MarketplaceClientProps {
   initialProducts: StoredProduct[];
@@ -309,7 +310,8 @@ export function MarketplaceClient({ initialProducts, isActivated }: MarketplaceC
                   </div>
 
                   {/* Boutons d'interaction */}
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                    <ProductShareActions productId={prod.id} compact />
                     {prod.sellerPhone && (
                       <>
                         <a
@@ -320,10 +322,10 @@ export function MarketplaceClient({ initialProducts, isActivated }: MarketplaceC
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="touch-target px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
+                          className="touch-target px-2.5 py-1.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5B] text-white text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
                           title="Contacter sur WhatsApp"
                         >
-                          <MessageCircle className="w-3.5 h-3.5" />
+                          <WhatsAppLogo className="w-3.5 h-3.5" />
                           <span className="hidden sm:inline">WhatsApp</span>
                         </a>
 
@@ -450,9 +452,9 @@ export function MarketplaceClient({ initialProducts, isActivated }: MarketplaceC
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="touch-target py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                    className="touch-target py-2.5 px-3 rounded-xl bg-[#25D366] hover:bg-[#1EBE5B] text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm"
                   >
-                    <MessageCircle className="w-4 h-4" />
+                    <WhatsAppLogo className="w-4 h-4" />
                     <span>WhatsApp</span>
                   </a>
 
@@ -464,6 +466,8 @@ export function MarketplaceClient({ initialProducts, isActivated }: MarketplaceC
                     <span>Appeler</span>
                   </a>
                 </div>
+
+                <ProductShareActions productId={selectedProduct.id} />
               </div>
             </div>
           </div>

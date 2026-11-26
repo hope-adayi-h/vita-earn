@@ -185,8 +185,9 @@ export async function middleware(request: NextRequest) {
     (c) => c.name.startsWith("sb-") && c.name.includes("auth-token")
   );
 
-  // Si un cookie Supabase officiel existe, synchroniser la session avec getAll/setAll
-  if (hasSupabaseAuthCookie) {
+  // Si un cookie Supabase officiel existe et qu'on n'a pas encore vita_session_user, synchroniser la session
+  // (Évite un appel réseau Supabase Auth bloquant à chaque navigation quand le cookie local est déjà présent)
+  if (hasSupabaseAuthCookie && !sessionUserCookie) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -304,7 +305,8 @@ export async function middleware(request: NextRequest) {
       path === "/activation" ||
       path.startsWith("/activation/") ||
       path.startsWith("/auth/") ||
-      path === "/auth/logout";
+      path === "/auth/logout" ||
+      path.startsWith("/marche");
 
     if (!isAllowedForUnactivated) {
       return NextResponse.redirect(new URL("/activation", request.url));

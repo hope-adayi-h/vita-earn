@@ -277,6 +277,15 @@ export async function getActiveMarketplaceProducts(): Promise<StoredProduct[]> {
 }
 
 /**
+ * Récupère un produit actif par son identifiant (pour la fiche publique partagée)
+ */
+export async function getStoredProductById(productId: string): Promise<StoredProduct | null> {
+  if (!productId) return null;
+  const all = await getAllStoredProducts();
+  return all.find((p) => p.id === productId && p.status === "active") || null;
+}
+
+/**
  * Récupère les produits d'un utilisateur spécifique (vendeur)
  */
 export async function getUserStoredProducts(userIdOrUsername: string): Promise<StoredProduct[]> {

@@ -1,12 +1,20 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { z } from "zod";
-import { addEmploiPost, type StoredEmploiPost } from "@/lib/data/emploi-store";
+import { createClient } from "@/lib/supabase/server";
+import { findUserByIdentifier } from "@/lib/auth/local-store";
+import { upsertEmploiPostForUser, type StoredEmploiPost } from "@/lib/data/emploi-store";
 
-const createEmploiSchema = z.object({
+const emploiSchema = z.object({
   firstName: z.string().trim().min(2, "Le prénom doit contenir au moins 2 caractères.").max(80),
   lastName: z.string().trim().min(2, "Le nom doit contenir au moins 2 caractères.").max(80),
+  phone: z
+    .string()
+    .trim()
+    .min(6, "Veuillez renseigner un numéro de téléphone valide.")
+    .max(30, "Numéro de téléphone trop long."),
   location: z.string().trim().min(2, "Veuillez indiquer votre ville ou lieu de résidence.").max(120),
   profession: z.string().trim().min(2, "Veuillez indiquer votre profession ou activité.").max(120),
   description: z.string().trim().min(10, "Décrivez brièvement votre travail (au moins 10 caractères).").max(1000),
@@ -44,24 +52,73 @@ function sanitizeImageSource(raw: string): { ok: boolean; url: string } {
   return sanitizeOptionalHttpUrl(trimmed);
 }
 
-export interface CreateEmploiResult {
+async function resolveCurrentUserId(): Promise<string> {
+  const cookieStore = cookies();
+  const sessionUserRaw = cookieStore.get("vita_session_user")?.value;
+  const testUser = cookieStore.get("vita_test_user")?.value;
+
+  if (sessionUserRaw) {
+    try {
+      const parsed = JSON.parse(sessionUserRaw);
+      if (parsed?.id) return String(parsed.id);
+      if (parsed?.username) return String(parsed.username);
+    } catch {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(sessionUserRaw));
+        if (parsed?.id) return String(parsed.id);
+      } catch {}
+    }
+  }
+
+  if (testUser) {
+    const localU = findUserByIdentifier(testUser);
+    return localU?.id || testUser;
+  }
+
+  const isConfigured =
+    Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+  if (isConfigured) {
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user?.id) return user.id;
+    } catch {}
+  }
+
+  return "";
+}
+
+export interface UpsertEmploiResult {
   success: boolean;
   message?: string;
   error?: string;
   post?: StoredEmploiPost;
+  isUpdate?: boolean;
 }
 
-export async function createEmploiPostAction(input: {
+export async function saveMyEmploiPostAction(input: {
   firstName: string;
   lastName: string;
+  phone: string;
   location: string;
   profession: string;
   description: string;
   serviceUrl?: string;
   photoUrl?: string;
-}): Promise<CreateEmploiResult> {
+}): Promise<UpsertEmploiResult> {
   try {
-    const parsed = createEmploiSchema.safeParse(input);
+    const userId = await resolveCurrentUserId();
+    if (!userId) {
+      return {
+        success: false,
+        error: "Veuillez vous connecter pour publier ou modifier votre emploi.",
+      };
+    }
+
+    const parsed = emploiSchema.safeParse(input);
     if (!parsed.success) {
       const firstIssue = parsed.error.issues[0]?.message || "Veuillez vérifier les champs saisis.";
       return { success: false, error: firstIssue };
@@ -77,9 +134,10 @@ export async function createEmploiPostAction(input: {
       return { success: false, error: "La photo fournie n'est pas dans un format valide." };
     }
 
-    const { post } = await addEmploiPost({
+    const { post, isUpdate } = await upsertEmploiPostForUser(userId, {
       firstName: parsed.data.firstName,
       lastName: parsed.data.lastName,
+      phone: parsed.data.phone,
       location: parsed.data.location,
       profession: parsed.data.profession,
       description: parsed.data.description,
@@ -92,7 +150,10 @@ export async function createEmploiPostAction(input: {
 
     return {
       success: true,
-      message: "Votre profil professionnel a été publié avec succès !",
+      isUpdate,
+      message: isUpdate
+        ? "Votre profil professionnel a été mis à jour avec succès !"
+        : "Votre profil professionnel a été publié avec succès !",
       post,
     };
   } catch (err: unknown) {

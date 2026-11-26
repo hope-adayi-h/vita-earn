@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { Briefcase, ChevronLeft, ShieldCheck } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { findUserByIdentifier } from "@/lib/auth/local-store";
 import { fetchAndSyncEmploiPosts } from "@/lib/data/emploi-store";
 import { EmploiClient } from "./EmploiClient";
 
@@ -11,7 +14,44 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function EmploiPage() {
-  const posts = await fetchAndSyncEmploiPosts();
+  const cookieStore = cookies();
+  const sessionUserRaw = cookieStore.get("vita_session_user")?.value;
+  const testUser = cookieStore.get("vita_test_user")?.value;
+
+  let currentUserId = "";
+  if (sessionUserRaw) {
+    try {
+      const parsed = JSON.parse(sessionUserRaw);
+      currentUserId = String(parsed?.id || parsed?.username || "");
+    } catch {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(sessionUserRaw));
+        currentUserId = String(parsed?.id || parsed?.username || "");
+      } catch {}
+    }
+  } else if (testUser) {
+    const localU = findUserByIdentifier(testUser);
+    currentUserId = localU?.id || testUser;
+  }
+
+  const postsPromise = fetchAndSyncEmploiPosts();
+
+  if (!currentUserId) {
+    const isConfigured =
+      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+      !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+    if (isConfigured) {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user?.id) currentUserId = user.id;
+      } catch {}
+    }
+  }
+
+  const posts = await postsPromise;
 
   return (
     <div className="min-h-screen bg-[#F4F7F0] py-6 sm:py-10 px-4">
@@ -37,7 +77,7 @@ export default async function EmploiPage() {
             <div>
               <h1 className="text-xl sm:text-2xl font-black text-[#14201A]">Espace Emploi</h1>
               <p className="text-xs sm:text-sm text-[#5B6B60]">
-                Présentez votre métier, vos services ou vos créations à la communauté
+                Présentez votre métier, vos services et votre contact (1 publication par compte)
               </p>
             </div>
           </div>
@@ -45,11 +85,11 @@ export default async function EmploiPage() {
           <div className="p-4 bg-[#F4F7F0] rounded-2xl border border-[#1B4D0F]/15 flex items-start gap-3">
             <ShieldCheck className="w-5 h-5 text-[#2F7A1A] shrink-0 mt-0.5" />
             <p className="text-xs text-[#14201A] leading-relaxed font-medium">
-              Publiez gratuitement votre profil professionnel avec votre photo, votre spécialité et le lien vers vos services.
+              Chaque compte peut publier <strong>un seul profil professionnel</strong> avec sa photo, son numéro de téléphone et ses services, modifiable à tout moment.
             </p>
           </div>
 
-          <EmploiClient initialPosts={posts} />
+          <EmploiClient initialPosts={posts} currentUserId={currentUserId} />
         </div>
       </div>
     </div>
