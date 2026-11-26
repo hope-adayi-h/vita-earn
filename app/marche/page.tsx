@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { getActiveMarketplaceProducts } from "@/lib/data/products-store";
+import { getActiveMarketplaceProducts, type StoredProduct } from "@/lib/data/products-store";
 import { createClient } from "@/lib/supabase/server";
 import { MarketplaceClient } from "./MarketplaceClient";
 
@@ -7,13 +7,14 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Place de Marché — Vita Earn",
-  description: "Découvrez et achetez des produits physiques, services et ressources digitales certifiés au Togo et en Afrique de l'Ouest.",
+  description:
+    "Découvrez et achetez des produits physiques, services et ressources digitales certifiés au Togo et en Afrique de l'Ouest.",
 };
 
 export default async function MarchePage() {
   const cookieStore = cookies();
   const sessionUserCookie = cookieStore.get("vita_session_user")?.value;
-  let sessionUser: any = null;
+  let sessionUser: { isActivated?: boolean } | null = null;
   if (sessionUserCookie) {
     try {
       sessionUser = JSON.parse(sessionUserCookie);
@@ -49,7 +50,19 @@ export default async function MarchePage() {
     } catch {}
   }
 
-  const products = await getActiveMarketplaceProducts();
+  const rawProducts = await getActiveMarketplaceProducts();
+
+  // RÈGLE STRICTE : Les informations du vendeur (nom, localisation, téléphone, lien digital)
+  // ne sont JAMAIS envoyées au client si le compte n'est pas activé.
+  const products: StoredProduct[] = isActivated
+    ? rawProducts
+    : rawProducts.map((p) => ({
+        ...p,
+        sellerUsername: "",
+        sellerLocation: "",
+        sellerPhone: "",
+        digitalLink: undefined,
+      }));
 
   return <MarketplaceClient initialProducts={products} isActivated={isActivated} />;
 }

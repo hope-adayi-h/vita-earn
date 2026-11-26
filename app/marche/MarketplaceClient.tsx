@@ -285,17 +285,19 @@ export function MarketplaceClient({ initialProducts, isActivated }: MarketplaceC
                     {prod.description}
                   </p>
 
-                  {/* Vendeur et Ville */}
-                  <div className="pt-2 text-[11px] text-vita-muted flex items-center justify-between border-t border-vita-border/60">
-                    <span className="flex items-center gap-1 font-semibold text-vita-text">
-                      <Store className="w-3 h-3 text-emerald-700" />
-                      {prod.sellerUsername}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-vita-muted" />
-                      {prod.sellerLocation}
-                    </span>
-                  </div>
+                  {/* Vendeur et Ville (uniquement si compte activé) */}
+                  {isActivated && (
+                    <div className="pt-2 text-[11px] text-vita-muted flex items-center justify-between border-t border-vita-border/60">
+                      <span className="flex items-center gap-1 font-semibold text-vita-text">
+                        <Store className="w-3 h-3 text-emerald-700" />
+                        {prod.sellerUsername}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-vita-muted" />
+                        {prod.sellerLocation}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Prix et Contact Vendeur Direct */}
@@ -311,8 +313,8 @@ export function MarketplaceClient({ initialProducts, isActivated }: MarketplaceC
 
                   {/* Boutons d'interaction */}
                   <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                    <ProductShareActions productId={prod.id} compact />
-                    {prod.sellerPhone && (
+                    {isActivated && <ProductShareActions productId={prod.id} compact />}
+                    {isActivated && prod.sellerPhone && (
                       <>
                         <a
                           href={`https://wa.me/${cleanPhoneForWhatsApp(
@@ -428,47 +430,58 @@ export function MarketplaceClient({ initialProducts, isActivated }: MarketplaceC
                 </div>
               )}
 
-              {/* Informations Vendeur et Contact Direct */}
-              <div className="p-4 rounded-2xl bg-vita-surface border border-vita-border space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-vita-muted">Vendeur :</span>
-                  <span className="font-bold text-vita-deep">{selectedProduct.sellerUsername}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-vita-muted">Localisation :</span>
-                  <span className="font-bold text-vita-deep">{selectedProduct.sellerLocation}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-vita-muted">Numéro de contact :</span>
-                  <span className="font-bold text-emerald-700">{selectedProduct.sellerPhone}</span>
-                </div>
+              {/* Informations Vendeur et Contact Direct (réservés aux comptes activés) */}
+              {isActivated ? (
+                <div className="p-4 rounded-2xl bg-vita-surface border border-vita-border space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-vita-muted">Vendeur :</span>
+                    <span className="font-bold text-vita-deep">{selectedProduct.sellerUsername}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-vita-muted">Localisation :</span>
+                    <span className="font-bold text-vita-deep">{selectedProduct.sellerLocation}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-vita-muted">Numéro de contact :</span>
+                    <span className="font-bold text-emerald-700">{selectedProduct.sellerPhone}</span>
+                  </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-2">
-                  <a
-                    href={`https://wa.me/${cleanPhoneForWhatsApp(
-                      selectedProduct.sellerPhone
-                    )}?text=${encodeURIComponent(
-                      `Bonjour ${selectedProduct.sellerUsername}, je suis intéressé par votre article "${selectedProduct.title}" vu sur la place de marché Vita Earn.`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="touch-target py-2.5 px-3 rounded-xl bg-[#25D366] hover:bg-[#1EBE5B] text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm"
-                  >
-                    <WhatsAppLogo className="w-4 h-4" />
-                    <span>WhatsApp</span>
-                  </a>
+                  <div className="grid grid-cols-2 gap-2 pt-2">
+                    <a
+                      href={`https://wa.me/${cleanPhoneForWhatsApp(
+                        selectedProduct.sellerPhone
+                      )}?text=${encodeURIComponent(
+                        `Bonjour ${selectedProduct.sellerUsername}, je suis intéressé par votre article "${selectedProduct.title}" vu sur la place de marché Vita Earn.`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="touch-target py-2.5 px-3 rounded-xl bg-[#25D366] hover:bg-[#1EBE5B] text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      <WhatsAppLogo className="w-4 h-4" />
+                      <span>WhatsApp</span>
+                    </a>
 
-                  <a
-                    href={`tel:${selectedProduct.sellerPhone}`}
-                    className="touch-target py-2.5 px-3 rounded-xl bg-vita-deep hover:bg-vita-medium text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm"
-                  >
-                    <Phone className="w-4 h-4" />
-                    <span>Appeler</span>
-                  </a>
+                    <a
+                      href={`tel:${selectedProduct.sellerPhone}`}
+                      className="touch-target py-2.5 px-3 rounded-xl bg-vita-deep hover:bg-vita-medium text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      <Phone className="w-4 h-4" />
+                      <span>Appeler</span>
+                    </a>
+                  </div>
+
+                  <ProductShareActions productId={selectedProduct.id} />
                 </div>
-
-                <ProductShareActions productId={selectedProduct.id} />
-              </div>
+              ) : (
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-2 text-xs text-amber-950">
+                  <p className="font-bold">
+                    Pour commander cet article, contactez directement la personne qui a partagé ce lien.
+                  </p>
+                  <p className="text-amber-800 leading-relaxed">
+                    Les coordonnées directes du vendeur et le lien de partage sont réservés aux membres Vita Earn ayant activé leur compte.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
