@@ -4,6 +4,7 @@ import { useState, useRef, useTransition } from "react";
 import Link from "next/link";
 import { formatFCFA } from "@/lib/utils";
 import { publishProductAction, type SellerDashboardData } from "./actions";
+import { SellerKycGate } from "@/components/vendre/SellerKycGate";
 import {
   ShoppingBag,
   Package,
@@ -74,6 +75,17 @@ export function VendreClient({ initialData }: VendreClientProps) {
           </Link>
         </div>
       </div>
+    );
+  }
+
+  if (!data.isKycVerified) {
+    return (
+      <SellerKycGate
+        initialKyc={data.kyc}
+        defaultFullName={data.user.fullName}
+        defaultPhone={data.user.phone}
+        onSubmitted={(kyc) => setData((prev) => (prev ? { ...prev, kyc } : prev))}
+      />
     );
   }
 

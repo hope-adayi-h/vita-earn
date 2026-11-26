@@ -107,6 +107,12 @@ export function AdminNavbar({
       badgeColor: "bg-[#0084FF] text-white",
     },
     {
+      label: "KYC Vendeurs",
+      href: "/admin/kyc",
+      icon: ShieldCheck,
+      badge: null,
+    },
+    {
       label: "Emploi",
       href: "/admin/emploi",
       icon: Briefcase,

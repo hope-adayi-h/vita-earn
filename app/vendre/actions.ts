@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { findUserByIdentifier } from "@/lib/auth/local-store";
 import {
@@ -14,6 +15,12 @@ import {
   type UserMarketplaceQuota,
   type MarketplaceSettings,
 } from "@/lib/data/products-store";
+import {
+  getUserKycRequest,
+  submitKycRequest,
+  type KycDocumentType,
+  type StoredKycRequest,
+} from "@/lib/data/kyc-store";
 
 export interface SellerDashboardData {
   user: {
@@ -25,6 +32,8 @@ export interface SellerDashboardData {
     isActivated: boolean;
   };
   isActivated: boolean;
+  kyc: StoredKycRequest | null;
+  isKycVerified: boolean;
   quota: UserMarketplaceQuota;
   settings: MarketplaceSettings;
   myProducts: StoredProduct[];
@@ -147,13 +156,18 @@ export async function getSellerDashboardData(): Promise<SellerDashboardData | nu
     const seller = await getCurrentSeller();
     if (!seller) return null;
 
-    const quota = await getUserMarketplaceQuota(seller.username || seller.id);
-    const settings = await getMarketplaceSettings();
-    const myProducts = await getUserStoredProducts(seller.username || seller.id);
+    const [quota, settings, myProducts, kyc] = await Promise.all([
+      getUserMarketplaceQuota(seller.username || seller.id),
+      getMarketplaceSettings(),
+      getUserStoredProducts(seller.username || seller.id),
+      getUserKycRequest(seller.id, seller.username),
+    ]);
 
     return {
       user: seller,
       isActivated: seller.isActivated,
+      kyc,
+      isKycVerified: kyc?.status === "approved",
       quota,
       settings,
       myProducts,
@@ -170,8 +184,75 @@ export async function getSellerDashboardData(): Promise<SellerDashboardData | nu
   }
 }
 
+const kycSubmitSchema = z.object({
+  documentType: z.enum(["cni", "school_card"]),
+  fullName: z.string().trim().min(2, "Veuillez renseigner votre nom complet.").max(120),
+  phone: z.string().trim().min(6, "Veuillez renseigner votre numéro de téléphone.").max(30),
+  frontImageUrl: z.string().trim().min(10, "La photo avant de la pièce est obligatoire.").max(600000),
+  backImageUrl: z.string().trim().min(10, "La photo arrière de la pièce est obligatoire.").max(600000),
+  selfieImageUrl: z.string().trim().min(10, "La photo de votre visage est obligatoire.").max(600000),
+});
+
+function isValidBase64Image(raw: string): boolean {
+  return /^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/i.test(raw.trim());
+}
+
 /**
- * Publication d'un nouvel article (vérification du quota gratuit de 2 articles)
+ * Soumission du dossier KYC vendeur (pièce recto/verso + photo du visage)
+ */
+export async function submitSellerKycAction(input: {
+  documentType: KycDocumentType;
+  fullName: string;
+  phone: string;
+  frontImageUrl: string;
+  backImageUrl: string;
+  selfieImageUrl: string;
+}): Promise<{ success?: boolean; kyc?: StoredKycRequest; error?: string }> {
+  try {
+    const seller = await getCurrentSeller();
+    if (!seller) {
+      return { error: "Vous devez être connecté pour soumettre votre vérification KYC." };
+    }
+    if (!seller.isActivated) {
+      return { error: "Votre compte doit être activé avant de soumettre votre KYC." };
+    }
+
+    const parsed = kycSubmitSchema.safeParse(input);
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message || "Veuillez remplir tous les champs requis." };
+    }
+
+    if (
+      !isValidBase64Image(parsed.data.frontImageUrl) ||
+      !isValidBase64Image(parsed.data.backImageUrl) ||
+      !isValidBase64Image(parsed.data.selfieImageUrl)
+    ) {
+      return { error: "Toutes les photos doivent être des images valides (JPG, PNG, WebP)." };
+    }
+
+    const kyc = await submitKycRequest({
+      userId: seller.id,
+      username: seller.username || seller.fullName,
+      fullName: parsed.data.fullName,
+      phone: parsed.data.phone,
+      documentType: parsed.data.documentType,
+      frontImageUrl: parsed.data.frontImageUrl,
+      backImageUrl: parsed.data.backImageUrl,
+      selfieImageUrl: parsed.data.selfieImageUrl,
+    });
+
+    revalidatePath("/vendre");
+    revalidatePath("/admin/kyc");
+
+    return { success: true, kyc };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Erreur lors de l'envoi du KYC.";
+    return { error: msg };
+  }
+}
+
+/**
+ * Publication d'un nouvel article (vérification KYC obligatoire + quota gratuit de 2 articles)
  */
 export async function publishProductAction(formData: FormData): Promise<{
   success?: boolean;
@@ -188,6 +269,19 @@ export async function publishProductAction(formData: FormData): Promise<{
       return {
         error:
           "Votre compte doit être activé pour pouvoir publier des articles sur la place de marché.",
+      };
+    }
+
+    // RÈGLE STRICTE KYC : Le vendeur doit obligatoirement avoir un KYC validé par l'admin
+    const kyc = await getUserKycRequest(seller.id, seller.username);
+    if (!kyc || kyc.status !== "approved") {
+      return {
+        error:
+          kyc?.status === "pending"
+            ? "Votre vérification KYC est en attente de validation par l'administrateur. Vous pourrez publier dès qu'elle sera approuvée."
+            : kyc?.status === "rejected"
+            ? "Votre vérification KYC a été refusée. Veuillez soumettre un nouveau dossier conforme avant de publier."
+            : "Vous devez obligatoirement compléter et faire valider votre KYC (pièce d'identité ou carte scolaire + photo du visage) avant de publier un article.",
       };
     }
 
