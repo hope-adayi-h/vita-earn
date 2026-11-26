@@ -1,12 +1,18 @@
 import { redirect } from "next/navigation";
 import { isAdminUnlocked, checkAdminSession } from "@/lib/security/admin-lock";
-import { getAllStoredProducts, getMarketplaceSettings } from "@/lib/data/products-store";
+import {
+  getAllStoredProducts,
+  getMarketplaceSettings,
+  getSellersAtQuotaSummary,
+} from "@/lib/data/products-store";
 import { ProduitsClient } from "./ProduitsClient";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
 
 export const metadata = {
   title: "Modération & Réglages Marketplace — Administration Vita Earn",
 };
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminProduitsPage() {
   const { isAdmin, isSuperAdmin, userEmail } = await checkAdminSession();
@@ -20,9 +26,10 @@ export default async function AdminProduitsPage() {
     redirect("/admin/lock");
   }
 
-  const [productsList, settings] = await Promise.all([
+  const [productsList, settings, quotaSellers] = await Promise.all([
     getAllStoredProducts(),
     getMarketplaceSettings(),
+    getSellersAtQuotaSummary(),
   ]);
 
   const pendingProductsCount = productsList.filter((p) => p.status === "pending").length;
@@ -34,7 +41,11 @@ export default async function AdminProduitsPage() {
         isSuperAdmin={isSuperAdmin}
         pendingProductsCount={pendingProductsCount}
       />
-      <ProduitsClient initialProducts={productsList} initialSettings={settings} />
+      <ProduitsClient
+        initialProducts={productsList}
+        initialSettings={settings}
+        initialQuotaSellers={quotaSellers}
+      />
     </div>
   );
 }

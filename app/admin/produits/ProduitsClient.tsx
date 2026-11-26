@@ -3,8 +3,17 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { formatFCFA } from "@/lib/utils";
-import type { StoredProduct, MarketplaceSettings } from "@/lib/data/products-store";
-import { moderateProductAction, saveMarketplaceSettingsAction } from "@/app/admin/actions";
+import type {
+  StoredProduct,
+  MarketplaceSettings,
+  SellerQuotaSummary,
+} from "@/lib/data/products-store";
+import {
+  moderateProductAction,
+  saveMarketplaceSettingsAction,
+  grantSellerQuotaAction,
+  removeSellerQuotaAction,
+} from "@/app/admin/actions";
 import {
   ShoppingBag,
   ArrowLeft,
@@ -28,16 +37,25 @@ import {
   Sparkles,
   Save,
   X,
+  Users,
+  Trash2,
+  Infinity as InfinityIcon,
 } from "lucide-react";
 
 interface ProduitsClientProps {
   initialProducts: StoredProduct[];
   initialSettings: MarketplaceSettings;
+  initialQuotaSellers: SellerQuotaSummary[];
 }
 
-export function ProduitsClient({ initialProducts, initialSettings }: ProduitsClientProps) {
+export function ProduitsClient({
+  initialProducts,
+  initialSettings,
+  initialQuotaSellers,
+}: ProduitsClientProps) {
   const [products, setProducts] = useState<StoredProduct[]>(initialProducts);
   const [settings, setSettings] = useState<MarketplaceSettings>(initialSettings);
+  const [quotaSellers, setQuotaSellers] = useState<SellerQuotaSummary[]>(initialQuotaSellers);
   const [filter, setFilter] = useState<"all" | "pending" | "active" | "rejected">("pending");
   const [searchQuery, setSearchQuery] = useState("");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -48,6 +66,13 @@ export function ProduitsClient({ initialProducts, initialSettings }: ProduitsCli
   const [freeLimit, setFreeLimit] = useState(initialSettings.freeProductsLimit);
   const [extraPrice, setExtraPrice] = useState(initialSettings.extraProductPrice);
   const [extraRevenue, setExtraRevenue] = useState(initialSettings.totalExtraRevenue);
+  const [adminWhatsapp, setAdminWhatsapp] = useState(initialSettings.adminWhatsappNumber || "");
+
+  // Quota seller validation inline state
+  const [validatingSellerKey, setValidatingSellerKey] = useState<string | null>(null);
+  const [grantExtraCount, setGrantExtraCount] = useState<number>(5);
+  const [grantUnlimited, setGrantUnlimited] = useState<boolean>(false);
+  const [deletingSellerKey, setDeletingSellerKey] = useState<string | null>(null);
 
   // Large image preview modal
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -102,11 +127,16 @@ export function ProduitsClient({ initialProducts, initialSettings }: ProduitsCli
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
+    const parsedLimit = Math.max(0, Number(freeLimit));
+    const parsedPrice = Math.max(0, Number(extraPrice));
+    const parsedRevenue = Math.max(0, Number(extraRevenue));
+
     startTransition(async () => {
       const res = await saveMarketplaceSettingsAction({
-        freeProductsLimit: Number(freeLimit) || 2,
-        extraProductPrice: Number(extraPrice) || 1000,
-        totalExtraRevenue: Number(extraRevenue) || 0,
+        freeProductsLimit: isNaN(parsedLimit) ? 1 : parsedLimit,
+        extraProductPrice: isNaN(parsedPrice) ? 1000 : parsedPrice,
+        totalExtraRevenue: isNaN(parsedRevenue) ? 0 : parsedRevenue,
+        adminWhatsappNumber: adminWhatsapp.trim(),
       });
 
       if (res.error) {
@@ -116,14 +146,54 @@ export function ProduitsClient({ initialProducts, initialSettings }: ProduitsCli
           type: "success",
           text: "Les paramètres de la marketplace ont été enregistrés avec succès.",
         });
-        setSettings({
-          freeProductsLimit: Number(freeLimit) || 2,
-          extraProductPrice: Number(extraPrice) || 1000,
-          totalExtraRevenue: Number(extraRevenue) || 0,
-          updatedAt: new Date().toISOString(),
-          updatedBy: "admin",
-        });
+        if (res.settings) {
+          setSettings(res.settings);
+        }
         setShowSettings(false);
+      }
+    });
+  };
+
+  const handleConfirmGrantQuota = (seller: SellerQuotaSummary) => {
+    setMessage(null);
+    startTransition(async () => {
+      const res = await grantSellerQuotaAction({
+        sellerKey: seller.sellerKey,
+        sellerId: seller.sellerId,
+        sellerUsername: seller.sellerUsername,
+        sellerPhone: seller.sellerPhone,
+        extraSlotsGranted: grantUnlimited ? 0 : Math.max(1, Number(grantExtraCount) || 1),
+        isUnlimited: grantUnlimited,
+      });
+
+      setValidatingSellerKey(null);
+      if (res.error) {
+        setMessage({ type: "error", text: res.error });
+      } else if (res.sellers) {
+        setQuotaSellers(res.sellers);
+        setMessage({
+          type: "success",
+          text: grantUnlimited
+            ? `${seller.sellerUsername} est désormais autorisé en mode Permanent (Illimité).`
+            : `${seller.sellerUsername} a reçu +${Math.max(1, Number(grantExtraCount) || 1)} article(s) supplémentaire(s).`,
+        });
+      }
+    });
+  };
+
+  const handleRemoveSellerQuota = (sellerKey: string) => {
+    setMessage(null);
+    startTransition(async () => {
+      const res = await removeSellerQuotaAction(sellerKey);
+      setDeletingSellerKey(null);
+      if (res.error) {
+        setMessage({ type: "error", text: res.error });
+      } else if (res.sellers) {
+        setQuotaSellers(res.sellers);
+        setMessage({
+          type: "success",
+          text: "Vendeur retiré / réinitialisé.",
+        });
       }
     });
   };
@@ -195,7 +265,7 @@ export function ProduitsClient({ initialProducts, initialSettings }: ProduitsCli
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Articles Gratuits / Vendeur
@@ -203,20 +273,20 @@ export function ProduitsClient({ initialProducts, initialSettings }: ProduitsCli
               <input
                 type="number"
                 min={1}
-                max={20}
+                max={50}
                 required
                 value={freeLimit}
                 onChange={(e) => setFreeLimit(Number(e.target.value))}
                 className="w-full touch-target rounded-xl border border-gray-200 dark:border-[#1E2E24] bg-white dark:bg-[#0E1511] px-3.5 text-xs sm:text-sm font-bold text-gray-900 dark:text-white"
               />
               <p className="text-[10px] text-gray-400">
-                Par défaut : 2 articles offerts à chaque compte activé.
+                Nombre d&apos;articles gratuits avant paiement (ex: 1 article).
               </p>
             </div>
 
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                Prix par Article Supplémentaire (FCFA)
+                Prix Abonnement Supplémentaire (FCFA)
               </label>
               <input
                 type="number"
@@ -234,6 +304,22 @@ export function ProduitsClient({ initialProducts, initialSettings }: ProduitsCli
 
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                Numéro WhatsApp Admin (Paiements)
+              </label>
+              <input
+                type="tel"
+                value={adminWhatsapp}
+                onChange={(e) => setAdminWhatsapp(e.target.value)}
+                placeholder="+228 90 00 00 00"
+                className="w-full touch-target rounded-xl border border-gray-200 dark:border-[#1E2E24] bg-white dark:bg-[#0E1511] px-3.5 text-xs sm:text-sm font-bold text-gray-900 dark:text-white"
+              />
+              <p className="text-[10px] text-gray-400">
+                Numéro utilisé par le bouton WhatsApp lorsque le vendeur atteint son quota.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Recettes Totales Collectées (FCFA)
               </label>
               <input
@@ -245,7 +331,7 @@ export function ProduitsClient({ initialProducts, initialSettings }: ProduitsCli
                 className="w-full touch-target rounded-xl border border-gray-200 dark:border-[#1E2E24] bg-white dark:bg-[#0E1511] px-3.5 text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400"
               />
               <p className="text-[10px] text-gray-400">
-                Somme totale enregistrée pour la publication d'articles supplémentaires.
+                Somme totale enregistrée pour la publication d&apos;articles supplémentaires.
               </p>
             </div>
           </div>
@@ -311,6 +397,181 @@ export function ProduitsClient({ initialProducts, initialSettings }: ProduitsCli
             {formatFCFA(settings.totalExtraRevenue)}
           </div>
         </div>
+      </div>
+
+      {/* Section Vendeurs ayant atteint leur quota & Autorisations */}
+      <div className="bg-white dark:bg-[#131E17] rounded-3xl border border-gray-200 dark:border-[#1E2E24] p-5 sm:p-6 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-gray-100 dark:border-[#1E2E24]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-black text-gray-900 dark:text-white">
+                Vendeurs au Quota &amp; Autorisations ({quotaSellers.length})
+              </h2>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                Dès qu&apos;un vendeur atteint son quota ({settings.freeProductsLimit} article(s)), il apparaît ici pour validation après paiement WhatsApp.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {quotaSellers.length === 0 ? (
+          <p className="text-xs text-gray-500 py-4 text-center">
+            Aucun vendeur n&apos;a encore atteint la limite de publication.
+          </p>
+        ) : (
+          <div className="divide-y divide-gray-100 dark:divide-[#1E2E24]">
+            {quotaSellers.map((seller) => {
+              const isValidatingThis = validatingSellerKey === seller.sellerKey;
+              const isDeletingThis = deletingSellerKey === seller.sellerKey;
+
+              return (
+                <div key={seller.sellerKey} className="py-3.5 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-black text-gray-900 dark:text-white">
+                          {seller.sellerUsername}
+                        </span>
+                        {seller.isUnlimited ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
+                            <InfinityIcon className="w-3 h-3" />
+                            <span>Permanent / Illimité</span>
+                          </span>
+                        ) : seller.isBlocked ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                            Quota atteint ({seller.publishedCount} / {seller.totalLimit})
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                            Autorisé ({seller.publishedCount} / {seller.totalLimit})
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500 flex items-center gap-3">
+                        {seller.sellerPhone && (
+                          <span className="inline-flex items-center gap-1">
+                            <Phone className="w-3 h-3" />
+                            {seller.sellerPhone}
+                          </span>
+                        )}
+                        <span>
+                          Base gratuite : {seller.baseFreeLimit} • Bonus accordés :{" "}
+                          {seller.isUnlimited ? "Illimité" : `+${seller.extraSlotsGranted}`}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setValidatingSellerKey(isValidatingThis ? null : seller.sellerKey);
+                          setGrantExtraCount(seller.extraSlotsGranted > 0 ? seller.extraSlotsGranted : 5);
+                          setGrantUnlimited(seller.isUnlimited);
+                          setDeletingSellerKey(null);
+                        }}
+                        className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Valider</span>
+                      </button>
+
+                      {isDeletingThis ? (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            disabled={isPending}
+                            onClick={() => handleRemoveSellerQuota(seller.sellerKey)}
+                            className="min-h-[38px] px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold cursor-pointer"
+                          >
+                            Confirmer
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeletingSellerKey(null)}
+                            className="min-h-[38px] px-2.5 py-1.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold cursor-pointer"
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDeletingSellerKey(seller.sellerKey);
+                            setValidatingSellerKey(null);
+                          }}
+                          className="min-h-[38px] px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Supprimer</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Panneau inline pour choisir le nombre d'articles à autoriser */}
+                  {isValidatingThis && (
+                    <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 flex flex-col sm:flex-row sm:items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          id={`unlimited-${seller.sellerKey}`}
+                          type="checkbox"
+                          checked={grantUnlimited}
+                          onChange={(e) => setGrantUnlimited(e.target.checked)}
+                          className="w-4 h-4 accent-emerald-600"
+                        />
+                        <label
+                          htmlFor={`unlimited-${seller.sellerKey}`}
+                          className="text-xs font-bold text-emerald-950 cursor-pointer"
+                        >
+                          Permanent (Illimité)
+                        </label>
+                      </div>
+
+                      {!grantUnlimited && (
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs font-bold text-emerald-950">
+                            Articles supplémentaires :
+                          </label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={500}
+                            value={grantExtraCount}
+                            onChange={(e) => setGrantExtraCount(Number(e.target.value))}
+                            className="w-24 px-3 py-1.5 rounded-xl border border-emerald-300 bg-white text-xs font-black text-gray-900"
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 sm:ml-auto">
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={() => handleConfirmGrantQuota(seller)}
+                          className="min-h-[38px] px-4 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black cursor-pointer"
+                        >
+                          Autoriser maintenant
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setValidatingSellerKey(null)}
+                          className="min-h-[38px] px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-xs font-bold cursor-pointer"
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Barre de Recherche et Filtres */}

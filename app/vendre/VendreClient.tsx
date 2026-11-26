@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatFCFA } from "@/lib/utils";
 import { publishProductAction, type SellerDashboardData } from "./actions";
 import { SellerKycGate } from "@/components/vendre/SellerKycGate";
+import { WhatsAppLogo } from "@/components/WhatsAppLogo";
 import {
   ShoppingBag,
   Package,
@@ -201,15 +202,18 @@ export function VendreClient({ initialData }: VendreClientProps) {
         setData((prev) => {
           if (!prev) return prev;
           const updatedMy = [res.product!, ...prev.myProducts];
+          const nextPublished = prev.quota.totalPublished + 1;
+          const nextCanPublish = prev.quota.isUnlimited || nextPublished < prev.quota.totalLimit;
           return {
             ...prev,
             myProducts: updatedMy,
             quota: {
               ...prev.quota,
-              totalPublished: prev.quota.totalPublished + 1,
+              totalPublished: nextPublished,
               pendingCount: prev.quota.pendingCount + 1,
-              freeRemaining: Math.max(0, prev.quota.freeRemaining - 1),
-              canPublish: prev.quota.totalPublished + 1 < prev.quota.freeLimit,
+              freeRemaining: prev.quota.isUnlimited ? 999 : Math.max(0, prev.quota.totalLimit - nextPublished),
+              canPublish: nextCanPublish,
+              extraRequired: !nextCanPublish,
             },
           };
         });
@@ -237,25 +241,29 @@ export function VendreClient({ initialData }: VendreClientProps) {
             </p>
           </div>
 
-          {/* Badge Quota Vendeur (Règle des 2 articles gratuits) */}
+          {/* Badge Quota Vendeur */}
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 flex-shrink-0 text-right">
             <div className="flex items-center justify-end gap-1.5 mb-1">
               <Sparkles className="w-4 h-4 text-vita-bright" />
               <span className="text-xs font-bold text-white uppercase tracking-wider">
-                Quota Articles Gratuits
+                Quota Publications
               </span>
             </div>
             <div className="text-2xl font-black text-white">
-              {quota.totalPublished} / {quota.freeLimit}
+              {quota.isUnlimited
+                ? `${quota.totalPublished} / Illimité`
+                : `${quota.totalPublished} / ${quota.totalLimit}`}
             </div>
             <div className="text-[11px] text-emerald-200 mt-0.5">
-              {quota.freeRemaining > 0 ? (
+              {quota.isUnlimited ? (
+                <span>Accès permanent autorisé</span>
+              ) : quota.freeRemaining > 0 ? (
                 <span>
-                  {quota.freeRemaining} article{quota.freeRemaining > 1 ? "s" : ""} gratuit
-                  {quota.freeRemaining > 1 ? "s" : ""} restant{quota.freeRemaining > 1 ? "s" : ""}
+                  {quota.freeRemaining} article{quota.freeRemaining > 1 ? "s" : ""} restant
+                  {quota.freeRemaining > 1 ? "s" : ""}
                 </span>
               ) : (
-                <span className="text-amber-300 font-bold">Quota gratuit atteint</span>
+                <span className="text-amber-300 font-bold">Quota atteint</span>
               )}
             </div>
           </div>
@@ -263,27 +271,51 @@ export function VendreClient({ initialData }: VendreClientProps) {
       </div>
 
       {/* Message d'information sur le quota */}
-      {quota.freeRemaining === 0 ? (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <p className="font-bold">
-              Vous avez atteint votre quota de {quota.freeLimit} articles gratuits.
-            </p>
-            <p className="text-amber-800">
-              Pour publier un article supplémentaire, un forfait de{" "}
-              <strong>{formatFCFA(settings.extraProductPrice)}</strong> est appliqué ou vous pouvez
-              contacter l'administrateur pour débloquer votre compte.
-            </p>
+      {!quota.canPublish ? (
+        <div className="p-5 rounded-3xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-950 space-y-3">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-black text-sm">
+                Vous avez atteint votre limite de publication ({quota.totalPublished} / {quota.totalLimit} article{quota.totalLimit > 1 ? "s" : ""}).
+              </p>
+              <p className="text-amber-900 leading-relaxed">
+                Pour passer à l&apos;étape supérieure et publier d&apos;autres articles sur la Marketplace, vous devez régler l&apos;abonnement de{" "}
+                <strong>{formatFCFA(settings.extraProductPrice)}</strong> directement auprès de l&apos;administrateur sur WhatsApp.
+              </p>
+            </div>
           </div>
+
+          {settings.adminWhatsappNumber ? (
+            <a
+              href={`https://wa.me/${settings.adminWhatsappNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                `Je suis là pour prendre l'abonnement de ${settings.extraProductPrice} FCFA afin de publier plus d'articles sur Vita Earn. Mon pseudo : ${data.user.username}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="touch-target min-h-[44px] w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-[#25D366] hover:bg-[#1EBE5B] text-white font-black text-xs sm:text-sm inline-flex items-center justify-center gap-2 shadow-sm transition-all"
+            >
+              <WhatsAppLogo className="w-4 h-4" />
+              <span>Contacter l&apos;administrateur sur WhatsApp ({formatFCFA(settings.extraProductPrice)})</span>
+            </a>
+          ) : (
+            <p className="text-xs font-bold text-amber-800">
+              Veuillez contacter l&apos;administrateur pour valider votre abonnement supplémentaire.
+            </p>
+          )}
         </div>
       ) : (
         <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>
-              Vous bénéficiez de <strong>{quota.freeLimit} articles gratuits</strong> avec votre
-              compte activé ({quota.freeRemaining} restant{quota.freeRemaining > 1 ? "s" : ""}).
+              {quota.isUnlimited ? (
+                <>Vous disposez d&apos;un accès <strong>permanent et illimité</strong> pour publier vos articles.</>
+              ) : (
+                <>
+                  Vous pouvez publier jusqu&apos;à <strong>{quota.totalLimit} article{quota.totalLimit > 1 ? "s" : ""}</strong> ({quota.freeRemaining} restant{quota.freeRemaining > 1 ? "s" : ""}).
+                </>
+              )}
             </span>
           </div>
           <Link
@@ -342,8 +374,36 @@ export function VendreClient({ initialData }: VendreClientProps) {
         </button>
       </div>
 
-      {/* CONTENU ONGLET 1 : Formulaire de Publication */}
-      {activeTab === "publish" && (
+      {/* CONTENU ONGLET 1 : Formulaire de Publication (masqué si quota atteint) */}
+      {activeTab === "publish" && !quota.canPublish && (
+        <div className="bg-white rounded-3xl border border-amber-200 p-6 sm:p-8 text-center shadow-sm space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
+            <AlertCircle className="w-7 h-7" />
+          </div>
+          <h2 className="text-lg font-black text-[#14201A]">
+            Limite de publication atteinte ({quota.totalPublished} / {quota.totalLimit})
+          </h2>
+          <p className="text-xs sm:text-sm text-[#5B6B60] max-w-md mx-auto leading-relaxed">
+            Vous avez déjà publié votre maximum autorisé. Pour débloquer la publication de nouveaux articles, réglez l&apos;abonnement de{" "}
+            <strong>{formatFCFA(settings.extraProductPrice)}</strong> sur WhatsApp avec l&apos;administrateur, puis actualisez cette page après validation.
+          </p>
+          {settings.adminWhatsappNumber && (
+            <a
+              href={`https://wa.me/${settings.adminWhatsappNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                `Je suis là pour prendre l'abonnement de ${settings.extraProductPrice} FCFA afin de publier plus d'articles sur Vita Earn. Mon pseudo : ${data.user.username}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="touch-target min-h-[44px] px-6 py-3 rounded-2xl bg-[#25D366] hover:bg-[#1EBE5B] text-white font-black text-xs sm:text-sm inline-flex items-center justify-center gap-2 shadow-sm transition-all"
+            >
+              <WhatsAppLogo className="w-4 h-4" />
+              <span>Payer {formatFCFA(settings.extraProductPrice)} sur WhatsApp</span>
+            </a>
+          )}
+        </div>
+      )}
+
+      {activeTab === "publish" && quota.canPublish && (
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="bg-white rounded-3xl border border-vita-border p-6 sm:p-8 shadow-sm space-y-6">
             {/* 1. Type de produit */}

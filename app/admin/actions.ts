@@ -35,6 +35,10 @@ import {
   updateStoredProductStatus,
   saveMarketplaceSettings,
   getMarketplaceSettings,
+  grantSellerExtraQuota,
+  removeSellerQuotaEntry,
+  type MarketplaceSettings,
+  type SellerQuotaSummary,
 } from "@/lib/data/products-store";
 import { SasPayClient } from "@/lib/payments/saspay";
 
@@ -614,7 +618,8 @@ export async function saveMarketplaceSettingsAction(input: {
   freeProductsLimit: number;
   extraProductPrice: number;
   totalExtraRevenue?: number;
-}): Promise<{ success?: boolean; error?: string }> {
+  adminWhatsappNumber?: string;
+}): Promise<{ success?: boolean; settings?: MarketplaceSettings; error?: string }> {
   try {
     const { user } = await verifyAdminUser();
     const res = await saveMarketplaceSettings(input, user.email || user.id);
@@ -626,9 +631,57 @@ export async function saveMarketplaceSettingsAction(input: {
     revalidatePath("/vendre");
     revalidatePath("/marche");
 
-    return { success: true };
+    return { success: true, settings: res.settings };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Erreur non autorisée.";
+    return { error: message };
+  }
+}
+
+/**
+ * Valide et accorde un quota supplémentaire (ou permanent) à un vendeur après paiement manuel
+ */
+export async function grantSellerQuotaAction(input: {
+  sellerKey: string;
+  sellerId: string;
+  sellerUsername: string;
+  sellerPhone: string;
+  extraSlotsGranted: number;
+  isUnlimited: boolean;
+}): Promise<{ success?: boolean; sellers?: SellerQuotaSummary[]; error?: string }> {
+  try {
+    const { user } = await verifyAdminUser();
+    const sellers = await grantSellerExtraQuota({
+      ...input,
+      grantedBy: user.email || user.id,
+    });
+
+    revalidatePath("/admin/produits");
+    revalidatePath("/vendre");
+
+    return { success: true, sellers };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur lors de l'autorisation.";
+    return { error: message };
+  }
+}
+
+/**
+ * Supprime / réinitialise l'entrée d'un vendeur au quota
+ */
+export async function removeSellerQuotaAction(
+  sellerKey: string
+): Promise<{ success?: boolean; sellers?: SellerQuotaSummary[]; error?: string }> {
+  try {
+    await verifyAdminUser();
+    const sellers = await removeSellerQuotaEntry(sellerKey);
+
+    revalidatePath("/admin/produits");
+    revalidatePath("/vendre");
+
+    return { success: true, sellers };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur lors de la suppression.";
     return { error: message };
   }
 }
