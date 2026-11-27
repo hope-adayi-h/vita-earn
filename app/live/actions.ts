@@ -10,6 +10,9 @@ import {
   getAllLiveConferences,
   getApprovedAndActiveLives,
   getLiveAlerts,
+  checkLiveAvailability,
+  getWeekLiveStats,
+  getLiveSettings,
 } from "@/lib/data/live-store";
 
 const liveRequestSchema = z.object({
@@ -96,23 +99,20 @@ export async function submitLiveRequestAction(prevState: any, formData: FormData
 
     const user = resolveCurrentUser();
 
-    // Vérifier si un live est déjà approuvé exactement au même créneau
-    const all = await getAllLiveConferences();
-    const conflict = all.find(
-      (l) =>
-        (l.status === "approved" || l.status === "live") &&
-        l.scheduledDate === parsed.data.scheduledDate &&
-        l.scheduledTime === parsed.data.scheduledTime
+    // 1. Vérifier la disponibilité (jour ouvert, quota hebdomadaire et conflit d'horaire)
+    const availCheck = await checkLiveAvailability(
+      parsed.data.scheduledDate,
+      parsed.data.scheduledTime
     );
 
-    if (conflict) {
+    if (!availCheck.ok) {
       return {
         ok: false,
-        error: `Un live est déjà programmé à cette date (${parsed.data.scheduledDate}) et heure (${parsed.data.scheduledTime}). Veuillez choisir un autre horaire.`,
+        error: availCheck.error || "Ce créneau horaire ou ce jour n'est pas disponible.",
       };
     }
 
-    // Valider ou assigner le lien Google Meet
+    // 2. Valider ou assigner le lien Google Meet
     let finalMeetUrl = parsed.data.meetUrl;
     if (!finalMeetUrl || !finalMeetUrl.startsWith("http")) {
       finalMeetUrl = "https://meet.google.com/new";
@@ -177,5 +177,15 @@ export async function getLiveAlertsAction() {
     return { ok: true, alerts };
   } catch {
     return { ok: false, alerts: { activeLive: null, imminentLive: null, tomorrowLive: null } };
+  }
+}
+
+export async function getLiveQuotaInfoAction(targetDate?: string) {
+  try {
+    const stats = await getWeekLiveStats(targetDate);
+    const settings = await getLiveSettings();
+    return { ok: true, stats, settings };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "Erreur de chargement des quotas." };
   }
 }

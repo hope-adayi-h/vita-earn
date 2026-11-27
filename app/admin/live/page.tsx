@@ -3,7 +3,11 @@ import Link from "next/link";
 import { ArrowLeft, Video } from "lucide-react";
 import { isAdminUnlocked, checkAdminSession } from "@/lib/security/admin-lock";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
-import { getAllLiveConferences } from "@/lib/data/live-store";
+import {
+  getAllLiveConferences,
+  getLiveSettings,
+  getWeekLiveStats,
+} from "@/lib/data/live-store";
 import { AdminLiveClient } from "./AdminLiveClient";
 
 export const metadata = {
@@ -25,6 +29,8 @@ export default async function AdminLivePage() {
   }
 
   const lives = await getAllLiveConferences();
+  const settings = await getLiveSettings();
+  const weekStats = await getWeekLiveStats();
 
   return (
     <div className="space-y-6">
@@ -54,7 +60,11 @@ export default async function AdminLivePage() {
         </div>
       </div>
 
-      <AdminLiveClient initialLives={lives} />
+      <AdminLiveClient
+        initialLives={lives}
+        initialSettings={settings}
+        initialWeekStats={weekStats}
+      />
     </div>
   );
 }

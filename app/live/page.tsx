@@ -4,6 +4,8 @@ import { ChevronLeft, Video } from "lucide-react";
 import {
   getAllLiveConferences,
   getUserSubscribedLiveIds,
+  getLiveSettings,
+  getWeekLiveStats,
 } from "@/lib/data/live-store";
 import { LiveClient } from "./LiveClient";
 
@@ -57,6 +59,8 @@ export default async function LivePage() {
 
   const allLives = await getAllLiveConferences();
   const userSubscribedIds = await getUserSubscribedLiveIds(currentUser.identifier);
+  const settings = await getLiveSettings();
+  const weekStats = await getWeekLiveStats();
 
   return (
     <div className="min-h-screen bg-[#F4F7F0] py-6 sm:py-10 px-3 sm:px-6">
@@ -100,6 +104,8 @@ export default async function LivePage() {
           lives={allLives}
           initialSubscribedIds={userSubscribedIds}
           currentUser={currentUser}
+          initialSettings={settings}
+          initialWeekStats={weekStats}
         />
       </div>
     </div>

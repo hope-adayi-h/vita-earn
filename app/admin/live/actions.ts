@@ -7,7 +7,10 @@ import {
   toggleLiveStatus,
   deleteLiveConference,
   getAllLiveConferences,
+  getLiveSettings,
+  updateLiveSettings,
   type LiveStatus,
+  type LiveSettings,
 } from "@/lib/data/live-store";
 
 function isAdminAuthorized(): boolean {
@@ -120,5 +123,46 @@ export async function deleteLiveAction(liveId: string) {
     return { ok: true, message: "Live supprimé avec succès." };
   } catch (err: any) {
     return { ok: false, error: err?.message || "Erreur lors de la suppression." };
+  }
+}
+
+export async function updateLiveSettingsAction(prevState: any, formData: FormData) {
+  if (!isAdminAuthorized()) {
+    return { ok: false, error: "Non autorisé." };
+  }
+
+  try {
+    const maxSlotsRaw = formData.get("maxSlotsPerWeek");
+    const maxSlots = Number(maxSlotsRaw);
+    if (isNaN(maxSlots) || maxSlots <= 0) {
+      return { ok: false, error: "Le nombre de places doit être supérieur à zéro." };
+    }
+
+    const allowedDaysRaw = formData.getAll("allowedDays");
+    const allowedDays = allowedDaysRaw.map((v) => Number(v)).filter((v) => !isNaN(v) && v >= 0 && v <= 6);
+
+    if (allowedDays.length === 0) {
+      return { ok: false, error: "Vous devez sélectionner au moins un jour disponible." };
+    }
+
+    const noticeMessage = (formData.get("noticeMessage") as string) || "";
+
+    const updated = await updateLiveSettings({
+      maxSlotsPerWeek: maxSlots,
+      allowedDaysOfWeek: allowedDays,
+      noticeMessage,
+    });
+
+    revalidatePath("/admin/live");
+    revalidatePath("/live");
+    revalidatePath("/");
+
+    return {
+      ok: true,
+      message: `Paramètres enregistrés ! Quota : ${updated.maxSlotsPerWeek} places/semaine sur ${updated.allowedDaysOfWeek.length} jours configurés.`,
+      settings: updated,
+    };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "Erreur lors de la sauvegarde des paramètres." };
   }
 }

@@ -17,8 +17,17 @@ import {
   PlusCircle,
   Sparkles,
   Info,
+  Camera,
+  Trash2,
+  AlertTriangle,
+  CalendarDays,
+  ImageIcon,
 } from "lucide-react";
-import type { LiveConference } from "@/lib/data/live-store";
+import {
+  DAYS_OF_WEEK,
+  type LiveConference,
+  type LiveSettings,
+} from "@/lib/data/live-types";
 import { submitLiveRequestAction, toggleLiveReminderAction } from "./actions";
 
 interface LiveClientProps {
@@ -30,18 +39,39 @@ interface LiveClientProps {
     name: string;
     isActivated: boolean;
   };
+  initialSettings: LiveSettings;
+  initialWeekStats: {
+    mondayStr: string;
+    sundayStr: string;
+    maxSlots: number;
+    occupiedSlots: number;
+    remainingSlots: number;
+    isFull: boolean;
+    allowedDaysOfWeek: number[];
+    allowedDayNames: string[];
+    noticeMessage: string;
+  };
 }
 
 export function LiveClient({
   lives,
   initialSubscribedIds,
   currentUser,
+  initialSettings,
+  initialWeekStats,
 }: LiveClientProps) {
   const [activeTab, setActiveTab] = useState<"list" | "request" | "my_requests">("list");
   const [subscribedIds, setSubscribedIds] = useState<string[]>(initialSubscribedIds);
   const [isSubscribing, setIsSubscribing] = useState<string | null>(null);
 
+  // Settings & Quotas
+  const [settings] = useState<LiveSettings>(initialSettings);
+  const [weekStats] = useState(initialWeekStats);
+
   // Form states
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [dateWarning, setDateWarning] = useState<string | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>("");
   const [isPending, startTransition] = useTransition();
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -69,17 +99,68 @@ export function LiveClient({
     }
   };
 
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSelectedDate(val);
+    setDateWarning(null);
+
+    if (!val) return;
+
+    try {
+      const parts = val.split("-").map(Number);
+      const targetDate = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 12, 0, 0));
+      const dayOfWeek = targetDate.getUTCDay();
+
+      if (!settings.allowedDaysOfWeek.includes(dayOfWeek)) {
+        const dayObj = DAYS_OF_WEEK.find((d) => d.value === dayOfWeek);
+        const dayName = dayObj ? dayObj.label : "Ce jour";
+        setDateWarning(
+          `Attention : ${dayName} n'est pas un jour de live autorisé. Jours disponibles : ${weekStats.allowedDayNames.join(", ")}.`
+        );
+      }
+    } catch {}
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert("L'image ne doit pas dépasser 2 Mo.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setPhotoPreview(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFormSuccess(null);
     setFormError(null);
 
+    if (dateWarning) {
+      setFormError("Veuillez choisir une date correspondant aux jours ouverts autorisés par l'administration.");
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
+    if (photoPreview) {
+      formData.set("coverImageUrl", photoPreview);
+    }
+
     startTransition(async () => {
       const res = await submitLiveRequestAction(null, formData);
       if (res.ok) {
         setFormSuccess(res.message || "Votre demande a été enregistrée avec succès !");
         (e.target as HTMLFormElement).reset();
+        setPhotoPreview("");
+        setSelectedDate("");
         setActiveTab("my_requests");
       } else {
         setFormError(res.error || "Une erreur est survenue.");
@@ -115,6 +196,15 @@ export function LiveClient({
         >
           <PlusCircle className="w-4 h-4 text-emerald-400" />
           <span>Demander un Live</span>
+          {weekStats.remainingSlots > 0 ? (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-800 font-extrabold">
+              {weekStats.remainingSlots} place(s)
+            </span>
+          ) : (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-rose-500/20 text-rose-800 font-extrabold">
+              Plein
+            </span>
+          )}
         </button>
 
         {myRequests.length > 0 && (
@@ -155,31 +245,43 @@ export function LiveClient({
                     className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-950 via-slate-900 to-red-900 text-white p-5 sm:p-7 shadow-xl border-2 border-red-500/80"
                   >
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white text-xs font-black uppercase tracking-wider shadow-sm animate-pulse">
-                            <Radio className="w-3.5 h-3.5" />
-                            En Direct
-                          </span>
-                          <span className="text-xs text-red-200/90 font-medium">
-                            {live.category}
-                          </span>
-                        </div>
-                        <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                          {live.title}
-                        </h3>
-                        <p className="text-xs sm:text-sm text-slate-300 max-w-2xl line-clamp-2">
-                          {live.description}
-                        </p>
-                        <div className="flex items-center gap-4 text-xs text-slate-300 pt-1">
-                          <span className="flex items-center gap-1">
-                            <User className="w-3.5 h-3.5 text-red-400" />
-                            Intervenant : <strong>{live.applicantName}</strong>
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5 text-red-400" />
-                            Durée : ~{live.durationMinutes} min
-                          </span>
+                      <div className="flex items-start gap-4">
+                        {live.coverImageUrl && (
+                          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border border-red-400/40 shrink-0 shadow-md">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={live.coverImageUrl}
+                              alt={live.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white text-xs font-black uppercase tracking-wider shadow-sm animate-pulse">
+                              <Radio className="w-3.5 h-3.5" />
+                              En Direct
+                            </span>
+                            <span className="text-xs text-red-200/90 font-medium">
+                              {live.category}
+                            </span>
+                          </div>
+                          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                            {live.title}
+                          </h3>
+                          <p className="text-xs sm:text-sm text-slate-300 max-w-2xl line-clamp-2">
+                            {live.description}
+                          </p>
+                          <div className="flex items-center gap-4 text-xs text-slate-300 pt-1">
+                            <span className="flex items-center gap-1">
+                              <User className="w-3.5 h-3.5 text-red-400" />
+                              Intervenant : <strong>{live.applicantName}</strong>
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-red-400" />
+                              Durée : ~{live.durationMinutes} min
+                            </span>
+                          </div>
                         </div>
                       </div>
 
@@ -270,13 +372,26 @@ export function LiveClient({
                           </button>
                         </div>
 
-                        <div>
-                          <h3 className="text-base font-bold text-slate-900 leading-snug">
-                            {live.title}
-                          </h3>
-                          <p className="text-xs text-slate-600 line-clamp-3 mt-1.5">
-                            {live.description}
-                          </p>
+                        <div className="flex items-start gap-3">
+                          {live.coverImageUrl && (
+                            <div className="w-14 h-14 rounded-2xl overflow-hidden border border-slate-200 shrink-0 shadow-xs">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={live.coverImageUrl}
+                                alt={live.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-base font-bold text-slate-900 leading-snug">
+                              {live.title}
+                            </h3>
+                            <p className="text-xs text-slate-600 line-clamp-3 mt-1.5">
+                              {live.description}
+                            </p>
+                          </div>
                         </div>
                       </div>
 
@@ -328,20 +443,54 @@ export function LiveClient({
               Formulaire de demande de live
             </h2>
             <p className="text-xs sm:text-sm text-slate-500">
-              Renseignez les détails de votre événement en ligne. L&apos;administration vérifiera la disponibilité du créneau avant de le publier officiellement.
+              Renseignez les détails de votre événement en ligne. L&apos;administration vérifiera la conformité et la disponibilité avant de le publier officiellement.
             </p>
           </div>
 
-          <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200/70 flex items-start gap-3">
-            <Info className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-            <div className="text-xs text-emerald-900 leading-relaxed font-medium space-y-1">
-              <p>
-                <strong>Processus de validation :</strong> Chaque proposition est vérifiée pour garantir qu&apos;aucun autre live ne chevauche le créneau horaire.
-              </p>
-              <p>
-                Vous recevrez la confirmation et le lien Google Meet sera rendu public auprès de tous les membres Vita Earn.
-              </p>
+          {/* BANDEAU QUOTAS ET CONDITIONS FIXÉES PAR L'ADMINISTRATEUR */}
+          <div className="p-4 bg-gradient-to-r from-emerald-50 to-[#F4F7F0] rounded-2xl border border-emerald-200/80 space-y-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-[#1B4D0F] shrink-0" />
+                <span className="text-xs font-bold text-slate-900">
+                  Règles & Disponibilités ({weekStats.mondayStr} au {weekStats.sundayStr})
+                </span>
+              </div>
+              <span
+                className={`px-3 py-1 rounded-full text-[11px] font-extrabold ${
+                  weekStats.isFull
+                    ? "bg-rose-100 text-rose-800 border border-rose-300"
+                    : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                }`}
+              >
+                {weekStats.isFull
+                  ? "Toutes les places sont occupées pour cette semaine"
+                  : `${weekStats.remainingSlots} place(s) disponible(s) sur ${settings.maxSlotsPerWeek}`}
+              </span>
             </div>
+
+            <div className="text-xs text-slate-700 space-y-1">
+              <p>
+                <strong>Jours de live autorisés :</strong>{" "}
+                <span className="font-semibold text-[#1B4D0F]">
+                  {weekStats.allowedDayNames.join(", ")}
+                </span>.
+              </p>
+              {settings.noticeMessage && (
+                <p className="italic text-slate-600 bg-white/70 p-2 rounded-xl border border-emerald-100">
+                  {settings.noticeMessage}
+                </p>
+              )}
+            </div>
+
+            {weekStats.isFull && (
+              <div className="p-3 bg-rose-50 text-rose-900 rounded-xl border border-rose-200 text-xs font-semibold flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <span>
+                  Le quota maximum de <strong>{settings.maxSlotsPerWeek} places</strong> pour cette semaine est atteint. Vous pouvez proposer une date pour la semaine suivante ou patienter jusqu&apos;à la prochaine session.
+                </span>
+              </div>
+            )}
           </div>
 
           {formSuccess && (
@@ -419,6 +568,7 @@ export function LiveClient({
               </div>
             </div>
 
+            {/* Date, Heure & Durée avec validation dynamique des jours */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -428,9 +578,20 @@ export function LiveClient({
                   type="date"
                   name="scheduledDate"
                   required
+                  value={selectedDate}
+                  onChange={handleDateChange}
                   min={new Date().toISOString().split("T")[0]}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs text-slate-900 focus:outline-hidden focus:border-[#1B4D0F]"
+                  className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-slate-900 focus:outline-hidden ${
+                    dateWarning
+                      ? "border-rose-400 bg-rose-50/50"
+                      : "border-slate-300 focus:border-[#1B4D0F]"
+                  }`}
                 />
+                {dateWarning && (
+                  <p className="text-[11px] font-semibold text-rose-600 mt-1">
+                    {dateWarning}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -457,6 +618,54 @@ export function LiveClient({
                   defaultValue="60"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs text-slate-900 focus:outline-hidden focus:border-[#1B4D0F]"
                 />
+              </div>
+            </div>
+
+            {/* Photo de l'intervenant ou du produit */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Photo de profil de l&apos;intervenant ou image du produit / formation (Optionnel)
+              </label>
+
+              <div className="flex items-center gap-4">
+                {photoPreview ? (
+                  <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-slate-200 shrink-0 shadow-xs">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={photoPreview}
+                      alt="Aperçu photo"
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPhotoPreview("")}
+                      className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-black transition-colors"
+                      title="Supprimer la photo"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 hover:border-[#1B4D0F] bg-slate-50 hover:bg-emerald-50/40 cursor-pointer transition-colors shrink-0">
+                    <Camera className="w-6 h-6 text-slate-400 mb-1" />
+                    <span className="text-[10px] font-bold text-slate-600 text-center px-1">
+                      Ajouter photo
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoSelect}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+
+                <div className="text-[11px] text-slate-500 space-y-1">
+                  <p>
+                    Vous pouvez charger une photo claire de vous ou une bannière de votre formation.
+                  </p>
+                  <p>Format JPG, PNG ou WEBP (max 2 Mo).</p>
+                </div>
               </div>
             </div>
 
@@ -490,7 +699,7 @@ export function LiveClient({
 
             <button
               type="submit"
-              disabled={isPending}
+              disabled={isPending || Boolean(dateWarning)}
               className="w-full py-3 px-6 rounded-2xl bg-[#1B4D0F] hover:bg-[#2F7A1A] text-white font-bold text-sm transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isPending ? (

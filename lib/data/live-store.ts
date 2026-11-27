@@ -2,35 +2,17 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  LiveStatus,
+  LiveConference,
+  LiveSubscription,
+  LiveSettings,
+  DAYS_OF_WEEK,
+  DEFAULT_LIVE_SETTINGS,
+  LiveAlertPayload,
+} from "./live-types";
 
-export type LiveStatus = "pending" | "approved" | "rejected" | "live" | "ended";
-
-export interface LiveConference {
-  id: string;
-  userId: string;
-  applicantName: string;
-  applicantPhone: string;
-  title: string;
-  description: string;
-  category: string;
-  scheduledDate: string; // Format: YYYY-MM-DD
-  scheduledTime: string; // Format: HH:mm
-  durationMinutes: number;
-  meetUrl: string; // Lien Google Meet ou équivalent
-  coverImageUrl?: string;
-  status: LiveStatus;
-  adminMessage?: string;
-  reviewedBy?: string;
-  reviewedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface LiveSubscription {
-  liveId: string;
-  userIdentifier: string;
-  subscribedAt: string;
-}
+export * from "./live-types";
 
 function getDataDir(): string {
   try {
@@ -59,6 +41,10 @@ function getLiveFilePath(): string {
 
 function getSubscribersFilePath(): string {
   return path.join(getDataDir(), "live_subscribers.json");
+}
+
+function getSettingsFilePath(): string {
+  return path.join(getDataDir(), "live_settings.json");
 }
 
 function readJsonFile<T>(filePath: string, defaultValue: T): T {
@@ -136,6 +122,240 @@ export async function syncLiveSubscribersToSupabase(subs: LiveSubscription[]): P
   } catch (err) {
     console.warn("Synchronisation Supabase platform_settings (live_subscribers) échouée:", err);
   }
+}
+
+export async function syncLiveSettingsToSupabase(settings: LiveSettings): Promise<void> {
+  try {
+    const isConfigured =
+      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+      !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+
+    if (isConfigured) {
+      const adminClient = createAdminClient();
+      await adminClient
+        .from("platform_settings")
+        .upsert(
+          {
+            key: "live_settings",
+            value: settings,
+            description: "Paramètres de quotas et jours disponibles pour les lives",
+          },
+          { onConflict: "key" }
+        );
+    }
+  } catch (err) {
+    console.warn("Synchronisation Supabase platform_settings (live_settings) échouée:", err);
+  }
+}
+
+// -------------------------------------------------------------
+// READ & UPDATE LIVE SETTINGS
+// -------------------------------------------------------------
+export async function getLiveSettings(): Promise<LiveSettings> {
+  let settings = readJsonFile<LiveSettings | null>(getSettingsFilePath(), null);
+
+  if (!settings) {
+    try {
+      const isConfigured =
+        Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+        !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("placeholder");
+
+      if (isConfigured) {
+        const adminClient = createAdminClient();
+        const { data } = await adminClient
+          .from("platform_settings")
+          .select("value")
+          .eq("key", "live_settings")
+          .maybeSingle();
+
+        if (data?.value && typeof data.value.maxSlotsPerWeek === "number") {
+          settings = data.value as LiveSettings;
+          writeJsonFile(getSettingsFilePath(), settings);
+        }
+      }
+    } catch {}
+  }
+
+  if (!settings) {
+    settings = { ...DEFAULT_LIVE_SETTINGS };
+    writeJsonFile(getSettingsFilePath(), settings);
+  }
+
+  return settings;
+}
+
+export async function updateLiveSettings(
+  partial: Partial<LiveSettings>
+): Promise<LiveSettings> {
+  const current = await getLiveSettings();
+
+  const maxSlots =
+    typeof partial.maxSlotsPerWeek === "number" && partial.maxSlotsPerWeek > 0
+      ? Math.floor(partial.maxSlotsPerWeek)
+      : current.maxSlotsPerWeek;
+
+  const allowedDays =
+    Array.isArray(partial.allowedDaysOfWeek) && partial.allowedDaysOfWeek.length > 0
+      ? partial.allowedDaysOfWeek
+      : current.allowedDaysOfWeek;
+
+  const updated: LiveSettings = {
+    ...current,
+    maxSlotsPerWeek: maxSlots,
+    allowedDaysOfWeek: allowedDays,
+    noticeMessage:
+      partial.noticeMessage !== undefined
+        ? partial.noticeMessage.trim()
+        : current.noticeMessage,
+    updatedAt: new Date().toISOString(),
+  };
+
+  writeJsonFile(getSettingsFilePath(), updated);
+  await syncLiveSettingsToSupabase(updated);
+
+  return updated;
+}
+
+// -------------------------------------------------------------
+// WEEK BOUNDS & STATS CALCULATOR
+// -------------------------------------------------------------
+export function getWeekBounds(dateInput: Date | string = new Date()): {
+  mondayStr: string;
+  sundayStr: string;
+  mondayDate: Date;
+  sundayDate: Date;
+} {
+  let d: Date;
+  if (typeof dateInput === "string") {
+    const parts = dateInput.split("-").map(Number);
+    d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 12, 0, 0));
+  } else {
+    d = new Date(dateInput);
+  }
+
+  const day = d.getUTCDay(); // 0 is Sunday, 1 is Monday...
+  const diffToMonday = (day === 0 ? -6 : 1) - day;
+
+  const monday = new Date(d);
+  monday.setUTCDate(d.getUTCDate() + diffToMonday);
+  monday.setUTCHours(0, 0, 0, 0);
+
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  sunday.setUTCHours(23, 59, 59, 999);
+
+  return {
+    mondayStr: monday.toISOString().split("T")[0],
+    sundayStr: sunday.toISOString().split("T")[0],
+    mondayDate: monday,
+    sundayDate: sunday,
+  };
+}
+
+export async function getWeekLiveStats(targetDateStr?: string): Promise<{
+  mondayStr: string;
+  sundayStr: string;
+  maxSlots: number;
+  occupiedSlots: number;
+  remainingSlots: number;
+  isFull: boolean;
+  allowedDaysOfWeek: number[];
+  allowedDayNames: string[];
+  noticeMessage: string;
+}> {
+  const settings = await getLiveSettings();
+  const dateToUse = targetDateStr || new Date().toISOString().split("T")[0];
+  const { mondayStr, sundayStr } = getWeekBounds(dateToUse);
+
+  const allLives = await getAllLiveConferences();
+
+  // Filtrer les lives tombant dans cette semaine (lundi au dimanche) non rejetés
+  const weekLives = allLives.filter((l) => {
+    if (l.status === "rejected") return false;
+    return l.scheduledDate >= mondayStr && l.scheduledDate <= sundayStr;
+  });
+
+  const occupiedSlots = weekLives.length;
+  const maxSlots = settings.maxSlotsPerWeek;
+  const remainingSlots = Math.max(0, maxSlots - occupiedSlots);
+  const isFull = remainingSlots <= 0;
+
+  const allowedDayNames = settings.allowedDaysOfWeek
+    .map((val) => DAYS_OF_WEEK.find((d) => d.value === val)?.label || "")
+    .filter(Boolean);
+
+  return {
+    mondayStr,
+    sundayStr,
+    maxSlots,
+    occupiedSlots,
+    remainingSlots,
+    isFull,
+    allowedDaysOfWeek: settings.allowedDaysOfWeek,
+    allowedDayNames,
+    noticeMessage: settings.noticeMessage || "",
+  };
+}
+
+// -------------------------------------------------------------
+// CHECK AVAILABILITY FOR LIVE SUBMISSION
+// -------------------------------------------------------------
+export async function checkLiveAvailability(
+  scheduledDate: string,
+  scheduledTime: string,
+  excludeId?: string
+): Promise<{ ok: boolean; error?: string }> {
+  const settings = await getLiveSettings();
+
+  // 1. Vérification du jour de la semaine
+  const parts = scheduledDate.split("-").map(Number);
+  const targetDate = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 12, 0, 0));
+  const dayOfWeek = targetDate.getUTCDay(); // 0 = Dimanche, 1 = Lundi, etc.
+
+  if (!settings.allowedDaysOfWeek.includes(dayOfWeek)) {
+    const allowedNames = settings.allowedDaysOfWeek
+      .map((val) => DAYS_OF_WEEK.find((d) => d.value === val)?.label || "")
+      .filter(Boolean)
+      .join(", ");
+    const dayName = DAYS_OF_WEEK.find((d) => d.value === dayOfWeek)?.label || "Ce jour";
+    return {
+      ok: false,
+      error: `${dayName} n'est pas un jour ouvert pour les lives. Les jours autorisés sont : ${allowedNames}.`,
+    };
+  }
+
+  // 2. Vérification du quota de la semaine
+  const { mondayStr, sundayStr } = getWeekBounds(scheduledDate);
+  const allLives = await getAllLiveConferences();
+
+  const weekLives = allLives.filter((l) => {
+    if (excludeId && l.id === excludeId) return false;
+    if (l.status === "rejected") return false;
+    return l.scheduledDate >= mondayStr && l.scheduledDate <= sundayStr;
+  });
+
+  if (weekLives.length >= settings.maxSlotsPerWeek) {
+    return {
+      ok: false,
+      error: `Toutes les places (${settings.maxSlotsPerWeek} places max) pour la semaine du ${mondayStr} au ${sundayStr} sont déjà occupées. Revenez la semaine suivante.`,
+    };
+  }
+
+  // 3. Vérification de conflit direct (même date et même heure)
+  const conflict = allLives.find((l) => {
+    if (excludeId && l.id === excludeId) return false;
+    if (l.status === "rejected") return false;
+    return l.scheduledDate === scheduledDate && l.scheduledTime === scheduledTime;
+  });
+
+  if (conflict) {
+    return {
+      ok: false,
+      error: `Un live est déjà programmé à cette date (${scheduledDate}) à ${scheduledTime}. Veuillez choisir un autre horaire.`,
+    };
+  }
+
+  return { ok: true };
 }
 
 // -------------------------------------------------------------
@@ -377,12 +597,6 @@ export async function getUserSubscribedLiveIds(userIdentifier: string): Promise<
 // -------------------------------------------------------------
 // CHECK BANNER ALERTS (FOR HOMEPAGE)
 // -------------------------------------------------------------
-export interface LiveAlertPayload {
-  activeLive: LiveConference | null; // Actuellement en direct (bouton rouge clignotant)
-  imminentLive: LiveConference | null; // Démarre dans moins de 10 min
-  tomorrowLive: LiveConference | null; // Démarre demain (pour rappel 24h)
-}
-
 export async function getLiveAlerts(userSubscribedIds: string[] = []): Promise<LiveAlertPayload> {
   const lives = await getAllLiveConferences();
   const now = new Date().getTime();

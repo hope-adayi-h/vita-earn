@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Image from "next/image";
 import {
   Video,
   Radio,
@@ -17,24 +18,55 @@ import {
   Square,
   Sparkles,
   Info,
+  Settings,
+  Sliders,
+  CalendarDays,
+  ImageIcon,
 } from "lucide-react";
-import type { LiveConference, LiveStatus } from "@/lib/data/live-store";
+import {
+  DAYS_OF_WEEK,
+  type LiveConference,
+  type LiveStatus,
+  type LiveSettings,
+} from "@/lib/data/live-types";
 import {
   reviewLiveAction,
   quickToggleLiveStatusAction,
   deleteLiveAction,
+  updateLiveSettingsAction,
 } from "./actions";
 
 interface AdminLiveClientProps {
   initialLives: LiveConference[];
+  initialSettings: LiveSettings;
+  initialWeekStats: {
+    mondayStr: string;
+    sundayStr: string;
+    maxSlots: number;
+    occupiedSlots: number;
+    remainingSlots: number;
+    isFull: boolean;
+    allowedDaysOfWeek: number[];
+    allowedDayNames: string[];
+    noticeMessage: string;
+  };
 }
 
-export function AdminLiveClient({ initialLives }: AdminLiveClientProps) {
+export function AdminLiveClient({
+  initialLives,
+  initialSettings,
+  initialWeekStats,
+}: AdminLiveClientProps) {
   const [lives, setLives] = useState<LiveConference[]>(initialLives);
+  const [settings, setSettings] = useState<LiveSettings>(initialSettings);
+  const [weekStats, setWeekStats] = useState(initialWeekStats);
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "live" | "rejected">("all");
   const [editingLive, setEditingLive] = useState<LiveConference | null>(null);
   const [rejectingLive, setRejectingLive] = useState<LiveConference | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
@@ -154,6 +186,32 @@ export function AdminLiveClient({ initialLives }: AdminLiveClientProps) {
     });
   };
 
+  const handleSaveSettings = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    startTransition(async () => {
+      const res = await updateLiveSettingsAction(null, formData);
+      if (res.ok && res.settings) {
+        setSettings(res.settings);
+        setWeekStats((prev) => ({
+          ...prev,
+          maxSlots: res.settings.maxSlotsPerWeek,
+          remainingSlots: Math.max(0, res.settings.maxSlotsPerWeek - prev.occupiedSlots),
+          isFull: prev.occupiedSlots >= res.settings.maxSlotsPerWeek,
+          allowedDaysOfWeek: res.settings.allowedDaysOfWeek,
+          allowedDayNames: res.settings.allowedDaysOfWeek
+            .map((val: number) => DAYS_OF_WEEK.find((d) => d.value === val)?.label || "")
+            .filter(Boolean),
+        }));
+        setMessage({ text: res.message || "Paramètres enregistrés avec succès !", type: "success" });
+        setShowSettingsPanel(false);
+      } else {
+        setMessage({ text: res.error || "Erreur lors de la mise à jour des paramètres.", type: "error" });
+      }
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Notifications retour */}
@@ -175,6 +233,179 @@ export function AdminLiveClient({ initialLives }: AdminLiveClientProps) {
           </button>
         </div>
       )}
+
+      {/* BANDEAU GESTION DES QUOTAS & RÉGLAGES ADMINISTRATEUR */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-xs border border-slate-200/90 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#1B4D0F] text-white flex items-center justify-center shrink-0">
+              <Sliders className="w-5 h-5 text-[#7ED321]" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900">
+                Règles de Quota & Jours Ouverts
+              </h2>
+              <p className="text-xs text-slate-500">
+                {settings.maxSlotsPerWeek} places configurées par semaine • {settings.allowedDaysOfWeek.length} jours ouverts
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowSettingsPanel(!showSettingsPanel)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors cursor-pointer self-start sm:self-auto"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span>{showSettingsPanel ? "Masquer les réglages" : "Modifier les quotas & jours"}</span>
+          </button>
+        </div>
+
+        {/* Indicateur visuel d'occupation de la semaine */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs">
+          <div>
+            <span className="block text-[10px] uppercase font-bold text-slate-400">
+              Semaine en cours ({weekStats.mondayStr} au {weekStats.sundayStr})
+            </span>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-sm font-black text-slate-900">
+                {weekStats.occupiedSlots} / {settings.maxSlotsPerWeek} places occupées
+              </span>
+              {weekStats.isFull ? (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                  Complet
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  {weekStats.remainingSlots} disponible(s)
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <span className="block text-[10px] uppercase font-bold text-slate-400">
+              Jours autorisés pour les lives
+            </span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {weekStats.allowedDayNames.map((name) => (
+                <span
+                  key={name}
+                  className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[11px] font-semibold text-slate-700"
+                >
+                  {name}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <span className="block text-[10px] uppercase font-bold text-slate-400">
+              État du système
+            </span>
+            <p className="text-[11px] text-slate-600 mt-1">
+              {weekStats.isFull
+                ? "Nouvelles demandes bloquées jusqu'à la semaine suivante."
+                : "Les membres peuvent réserver parmi les jours ouverts."}
+            </p>
+          </div>
+        </div>
+
+        {/* FORMULAIRE DE MODIFICATION DES QUOTAS & JOURS (Accordeon) */}
+        {showSettingsPanel && (
+          <form
+            onSubmit={handleSaveSettings}
+            className="pt-4 border-t border-slate-100 space-y-4 animate-in slide-in-from-top-2 duration-150"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Nombre de places par semaine */}
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  Nombre de places autorisées par semaine (ex : 5, 3, 2, 1) *
+                </label>
+                <input
+                  type="number"
+                  name="maxSlotsPerWeek"
+                  required
+                  min="1"
+                  max="50"
+                  defaultValue={settings.maxSlotsPerWeek}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:outline-hidden focus:border-[#1B4D0F]"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Dès que ce quota est atteint dans une semaine, le formulaire bloque automatiquement toute nouvelle demande pour cette semaine.
+                </p>
+              </div>
+
+              {/* Message d'information optionnel */}
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  Message d&apos;information aux membres (optionnel)
+                </label>
+                <input
+                  type="text"
+                  name="noticeMessage"
+                  defaultValue={settings.noticeMessage || ""}
+                  placeholder="Ex : Les lives sont réservés aux formations certifiées et présentations de projets."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs text-slate-900 focus:outline-hidden focus:border-[#1B4D0F]"
+                />
+              </div>
+            </div>
+
+            {/* Sélection des jours de la semaine disponibles */}
+            <div>
+              <label className="block text-xs font-bold text-slate-800 mb-2">
+                Sélectionnez les jours de la semaine disponibles pour les lives *
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+                {DAYS_OF_WEEK.map((day) => {
+                  const isChecked = settings.allowedDaysOfWeek.includes(day.value);
+                  return (
+                    <label
+                      key={day.value}
+                      className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all text-xs font-bold ${
+                        isChecked
+                          ? "bg-emerald-50 border-[#1B4D0F] text-[#1B4D0F]"
+                          : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        name="allowedDays"
+                        value={day.value}
+                        defaultChecked={isChecked}
+                        className="rounded border-slate-300 text-[#1B4D0F] focus:ring-[#1B4D0F]"
+                      />
+                      <span>{day.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1.5">
+                Les candidats ne pourront sélectionner que des dates correspondant aux jours cochés ci-dessus.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowSettingsPanel(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={isPending}
+                className="px-5 py-2 rounded-xl bg-[#1B4D0F] hover:bg-[#2F7A1A] text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="w-4 h-4 text-[#7ED321]" />
+                <span>Enregistrer la programmation</span>
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
 
       {/* Barre de filtres & métriques */}
       <div className="flex flex-wrap items-center gap-2">
@@ -263,32 +494,55 @@ export function AdminLiveClient({ initialLives }: AdminLiveClientProps) {
               >
                 {/* Header de la carte */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-bold text-[#1B4D0F] bg-[#7ED321]/20 px-2.5 py-0.5 rounded-full">
-                        {live.category}
-                      </span>
-                      <span
-                        className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                          live.status === "approved"
-                            ? "bg-emerald-100 text-emerald-800"
-                            : live.status === "live"
-                            ? "bg-red-600 text-white animate-pulse"
-                            : live.status === "rejected"
-                            ? "bg-rose-100 text-rose-800"
-                            : "bg-amber-100 text-amber-800"
-                        }`}
+                  <div className="flex items-start gap-3">
+                    {/* Photo de couverture / Intervenant si présente */}
+                    {live.coverImageUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewImage(live.coverImageUrl || null)}
+                        className="w-12 h-12 rounded-2xl overflow-hidden border border-slate-200 shrink-0 hover:opacity-80 transition-opacity cursor-pointer"
+                        title="Cliquer pour agrandir la photo"
                       >
-                        {live.status === "approved" && "Programmé"}
-                        {live.status === "live" && "En Direct"}
-                        {live.status === "rejected" && "Refusé"}
-                        {live.status === "pending" && "En attente"}
-                        {live.status === "ended" && "Terminé"}
-                      </span>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={live.coverImageUrl}
+                          alt={live.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ) : (
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
+                        <Video className="w-6 h-6" />
+                      </div>
+                    )}
+
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-[#1B4D0F] bg-[#7ED321]/20 px-2.5 py-0.5 rounded-full">
+                          {live.category}
+                        </span>
+                        <span
+                          className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                            live.status === "approved"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : live.status === "live"
+                              ? "bg-red-600 text-white animate-pulse"
+                              : live.status === "rejected"
+                              ? "bg-rose-100 text-rose-800"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {live.status === "approved" && "Programmé"}
+                          {live.status === "live" && "En Direct"}
+                          {live.status === "rejected" && "Refusé"}
+                          {live.status === "pending" && "En attente"}
+                          {live.status === "ended" && "Terminé"}
+                        </span>
+                      </div>
+                      <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                        {live.title}
+                      </h2>
                     </div>
-                    <h2 className="text-base sm:text-lg font-bold text-slate-900">
-                      {live.title}
-                    </h2>
                   </div>
 
                   {/* Boutons d'action rapide */}
@@ -437,7 +691,7 @@ export function AdminLiveClient({ initialLives }: AdminLiveClientProps) {
               <button
                 type="button"
                 onClick={() => setEditingLive(null)}
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold"
+                className="text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer"
               >
                 Annuler
               </button>
@@ -531,7 +785,7 @@ export function AdminLiveClient({ initialLives }: AdminLiveClientProps) {
               <button
                 type="button"
                 onClick={() => setRejectingLive(null)}
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold"
+                className="text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer"
               >
                 Annuler
               </button>
@@ -568,6 +822,30 @@ export function AdminLiveClient({ initialLives }: AdminLiveClientProps) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Aperçu Photo Agrandie */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 cursor-pointer"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-xl max-h-[85vh] rounded-3xl overflow-hidden bg-black border border-white/20">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={previewImage}
+              alt="Aperçu photo live"
+              className="w-full h-auto max-h-[80vh] object-contain"
+            />
+            <button
+              type="button"
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-black/70 text-white text-xs font-bold hover:bg-black"
+            >
+              Fermer
+            </button>
           </div>
         </div>
       )}

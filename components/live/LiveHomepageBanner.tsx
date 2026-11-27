@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Video, Radio, BellRing, ExternalLink, X, Clock, Calendar, Sparkles } from "lucide-react";
-import type { LiveAlertPayload, LiveConference } from "@/lib/data/live-store";
+import type { LiveAlertPayload, LiveConference } from "@/lib/data/live-types";
 import { getLiveAlertsAction } from "@/app/live/actions";
 
 export function LiveHomepageBanner() {
