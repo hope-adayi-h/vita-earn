@@ -7,6 +7,7 @@ import { formatFCFA } from "@/lib/utils";
 import { ReferralSection } from "@/components/ReferralSection";
 import { WelcomeBonusCard } from "@/components/WelcomeBonusCard";
 import { TimeTableSection, TaskItem } from "@/components/TimeTableSection";
+import { LiveHomepageBanner } from "@/components/live/LiveHomepageBanner";
 import { fetchAndSyncDailyTasks, getAllTaskValidations, normalizeTaskAliases } from "@/lib/data/tasks-store";
 import { UserAvatar } from "@/components/UserAvatar";
 import { T } from "@/components/T";
@@ -915,6 +916,9 @@ export default async function HomePage() {
           </div>
         )}
       </div>
+
+      {/* Alerte flottante & pop-up redirection Live Vita Earn */}
+      <LiveHomepageBanner />
     </div>
   );
 }

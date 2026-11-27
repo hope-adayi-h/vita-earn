@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Globe,
   ExternalLink,
+  Video,
 } from "lucide-react";
 
 interface AdminNavbarProps {
@@ -116,6 +117,12 @@ export function AdminNavbar({
       label: "Emploi",
       href: "/admin/emploi",
       icon: Briefcase,
+      badge: null,
+    },
+    {
+      label: "Conférences Live",
+      href: "/admin/live",
+      icon: Video,
       badge: null,
     },
     {
