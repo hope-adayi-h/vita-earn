@@ -8,6 +8,8 @@ import { getSupportSettingsAction } from "@/lib/actions/support";
 import { AdminSupportSettingsCard } from "@/components/admin/AdminSupportSettingsCard";
 import { AdminNavbar } from "@/components/admin/AdminNavbar";
 import { AdminRoleManagerCard } from "@/components/admin/AdminRoleManagerCard";
+import { AdminQuickAlertsWidget } from "@/components/admin/AdminQuickAlertsWidget";
+import { getAdminNotificationSummary } from "@/lib/data/admin-notifications";
 import {
   isAdminUnlocked,
   SUPER_ADMIN_EMAIL,
@@ -322,6 +324,7 @@ export default async function AdminDashboardPage() {
   const otherPct = Math.max(0, 100 - tmoneyPct - floozPct);
 
   const supportSettings = await getSupportSettingsAction();
+  const notificationSummary = await getAdminNotificationSummary();
 
   return (
     <div className="space-y-5">
@@ -439,6 +442,9 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* 2.5 ALERTE DYNAMIQUE PRIORITAIRE EN TEMPS RÉEL (Retraits, KYC, Lives, Produits, Dépôts) */}
+      <AdminQuickAlertsWidget summary={notificationSummary} />
 
       {/* 3. SECTION DÉDIÉE AGRANDIE : VALIDER LES RETRAITS (Avec Notification Dynamique en bas) */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 space-y-4">

@@ -41,6 +41,8 @@ import {
   type SellerQuotaSummary,
 } from "@/lib/data/products-store";
 import { SasPayClient } from "@/lib/payments/saspay";
+import { getAdminNotificationSummary } from "@/lib/data/admin-notifications";
+import type { AdminNotificationSummary } from "@/lib/data/admin-notifications-types";
 
 const SESSION_COOKIE_NAME = "vita_admin_unlocked";
 
@@ -62,6 +64,34 @@ export async function verifyAdminUser() {
   }
 
   throw new Error("Accès formellement refusé : privilèges administrateur requis.");
+}
+
+/**
+ * Récupère en temps réel toutes les notifications en attente de traitement dans l'administration
+ */
+export async function getAdminNotificationsAction(): Promise<{
+  ok: boolean;
+  summary: AdminNotificationSummary;
+}> {
+  try {
+    const summary = await getAdminNotificationSummary();
+    return { ok: true, summary };
+  } catch (err) {
+    console.error("Erreur récupération notifications admin:", err);
+    return {
+      ok: false,
+      summary: {
+        totalCount: 0,
+        withdrawalsCount: 0,
+        kycCount: 0,
+        liveCount: 0,
+        productsCount: 0,
+        depositsCount: 0,
+        items: [],
+        lastCheckedAt: new Date().toISOString(),
+      },
+    };
+  }
 }
 
 /**

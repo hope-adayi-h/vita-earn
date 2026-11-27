@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { lockAdminSessionAction } from "@/app/admin/actions";
+import { AdminNotificationBell } from "./AdminNotificationBell";
 import {
   Menu,
   X,
@@ -181,8 +182,11 @@ export function AdminNavbar({
             </div>
           </div>
 
-          {/* Actions rapides à droite : RETOUR SUR LE SITE + VERROUILLER */}
+          {/* Actions rapides à droite : CLOCHE DE NOTIFICATION + RETOUR SUR LE SITE + VERROUILLER */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Cloche de notifications centralisée en temps réel */}
+            <AdminNotificationBell />
+
             {/* Bouton retour sur le site */}
             <Link
               href="/"
